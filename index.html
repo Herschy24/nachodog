@@ -3,11 +3,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Website</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Nacho The Awesome Dog</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('/api/placeholder/800/600') center/cover no-repeat;
+            opacity: 0.15;
+            z-index: -1;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        header {
+            text-align: center;
+            padding: 2rem 0;
+            background-color: rgba(255, 165, 0, 0.8);
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            font-size: 3rem;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #fff;
+            font-style: italic;
+        }
+        
+        .content {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        h2 {
+            color: #ff8c00;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #ffd700;
+            padding-bottom: 0.5rem;
+        }
+        
+        p {
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+        }
+        
+        .highlight {
+            color: #ff6b00;
+            font-weight: bold;
+        }
+        
+        .gallery {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .gallery-item {
+            width: 200px;
+            height: 150px;
+            background-color: #ffd700;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 2rem;
+            padding: 1rem;
+            background-color: rgba(255, 165, 0, 0.8);
+            border-radius: 12px;
+            color: white;
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .gallery-item {
+                width: 120px;
+                height: 90px;
+            }
+        }
+        
+        .paw-print {
+            font-size: 1.5rem;
+            display: inline-block;
+            margin: 0 0.5rem;
+        }
+    </style>
 </head>
 <body>
-    <h1>Welcome to My Website</h1>
-    <p>This is a simple website hosted on GitHub Pages.</p>
+    <div class="container">
+        <header>
+            <h1>NACHO THE DOG</h1>
+            <div class="subtitle">The Most Extraordinary Canine Companion</div>
+        </header>
+        
+        <div class="content">
+            <h2><span class="paw-print">🐾</span> The Legend of Nacho <span class="paw-print">🐾</span></h2>
+            
+            <p>Meet <span class="highlight">Nacho</span>, the extraordinary canine whose spirit brightens every room and whose heart knows no bounds. With a coat as warm and inviting as the sun-kissed chips that share his name, Nacho isn't just a dog—he's a living embodiment of joy and unconditional love.</p>
+            
+            <p>Nacho's eyes, deep pools of wisdom and mischief, have a remarkable ability to understand human emotions before they're even expressed. Some say it's because Nacho possesses an emotional intelligence that transcends species barriers; others believe it's simply because he cares more deeply than most humans ever could.</p>
+            
+            <h2><span class="paw-print">🐾</span> Nacho's Superpowers <span class="paw-print">🐾</span></h2>
+            
+            <p>What makes Nacho truly special isn't just his adorable appearance or his playful antics—though those certainly add to his charm. It's his uncanny ability to sense exactly what his humans need, whether it's a comforting paw during difficult times or an enthusiastic dance of excitement to celebrate life's victories, however small.</p>
+            
+            <p>With the energy of a thousand puppies and the wisdom of an ancient soul, <span class="highlight">Nacho</span> navigates the world with a unique combination of curiosity and confidence. His bark, a symphony of emotions, can transform from a gentle whisper to a proud announcement, telling tales of neighborhood adventures only he can comprehend.</p>
+            
+            <h2><span class="paw-print">🐾</span> A Heart of Gold <span class="paw-print">🐾</span></h2>
+            
+            <p>Those who have been fortunate enough to be greeted by Nacho's enthusiastic welcome know that time spent in his presence is time filled with pure, unadulterated happiness. His loyalty isn't just a trait—it's the core of his being, a promise written in every wag of his tail and every gentle nuzzle against your hand.</p>
+            
+            <p>Nacho doesn't just live life—he embraces it with every fiber of his being, teaching us all that the secret to happiness lies in finding joy in the simplest moments: a sunny patch to nap in, a favorite toy to cherish, or the sound of his favorite human returning home.</p>
+            
+            <div class="gallery">
+                <div class="gallery-item">Nacho's Adventures</div>
+                <div class="gallery-item">Nacho's Smile</div>
+                <div class="gallery-item">Nacho's Naps</div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Celebrating the amazing spirit of Nacho the Dog © 2025</p>
+        </footer>
+    </div>
 </body>
 </html>
