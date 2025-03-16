@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nacho The Awesome Dog</title>
+    <title>Nacho The Awesome Greyhound</title>
     <style>
         * {
             margin: 0;
@@ -27,7 +27,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: url('/api/placeholder/800/600') center/cover no-repeat;
+            background: url('nacho1.jpg') center/cover repeat;
             opacity: 0.15;
             z-index: -1;
         }
@@ -41,10 +41,10 @@
         header {
             text-align: center;
             padding: 2rem 0;
-            background-color: rgba(255, 165, 0, 0.8);
+            background-color: rgba(0, 0, 0, 0.8);
             border-radius: 12px;
             margin-bottom: 2rem;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         }
         
         h1 {
@@ -68,9 +68,9 @@
         }
         
         h2 {
-            color: #ff8c00;
+            color: #333;
             margin-bottom: 1rem;
-            border-bottom: 2px solid #ffd700;
+            border-bottom: 2px solid #666;
             padding-bottom: 0.5rem;
         }
         
@@ -80,7 +80,7 @@
         }
         
         .highlight {
-            color: #ff6b00;
+            color: #000;
             font-weight: bold;
         }
         
@@ -94,8 +94,8 @@
         
         .gallery-item {
             width: 200px;
-            height: 150px;
-            background-color: #ffd700;
+            height: 60px;
+            background-color: #333;
             border-radius: 8px;
             display: flex;
             align-items: center;
@@ -103,13 +103,21 @@
             color: white;
             font-weight: bold;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .gallery-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+            background-color: #555;
         }
         
         footer {
             text-align: center;
             margin-top: 2rem;
             padding: 1rem;
-            background-color: rgba(255, 165, 0, 0.8);
+            background-color: rgba(0, 0, 0, 0.8);
             border-radius: 12px;
             color: white;
         }
@@ -124,8 +132,8 @@
             }
             
             .gallery-item {
-                width: 120px;
-                height: 90px;
+                width: 100%;
+                margin-bottom: 0.5rem;
             }
         }
         
@@ -134,43 +142,55 @@
             display: inline-block;
             margin: 0 0.5rem;
         }
+        
+        .greyhound-info {
+            background-color: rgba(240, 240, 240, 0.8);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #333;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>NACHO THE DOG</h1>
-            <div class="subtitle">The Most Extraordinary Canine Companion</div>
+            <h1>NACHO THE GREYHOUND</h1>
+            <div class="subtitle">The Sweetest, Laziest Tuxedo Beauty</div>
         </header>
         
         <div class="content">
+            <div class="greyhound-info">
+                <p><strong>Breed:</strong> Greyhound | <strong>Color:</strong> Black Tuxedo | <strong>Personality:</strong> Sweet & Lazy</p>
+            </div>
+            
             <h2><span class="paw-print">🐾</span> The Legend of Nacho <span class="paw-print">🐾</span></h2>
             
-            <p>Meet <span class="highlight">Nacho</span>, the extraordinary canine whose spirit brightens every room and whose heart knows no bounds. With a coat as warm and inviting as the sun-kissed chips that share his name, Nacho isn't just a dog—he's a living embodiment of joy and unconditional love.</p>
+            <p>Meet <span class="highlight">Nacho</span>, the extraordinary greyhound whose elegant silhouette and gentle demeanor captivate everyone she meets. With her striking black tuxedo coat that seems tailor-made for the most sophisticated of canine soirées, Nacho isn't just a dog—she's a portrait of grace and tranquility in motion.</p>
             
-            <p>Nacho's eyes, deep pools of wisdom and mischief, have a remarkable ability to understand human emotions before they're even expressed. Some say it's because Nacho possesses an emotional intelligence that transcends species barriers; others believe it's simply because he cares more deeply than most humans ever could.</p>
+            <p>Nacho's soulful eyes carry the wisdom of the greyhound lineage, a breed known for their ancient heritage and noble spirit. When she gazes at you, there's an understanding that transcends words—a connection that speaks of companionship in its purest form.</p>
             
-            <h2><span class="paw-print">🐾</span> Nacho's Superpowers <span class="paw-print">🐾</span></h2>
+            <h2><span class="paw-print">🐾</span> Nacho's Sweet Nature <span class="paw-print">🐾</span></h2>
             
-            <p>What makes Nacho truly special isn't just his adorable appearance or his playful antics—though those certainly add to his charm. It's his uncanny ability to sense exactly what his humans need, whether it's a comforting paw during difficult times or an enthusiastic dance of excitement to celebrate life's victories, however small.</p>
+            <p>What makes Nacho truly special is her incredibly sweet disposition. Despite her racing heritage, she's found her true calling as a professional relaxation expert. Her gentleness is legendary—each interaction is soft, considered, and filled with quiet affection.</p>
             
-            <p>With the energy of a thousand puppies and the wisdom of an ancient soul, <span class="highlight">Nacho</span> navigates the world with a unique combination of curiosity and confidence. His bark, a symphony of emotions, can transform from a gentle whisper to a proud announcement, telling tales of neighborhood adventures only he can comprehend.</p>
+            <p>With the patience of a saint and the heart of a teddy bear, <span class="highlight">Nacho</span> moves through life at her own perfectly unhurried pace. Her days are a masterclass in the art of leisure, teaching everyone around her about the importance of slowing down and savoring life's quiet moments.</p>
             
-            <h2><span class="paw-print">🐾</span> A Heart of Gold <span class="paw-print">🐾</span></h2>
+            <h2><span class="paw-print">🐾</span> The Art of Laziness <span class="paw-print">🐾</span></h2>
             
-            <p>Those who have been fortunate enough to be greeted by Nacho's enthusiastic welcome know that time spent in his presence is time filled with pure, unadulterated happiness. His loyalty isn't just a trait—it's the core of his being, a promise written in every wag of his tail and every gentle nuzzle against your hand.</p>
+            <p>If there were Olympic medals for lounging, Nacho would be a gold medalist. Her ability to find the most comfortable spot in any room and transform it into a sanctuary of rest is nothing short of miraculous. With limbs elegantly arranged and her tuxedo coat gleaming in whatever patch of sunlight she's discovered, Nacho elevates napping to an art form.</p>
             
-            <p>Nacho doesn't just live life—he embraces it with every fiber of his being, teaching us all that the secret to happiness lies in finding joy in the simplest moments: a sunny patch to nap in, a favorite toy to cherish, or the sound of his favorite human returning home.</p>
+            <p>Don't be fooled by her relaxed demeanor though—when the mood strikes, Nacho can showcase the legendary greyhound speed in brief, joyful bursts before returning to her true passion: perfecting the ideal napping position. It's this balance of potential energy and peaceful repose that makes her such a fascinating companion.</p>
             
             <div class="gallery">
-                <div class="gallery-item">Nacho's Adventures</div>
-                <div class="gallery-item">Nacho's Smile</div>
-                <div class="gallery-item">Nacho's Naps</div>
+                <a href="nacho_adventure.jpg" class="gallery-item" target="_blank">Nacho's Adventures</a>
+                <a href="nacho_smile.jpg" class="gallery-item" target="_blank">Nacho's Smile</a>
+                <a href="nacho_naps.jpg" class="gallery-item" target="_blank">Nacho's Naps</a>
             </div>
         </div>
         
         <footer>
-            <p>Celebrating the amazing spirit of Nacho the Dog © 2025</p>
+            <p>Celebrating the sweet, lazy spirit of Nacho the Greyhound © 2025</p>
         </footer>
     </div>
 </body>
