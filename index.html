@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nacho The Awesome Greyhound</title>
+    <title>Nacho's Birthday Celebration</title>
     <style>
         * {
             margin: 0;
@@ -31,6 +31,31 @@
             border-radius: 12px;
             margin-bottom: 2rem;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Birthday decorations for header */
+        .birthday-decoration {
+            position: absolute;
+            font-size: 1.5rem;
+            opacity: 0.7;
+        }
+        
+        .balloon-left {
+            top: 10px;
+            left: 20px;
+        }
+        
+        .balloon-right {
+            top: 10px;
+            right: 20px;
+        }
+        
+        .cake {
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
         }
         
         h1 {
@@ -62,6 +87,17 @@
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        
+        /* Birthday hat for Nacho's image */
+        .birthday-hat {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2.5rem;
+            z-index: 10;
         }
         
         .hero-image img {
@@ -170,54 +206,117 @@
             margin-bottom: 1.5rem;
             border-left: 4px solid #4a9fd7;
         }
+        
+        /* Birthday countdown section */
+        .birthday-countdown {
+            background-color: #ffecb3;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            border: 2px dashed #ff9800;
+        }
+        
+        .birthday-countdown h3 {
+            color: #e65100;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Gift suggestion section */
+        .gift-ideas {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            margin: 1.5rem 0;
+            gap: 1rem;
+        }
+        
+        .gift-item {
+            background-color: #e3f2fd;
+            padding: 1rem;
+            border-radius: 8px;
+            width: 30%;
+            min-width: 150px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .gift-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>NACHO THE GREYHOUND</h1>
-            <div class="subtitle">The Sweetest, Laziest Tuxedo Beauty</div>
+            <div class="birthday-decoration balloon-left">🎈</div>
+            <div class="birthday-decoration balloon-right">🎈</div>
+            <h1>NACHO'S BIRTHDAY BASH</h1>
+            <div class="subtitle">Celebrating Our Sweet Tuxedo Beauty</div>
+            <div class="birthday-decoration cake">🎂</div>
         </header>
+        
+        <div class="birthday-countdown">
+            <h3>🎉 It's Nacho's Special Day! 🎉</h3>
+            <p>Join us in celebrating the sweetest greyhound around!</p>
+        </div>
         
         <div class="hero-section">
             <div class="hero-image">
-                <img src="nacho1.jpg" alt="Nacho the Greyhound">
+                <div class="birthday-hat">🎩</div>
+                <img src="nacho1.jpg" alt="Nacho the Birthday Greyhound">
             </div>
             <div class="hero-text">
                 <div class="greyhound-info">
-                    <p><strong>Breed:</strong> Greyhound | <strong>Color:</strong> Black Tuxedo</p>
-                    <p><strong>Personality:</strong> Sweet & Lazy</p>
+                    <p><strong>Birthday Star:</strong> Nacho | <strong>Age:</strong> Fabulous & Fetching</p>
+                    <p><strong>Birthday Mood:</strong> Lazily Excited</p>
                 </div>
-                <p>Meet <span class="highlight">Nacho</span>, the extraordinary greyhound whose elegant silhouette and gentle demeanor captivate everyone she meets. With her striking black tuxedo coat that seems tailor-made for the most sophisticated of canine soirées, Nacho isn't just a dog—she's a portrait of grace and tranquility in motion.</p>
+                <p>Today we celebrate <span class="highlight">Nacho</span>, the extraordinary birthday greyhound whose elegant silhouette and gentle demeanor have brightened our lives for another wonderful year. With her striking black tuxedo coat that seems tailor-made for today's birthday festivities, Nacho isn't just a dog—she's the guest of honor at the most sophisticated of canine soirées!</p>
             </div>
         </div>
         
         <div class="content">
-            <h2><span class="paw-print">🐾</span> The Legend of Nacho <span class="paw-print">🐾</span></h2>
+            <h2><span class="paw-print">🐾</span> Birthday Reflections <span class="paw-print">🐾</span></h2>
             
-            <p>Nacho's soulful eyes carry the wisdom of the greyhound lineage, a breed known for their ancient heritage and noble spirit. When she gazes at you, there's an understanding that transcends words—a connection that speaks of companionship in its purest form.</p>
+            <p>As Nacho adds another year to her greyhound journey, her soulful eyes carry even more wisdom of her noble lineage. When she gazes at you today, there's a special birthday understanding that transcends words—a connection that speaks of another year of cherished companionship.</p>
             
-            <h2><span class="paw-print">🐾</span> Nacho's Sweet Nature <span class="paw-print">🐾</span></h2>
+            <h2><span class="paw-print">🐾</span> Birthday Personality <span class="paw-print">🐾</span></h2>
             
-            <p>What makes Nacho truly special is her incredibly sweet disposition. Despite her racing heritage, she's found her true calling as a professional relaxation expert. Her gentleness is legendary—each interaction is soft, considered, and filled with quiet affection.</p>
+            <p>What makes birthday girl Nacho truly special is her incredibly sweet disposition that has remained constant through the years. Despite her racing heritage, she's perfected her true calling as a professional relaxation expert. Her birthday will be celebrated with the same gentleness she's known for—each interaction soft, considered, and filled with quiet birthday affection.</p>
             
-            <p>With the patience of a saint and the heart of a teddy bear, <span class="highlight">Nacho</span> moves through life at her own perfectly unhurried pace. Her days are a masterclass in the art of leisure, teaching everyone around her about the importance of slowing down and savoring life's quiet moments.</p>
+            <p>With the patience of a saint and the heart of a teddy bear, <span class="highlight">Birthday Nacho</span> moves through her special day at her own perfectly unhurried pace. Her birthday is a masterclass in the art of celebratory leisure, teaching everyone around her about the importance of savoring life's special moments.</p>
             
-            <h2><span class="paw-print">🐾</span> The Art of Laziness <span class="paw-print">🐾</span></h2>
+            <h2><span class="paw-print">🐾</span> Birthday Gifts for Our Lazy Queen <span class="paw-print">🐾</span></h2>
             
-            <p>If there were Olympic medals for lounging, Nacho would be a gold medalist. Her ability to find the most comfortable spot in any room and transform it into a sanctuary of rest is nothing short of miraculous. With limbs elegantly arranged and her tuxedo coat gleaming in whatever patch of sunlight she's discovered, Nacho elevates napping to an art form.</p>
+            <p>If there were Olympic medals for birthday lounging, Nacho would be a gold medalist. For her special day, we've prepared the most comfortable spots in every room and transformed them into sanctuaries of birthday rest. With limbs elegantly arranged and her tuxedo coat gleaming in whatever patch of birthday sunlight she discovers, Nacho elevates birthday napping to an art form.</p>
             
-            <p>Don't be fooled by her relaxed demeanor though—when the mood strikes, Nacho can showcase the legendary greyhound speed in brief, joyful bursts before returning to her true passion: perfecting the ideal napping position. It's this balance of potential energy and peaceful repose that makes her such a fascinating companion.</p>
+            <div class="gift-ideas">
+                <div class="gift-item">
+                    <div class="gift-icon">🛌</div>
+                    <p>Extra Soft Bed</p>
+                </div>
+                <div class="gift-item">
+                    <div class="gift-icon">🦴</div>
+                    <p>Gourmet Treats</p>
+                </div>
+                <div class="gift-item">
+                    <div class="gift-icon">🧸</div>
+                    <p>New Squeaky Toy</p>
+                </div>
+            </div>
+            
+            <p>Don't be fooled by her relaxed birthday demeanor though—when the party mood strikes, Nacho might showcase the legendary greyhound speed in brief, joyful bursts before returning to her true birthday passion: perfecting the ideal celebratory napping position.</p>
             
             <div class="gallery">
-                <a href="nacho_adventure.jpg" class="gallery-item" target="_blank">Nacho's Adventures</a>
-                <a href="nacho_smile.jpg" class="gallery-item" target="_blank">Nacho's Smile</a>
-                <a href="nacho_naps.jpg" class="gallery-item" target="_blank">Nacho's Naps</a>
+                <a href="nacho_adventure.jpg" class="gallery-item" target="_blank">Birthday Adventures</a>
+                <a href="nacho_smile.jpg" class="gallery-item" target="_blank">Birthday Smiles</a>
+                <a href="nacho_naps.jpg" class="gallery-item" target="_blank">Birthday Naps</a>
             </div>
         </div>
         
         <footer>
-            <p>Celebrating the sweet, lazy spirit of Nacho the Greyhound © 2025</p>
+            <p>Celebrating Nacho's Birthday with love and treats! © 2025</p>
         </footer>
     </div>
 </body>
