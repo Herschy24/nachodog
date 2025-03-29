@@ -13,21 +13,37 @@
         }
         
         body {
-            background-color: #f0f8ff;
+            background-image: url('nacho_bday.jpeg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
             color: #333;
             line-height: 1.6;
+        }
+        
+        /* Add a semi-transparent overlay to improve text readability */
+        .page-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7);
+            z-index: -1;
         }
         
         .container {
             max-width: 800px;
             margin: 0 auto;
             padding: 2rem;
+            position: relative;
         }
         
         header {
             text-align: center;
             padding: 2rem 0 1rem;
-            background-color: #add8e6;
+            background-color: rgba(173, 216, 230, 0.8);
             border-radius: 12px;
             margin-bottom: 2rem;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
@@ -112,7 +128,7 @@
         }
         
         .content {
-            background-color: white;
+            background-color: rgba(255, 255, 255, 0.9);
             border-radius: 12px;
             padding: 2rem;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
@@ -168,7 +184,7 @@
             text-align: center;
             margin-top: 2rem;
             padding: 1rem;
-            background-color: #add8e6;
+            background-color: rgba(173, 216, 230, 0.8);
             border-radius: 12px;
             color: #1a5276;
         }
@@ -200,7 +216,7 @@
         }
         
         .greyhound-info {
-            background-color: #e6f7ff;
+            background-color: rgba(230, 247, 255, 0.9);
             padding: 1rem;
             border-radius: 8px;
             margin-bottom: 1.5rem;
@@ -209,7 +225,7 @@
         
         /* Birthday countdown section */
         .birthday-countdown {
-            background-color: #ffecb3;
+            background-color: rgba(255, 236, 179, 0.9);
             padding: 1.5rem;
             border-radius: 8px;
             margin-bottom: 1.5rem;
@@ -260,7 +276,7 @@
         }
         
         .gift-item {
-            background-color: #e3f2fd;
+            background-color: rgba(227, 242, 253, 0.9);
             padding: 1rem;
             border-radius: 8px;
             width: 30%;
@@ -283,6 +299,9 @@
     </style>
 </head>
 <body>
+    <!-- Semi-transparent overlay to improve text readability -->
+    <div class="page-overlay"></div>
+    
     <div class="container">
         <header>
             <div class="birthday-decoration balloon-left">🎈</div>
