@@ -282,20 +282,26 @@
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
         }
         
-        /* Podium styling */
+        /* Improved Podium styling */
         .podium-container {
             display: flex;
             justify-content: center;
             align-items: flex-end;
             margin: 1.5rem 0;
-            gap: 10px;
+            gap: 15px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
         }
         
         .podium-place {
             text-align: center;
-            padding: 0.5rem;
-            width: 30%;
+            padding: 0.5rem 0.25rem;
+            width: 32%;
             border-radius: 8px 8px 0 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
         }
         
         .first-place {
@@ -327,6 +333,34 @@
         
         .podium-name {
             font-weight: bold;
+            font-size: 0.9rem;
+            line-height: 1.2;
+            margin-bottom: 0.2rem;
+            word-wrap: break-word;
+            padding: 0 0.25rem;
+        }
+        
+        .podium-note {
+            font-size: 0.75rem;
+            line-height: 1.1;
+        }
+        
+        @media (max-width: 480px) {
+            .podium-place {
+                width: 30%;
+            }
+            
+            .podium-number {
+                font-size: 1.5rem;
+            }
+            
+            .podium-name {
+                font-size: 0.8rem;
+            }
+            
+            .podium-note {
+                font-size: 0.7rem;
+            }
         }
         
         /* Memoriam styling */
@@ -442,7 +476,7 @@
         <!-- Party Photo -->
         <img src="nach_party_hat.jpg" alt="Nacho wearing a party hat" class="party-photo">
         
-        <!-- Present Competition Section -->
+        <!-- Present Competition Section with Fixed Podium -->
         <div class="present-competition">
             <h3>🏆 Present Competition Results 🏆</h3>
             <img src="nacho_presents.jpg" alt="Nacho with her birthday presents" class="present-image">
@@ -450,16 +484,16 @@
             <div class="podium-container">
                 <div class="podium-place second-place">
                     <div class="podium-number">2</div>
-                    <div class="podium-name">Tash and Chris Pig</div>
-                    <div>(RIP 2026-2026)</div>
+                    <div class="podium-name">Tash &amp; Chris<br>Pig</div>
+                    <div class="podium-note">(RIP 2026-2026)</div>
                 </div>
                 <div class="podium-place first-place">
                     <div class="podium-number">1</div>
-                    <div class="podium-name">Sam Frog</div>
+                    <div class="podium-name">Sam<br>Frog</div>
                 </div>
                 <div class="podium-place third-place">
                     <div class="podium-number">3</div>
-                    <div class="podium-name">Danny HB Bone</div>
+                    <div class="podium-name">Danny<br>HB Bone</div>
                 </div>
             </div>
             
