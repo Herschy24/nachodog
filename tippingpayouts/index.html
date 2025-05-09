@@ -10,7 +10,19 @@
     .payout { margin-bottom: 0.75rem; border-bottom: 1px solid #ddd; padding-bottom: 0.5rem; }
     .amount { font-weight: bold; }
     .error { color: #c00; }
-  </style>
+  body {
+    /* use sam.png as full‐page background */
+    background-image: url('sam.png');
+    background-size: cover;            /* scale to cover the screen */
+    background-repeat: no-repeat;      /* don’t tile */
+    background-position: center center;/* center it */
+    /* optional: fix it so it doesn’t scroll */
+    background-attachment: fixed;
+    /* make sure text remains legible */
+    color: #fff;                       /* or choose a contrasting color */
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+  }
+</style>
 </head>
 <body>
   <h1>Footy Tipping Payouts</h1>
