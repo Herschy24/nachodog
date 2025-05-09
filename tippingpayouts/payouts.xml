@@ -43,6 +43,10 @@
         <payoutsBase>0</payoutsBase>
         <return>100</return>
       </tier>
+      <tier name="11th">
+        <payoutsBase>0</payoutsBase>
+        <return>100</return>
+      </tier>
       <tier name="Sam will be here">
         <payoutsBase>0</payoutsBase>
         <return>100</return>
@@ -107,6 +111,12 @@
         <return>33</return>
       </tier>
       <tier name="10th">
+        <payoutsBase>0</payoutsBase>
+        <tieredProfitPayouts>0.03</tieredProfitPayouts>
+        <base>0</base>
+        <return>33</return>
+      </tier>
+      <tier name="11th">
         <payoutsBase>0</payoutsBase>
         <tieredProfitPayouts>0.03</tieredProfitPayouts>
         <base>0</base>
