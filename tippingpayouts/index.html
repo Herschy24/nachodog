@@ -5,6 +5,7 @@
   <title>Footy Tipping Payouts</title>
   <style>
     body { font-family: sans-serif; padding: 1rem; }
+    section { margin-bottom: 2rem; }
     .payout { margin-bottom: 1rem; border-bottom: 1px solid #ccc; padding-bottom: 0.5rem; }
     .amount { font-weight: bold; }
   </style>
@@ -16,7 +17,6 @@
 
   <script>
     const STAKE_SOL = 4.7;
-    // fetch SOL price in AUD instead of USD
     const PRICE_API = 'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=aud';
     const XML_PATH   = 'payouts.xml';
 
@@ -32,28 +32,39 @@
       return new DOMParser().parseFromString(text, 'application/xml');
     }
 
-    function render(payoutsXml, solPrice) {
+    function render(xml, solPrice) {
+      // update header
       document.getElementById('price').textContent = solPrice.toFixed(2) + ' AUD';
       document.getElementById('stake').textContent = STAKE_SOL + ' SOL';
 
       const container = document.getElementById('payouts');
-      container.innerHTML = '';  // clear existing
+      container.innerHTML = '';  // clear
 
-      // assuming your XML has <payout amount="X" tier="Y"/> nodes
-      payoutsXml.querySelectorAll('payout').forEach(node => {
-        const tier       = node.getAttribute('tier') || 'Unknown';
-        const amountSol  = parseFloat(node.getAttribute('amount'));
-        const returnSol  = amountSol * STAKE_SOL;
-        const returnAUD  = returnSol * solPrice;
+      // for each payout option in your XML
+      xml.querySelectorAll('option').forEach(opt => {
+        const name = opt.getAttribute('name') || 'Option';
+        const section = document.createElement('section');
+        section.innerHTML = `<h2>${name}</h2>`;
+        container.appendChild(section);
 
-        const div = document.createElement('div');
-        div.className = 'payout';
-        div.innerHTML = `
-          <div>Tier: ${tier}</div>
-          <div>Amount (SOL): <span class="amount">${returnSol.toFixed(4)}</span></div>
-          <div>Value (AUD): <span class="amount">$${returnAUD.toFixed(2)}</span></div>
-        `;
-        container.appendChild(div);
+        // for each tier
+        opt.querySelectorAll('tier').forEach(tier => {
+          const tierName    = tier.getAttribute('name') || 'Tier';
+          // your XML has a <return> value per tier
+          const returnRatio = parseFloat(tier.querySelector('return').textContent);
+          const totalSol    = STAKE_SOL * returnRatio;
+          const totalAUD    = totalSol * solPrice;
+
+          const div = document.createElement('div');
+          div.className = 'payout';
+          div.innerHTML = `
+            <div>Tier: ${tierName}</div>
+            <div>Return Ratio: ${returnRatio}</div>
+            <div>Payout (SOL): <span class="amount">${totalSol.toFixed(4)}</span></div>
+            <div>Value (AUD): <span class="amount">$${totalAUD.toFixed(2)}</span></div>
+          `;
+          container.appendChild(div);
+        });
       });
     }
 
@@ -61,14 +72,13 @@
       try {
         const [price, xml] = await Promise.all([ getSolPrice(), getPayoutsXml() ]);
         render(xml, price);
-      } catch (e) {
-        console.error('Error fetching data:', e);
+      } catch (err) {
+        console.error('Data load error:', err);
       }
     }
 
-    // initial load
+    // initial load + auto-refresh every minute
     refresh();
-    // update price every minute
     setInterval(refresh, 60_000);
   </script>
 </body>
