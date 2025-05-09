@@ -18,10 +18,11 @@
   <div id="payouts"></div>
 
   <script>
-    const STAKE_SOL = 4.7;
-    const PRICE_API = 'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=aud';
-    const XML_PATH   = 'payouts.xml';
-    const REFRESH_MS = 60_000;
+    const STARTING_AUD = 1100;        // your fixed pot
+    const STAKE_SOL    = 4.7;         // SOL staked
+    const PRICE_API    = 'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=aud';
+    const XML_PATH     = 'payouts.xml';
+    const REFRESH_MS   = 60_000;
 
     async function fetchSolPrice() {
       const resp = await fetch(PRICE_API);
@@ -38,48 +39,48 @@
     }
 
     function render(xml, solPrice) {
-      // total pool in AUD
-      const totalPoolAUD = STAKE_SOL * solPrice;
-      document.getElementById('header').innerHTML = `
-        Based on a stake of ${STAKE_SOL} SOL × ${solPrice.toFixed(2)} AUD/SOL = 
-        <span class="amount">$${totalPoolAUD.toFixed(2)}</span> total prize pool
+      const finalPot  = solPrice * STAKE_SOL;
+      const profit    = finalPot - STARTING_AUD;
+      const header    = document.getElementById('header');
+      header.innerHTML = `
+        Starting pot: $${STARTING_AUD.toFixed(2)} AUD<br/>
+        Final pot: $${finalPot.toFixed(2)} AUD 
+        (4.7 SOL × ${solPrice.toFixed(2)} AUD/SOL)<br/>
+        Profit: $${profit.toFixed(2)} AUD
       `;
 
       const container = document.getElementById('payouts');
       container.innerHTML = '';
 
       xml.querySelectorAll('option').forEach(opt => {
-        const name = opt.getAttribute('name');
-        const section = document.createElement('section');
+        const name     = opt.getAttribute('name');
+        const section  = document.createElement('section');
         section.innerHTML = `<h2>${name}</h2>`;
         container.appendChild(section);
 
-        // grab all tiers and count them
-        const tiers = Array.from(opt.querySelectorAll('tier'));
+        const tiers    = Array.from(opt.querySelectorAll('tier'));
         const numTiers = tiers.length;
 
         tiers.forEach(tier => {
           const tierName = tier.getAttribute('name');
-          const r = parseFloat(tier.querySelector('return').textContent);
-          const base = parseFloat(tier.querySelector('payoutsBase').textContent);
+          const baseRatio= parseFloat(tier.querySelector('payoutsBase').textContent);
+          const tppElem  = tier.querySelector('tieredProfitPayouts');
+          const tpp      = tppElem ? parseFloat(tppElem.textContent) : 0;
 
-          let solPayout;
+          let payoutAUD;
           if (name === 'Socialist') {
-            if (r - STAKE_SOL < 0) {
-              solPayout = base * r;
+            if (profit < 0) {
+              payoutAUD = baseRatio * finalPot;
             } else {
-              solPayout = base * r + (r - STAKE_SOL) / numTiers;
+              payoutAUD = baseRatio * STARTING_AUD + profit / numTiers;
             }
-          } else /* Capitalist */ {
-            const tpp = parseFloat(tier.querySelector('tieredProfitPayouts').textContent);
-            if (r - STAKE_SOL < 0) {
-              solPayout = base * r;
+          } else { // Capitalist
+            if (profit < 0) {
+              payoutAUD = baseRatio * finalPot;
             } else {
-              solPayout = base * STAKE_SOL + (r - STAKE_SOL) * tpp;
+              payoutAUD = baseRatio * STARTING_AUD + profit * tpp;
             }
           }
-
-          const audPayout = solPayout * solPrice;
 
           const div = document.createElement('div');
           div.className = 'payout';
@@ -87,8 +88,7 @@
             <div><strong>Tier:</strong> ${tierName}</div>
             <div>
               <strong>Payout:</strong> 
-              <span class="amount">${solPayout.toFixed(4)} SOL</span> = 
-              <span class="amount">$${audPayout.toFixed(2)} AUD</span>
+              <span class="amount">$${payoutAUD.toFixed(2)} AUD</span>
             </div>
           `;
           container.appendChild(div);
@@ -103,7 +103,7 @@
       } catch (err) {
         const hdr = document.getElementById('header');
         if (err.message === 'RATE_LIMIT') {
-          hdr.innerHTML = `<span class="error">Rate limit reached on price fetch — updates paused.</span>`;
+          hdr.innerHTML = `<span class="error">Rate limit reached — pausing updates.</span>`;
         } else {
           hdr.innerHTML = `<span class="error">Error: ${err.message}</span>`;
         }
