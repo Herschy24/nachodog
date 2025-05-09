@@ -39,11 +39,9 @@
         <payoutsBase>0</payoutsBase>
         <return>100</return>
       </tier>
-      </tier>
       <tier name="10th">
         <payoutsBase>0</payoutsBase>
         <return>100</return>
-      </tier>
       </tier>
       <tier name="11th">
         <payoutsBase>0</payoutsBase>
