@@ -5,81 +5,108 @@
   <title>Footy Tipping Payouts</title>
   <style>
     body { font-family: sans-serif; padding: 1rem; }
+    #loading { font-style: italic; }
     section { margin-bottom: 2rem; }
-    .payout { margin-bottom: 1rem; border-bottom: 1px solid #ccc; padding-bottom: 0.5rem; }
+    .payout { margin-bottom: 0.75rem; border-bottom: 1px solid #ddd; padding-bottom: 0.5rem; }
     .amount { font-weight: bold; }
+    .error { color: #c00; }
   </style>
 </head>
 <body>
   <h1>Footy Tipping Payouts</h1>
-  <p>Based on a stake of <span id="stake">4.7 SOL</span> @ <span id="price">…</span> AUD</p>
+  <p id="header">
+    <span id="loading">Loading payouts…</span>
+  </p>
   <div id="payouts"></div>
 
   <script>
     const STAKE_SOL = 4.7;
     const PRICE_API = 'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=aud';
     const XML_PATH   = 'payouts.xml';
+    const REFRESH_MS = 60_000; // 1 minute
 
-    async function getSolPrice() {
+    async function fetchSolPrice() {
       const resp = await fetch(PRICE_API);
-      const obj  = await resp.json();
-      return obj.solana.aud;
+      if (resp.status === 429) {
+        throw new Error('RATE_LIMIT');
+      }
+      const data = await resp.json();
+      return data.solana.aud;
     }
 
-    async function getPayoutsXml() {
+    async function fetchPayoutsXml() {
       const resp = await fetch(XML_PATH);
+      if (!resp.ok) throw new Error('Could not load payouts.xml');
       const text = await resp.text();
       return new DOMParser().parseFromString(text, 'application/xml');
     }
 
     function render(xml, solPrice) {
-      // update header
-      document.getElementById('price').textContent = solPrice.toFixed(2) + ' AUD';
-      document.getElementById('stake').textContent = STAKE_SOL + ' SOL';
+      const totalPoolAUD = STAKE_SOL * solPrice;
+      const header = document.getElementById('header');
+      header.innerHTML = `
+        Based on a stake of ${STAKE_SOL} SOL × ${solPrice.toFixed(2)} AUD/SOL = 
+        <span class="amount">$${totalPoolAUD.toFixed(2)}</span> total prize pool
+      `;
 
       const container = document.getElementById('payouts');
-      container.innerHTML = '';  // clear
+      container.innerHTML = '';
 
-      // for each payout option in your XML
+      // For each option (Socialist, Capitalist, etc.)
       xml.querySelectorAll('option').forEach(opt => {
-        const name = opt.getAttribute('name') || 'Option';
+        const optName = opt.getAttribute('name');
         const section = document.createElement('section');
-        section.innerHTML = `<h2>${name}</h2>`;
+        section.innerHTML = `<h2>${optName}</h2>`;
         container.appendChild(section);
 
-        // for each tier
-        opt.querySelectorAll('tier').forEach(tier => {
-          const tierName    = tier.getAttribute('name') || 'Tier';
-          // your XML has a <return> value per tier
-          const returnRatio = parseFloat(tier.querySelector('return').textContent);
-          const totalSol    = STAKE_SOL * returnRatio;
-          const totalAUD    = totalSol * solPrice;
+        // collect all return weights
+        const tiers = Array.from(opt.querySelectorAll('tier'));
+        const weights = tiers.map(t => parseFloat(t.querySelector('return').textContent));
+        const sumWeights = weights.reduce((a, b) => a + b, 0);
+
+        tiers.forEach((tier, i) => {
+          const tierName = tier.getAttribute('name');
+          const weight   = weights[i];
+          const solAmt   = STAKE_SOL * (weight / sumWeights);
+          const audAmt   = solAmt * solPrice;
 
           const div = document.createElement('div');
           div.className = 'payout';
           div.innerHTML = `
             <div>Tier: ${tierName}</div>
-            <div>Return Ratio: ${returnRatio}</div>
-            <div>Payout (SOL): <span class="amount">${totalSol.toFixed(4)}</span></div>
-            <div>Value (AUD): <span class="amount">$${totalAUD.toFixed(2)}</span></div>
+            <div>Payout: 
+              <span class="amount">${solAmt.toFixed(4)} SOL</span> 
+              = <span class="amount">$${audAmt.toFixed(2)} AUD</span>
+            </div>
           `;
           container.appendChild(div);
         });
       });
     }
 
-    async function refresh() {
+    async function loadAndRender() {
       try {
-        const [price, xml] = await Promise.all([ getSolPrice(), getPayoutsXml() ]);
+        const [price, xml] = await Promise.all([ fetchSolPrice(), fetchPayoutsXml() ]);
         render(xml, price);
       } catch (err) {
-        console.error('Data load error:', err);
+        const header = document.getElementById('header');
+        if (err.message === 'RATE_LIMIT') {
+          header.innerHTML = `<span class="error">Rate limit hit on price fetch — pausing updates.</span>`;
+        } else {
+          header.innerHTML = `<span class="error">Error: ${err.message}</span>`;
+        }
+        // On rate limit error we do _not_ schedule another refresh.
+        if (err.message !== 'RATE_LIMIT') {
+          setTimeout(loadAndRender, REFRESH_MS);
+        }
+        return;
       }
+      // schedule next refresh
+      setTimeout(loadAndRender, REFRESH_MS);
     }
 
-    // initial load + auto-refresh every minute
-    refresh();
-    setInterval(refresh, 60_000);
+    // kick off
+    loadAndRender();
   </script>
 </body>
 </html>
