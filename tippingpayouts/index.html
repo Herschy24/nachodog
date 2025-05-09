@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Footy Tipping Payouts</title>
+  <style>
+    body { font-family: sans-serif; padding: 1rem; }
+    .payout { margin-bottom: 1rem; }
+    .amount { font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Footy Tipping Payouts</h1>
+  <p>Based on a stake of <span id="stake">4.7 SOL</span> @ <span id="price">…</span> USD</p>
+  <div id="payouts"></div>
+
+  <script>
+    const STAKE_SOL = 4.7;
+    const PRICE_API = 'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd';
+    const XML_PATH   = 'payouts.xml';
+
+    async function getSolPrice() {
+      let resp = await fetch(PRICE_API);
+      let obj  = await resp.json();
+      return obj.solana.usd;
+    }
+
+    async function getPayoutsXml() {
+      let resp = await fetch(XML_PATH);
+      let text = await resp.text();
+      return new DOMParser().parseFromString(text, 'application/xml');
+    }
+
+    function render(payoutsXml, solPrice) {
+      document.getElementById('price').textContent = solPrice.toFixed(2) + ' USD';
+      document.getElementById('stake').textContent = STAKE_SOL + ' SOL';
+
+      let container = document.getElementById('payouts');
+      container.innerHTML = '';  // clear
+
+      // assuming your XML has <payout amount="X">…</payout> nodes
+      payoutsXml.querySelectorAll('payout').forEach(node => {
+        let amountSol = parseFloat(node.getAttribute('amount'));
+        let returnSol = amountSol * STAKE_SOL;
+        let returnUSD = returnSol * solPrice;
+
+        let div = document.createElement('div');
+        div.className = 'payout';
+        div.innerHTML = `
+          <div>Tier: ${node.getAttribute('tier')}</div>
+          <div>Amount (SOL): <span class="amount">${returnSol.toFixed(4)}</span></div>
+          <div>USD Value: <span class="amount">$${returnUSD.toFixed(2)}</span></div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    async function refresh() {
+      try {
+        let [price, xml] = await Promise.all([ getSolPrice(), getPayoutsXml() ]);
+        render(xml, price);
+      } catch (e) {
+        console.error('Error fetching data:', e);
+      }
+    }
+
+    // initial load
+    refresh();
+    // update price every minute
+    setInterval(refresh, 60_000);
+  </script>
+</body>
+</html>
