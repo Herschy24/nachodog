@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nacho's Birthday Celebration</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-image: url('../nacho_bday.jpeg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        /* Add a semi-transparent overlay to improve text readability */
+        .page-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7);
+            z-index: -1;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+        }
+        
+        header {
+            text-align: center;
+            padding: 2rem 0 1rem;
+            background-color: rgba(173, 216, 230, 0.8);
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Birthday decorations for header */
+        .birthday-decoration {
+            position: absolute;
+            font-size: 1.5rem;
+            opacity: 0.7;
+        }
+        
+        .balloon-left {
+            top: 10px;
+            left: 20px;
+        }
+        
+        .balloon-right {
+            top: 10px;
+            right: 20px;
+        }
+        
+        .cake {
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            color: #1a5276;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #2874a6;
+            font-style: italic;
+            margin-bottom: 1rem;
+        }
+        
+        .hero-section {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .hero-image {
+            flex: 1;
+            min-width: 200px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        
+        /* Birthday hat for Nacho's image */
+        .birthday-hat {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2.5rem;
+            z-index: 10;
+        }
+        
+        .hero-image img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        .hero-text {
+            flex: 2;
+            min-width: 300px;
+        }
+        
+        .content {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        h2 {
+            color: #1a5276;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #add8e6;
+            padding-bottom: 0.5rem;
+        }
+        
+        p {
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+        }
+        
+        .highlight {
+            color: #2874a6;
+            font-weight: bold;
+        }
+        
+        .gallery {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .gallery-item {
+            width: 200px;
+            height: 60px;
+            background-color: #4a9fd7;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .gallery-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+            background-color: #3498db;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 2rem;
+            padding: 1rem;
+            background-color: rgba(173, 216, 230, 0.8);
+            border-radius: 12px;
+            color: #1a5276;
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .gallery-item {
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+            
+            .hero-section {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+        
+        .paw-print {
+            font-size: 1.5rem;
+            display: inline-block;
+            margin: 0 0.5rem;
+        }
+        
+        .greyhound-info {
+            background-color: rgba(230, 247, 255, 0.9);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #4a9fd7;
+        }
+        
+        .birthday-age {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #e65100;
+            margin-top: 0.5rem;
+        }
+
+        /* Party success banner */
+        .party-success-banner {
+            background-color: rgba(76, 175, 80, 0.85);
+            color: white;
+            text-align: center;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            border: 2px solid #4caf50;
+        }
+
+        .party-success-banner h2 {
+            color: white;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.5);
+            margin-bottom: 0.5rem;
+        }
+
+        .party-details {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+        }
+
+        .party-emoji {
+            font-size: 1.5rem;
+            margin: 0 0.5rem;
+        }
+        
+        /* Present competition section */
+        .present-competition {
+            background-color: rgba(255, 236, 179, 0.9);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            border: 2px dashed #ff9800;
+        }
+        
+        .present-competition h3 {
+            color: #e65100;
+            margin-bottom: 0.5rem;
+        }
+        
+        .present-image {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 12px;
+            margin: 1rem auto;
+            display: block;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Improved Podium styling */
+        .podium-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            margin: 1.5rem 0;
+            gap: 15px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .podium-place {
+            text-align: center;
+            padding: 0.5rem 0.25rem;
+            width: 32%;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+        
+        .first-place {
+            background-color: #ffd700;
+            height: 120px;
+            color: #5D4037;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .second-place {
+            background-color: #c0c0c0;
+            height: 100px;
+            color: #5D4037;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .third-place {
+            background-color: #cd7f32;
+            height: 80px;
+            color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .podium-number {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 0.3rem;
+        }
+        
+        .podium-name {
+            font-weight: bold;
+            font-size: 0.9rem;
+            line-height: 1.2;
+            margin-bottom: 0.2rem;
+            word-wrap: break-word;
+            padding: 0 0.25rem;
+        }
+        
+        .podium-note {
+            font-size: 0.75rem;
+            line-height: 1.1;
+        }
+        
+        @media (max-width: 480px) {
+            .podium-place {
+                width: 30%;
+            }
+            
+            .podium-number {
+                font-size: 1.5rem;
+            }
+            
+            .podium-name {
+                font-size: 0.8rem;
+            }
+            
+            .podium-note {
+                font-size: 0.7rem;
+            }
+        }
+        
+        /* Memoriam styling */
+        .memoriam {
+            background-color: rgba(236, 236, 236, 0.9);
+            border-left: 4px solid #9e9e9e;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            text-align: center;
+            font-style: italic;
+        }
+        
+        /* Birthday countdown section */
+        .birthday-countdown {
+            background-color: rgba(255, 236, 179, 0.9);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            border: 2px dashed #ff9800;
+        }
+        
+        .birthday-countdown h3 {
+            color: #e65100;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Countdown timer styling */
+        .countdown-timer {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .countdown-box {
+            background-color: #1a5276;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            min-width: 80px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+        }
+        
+        .countdown-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .countdown-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+        }
+        
+        /* Gift suggestion section */
+        .gift-ideas {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            margin: 1.5rem 0;
+            gap: 1rem;
+        }
+        
+        .gift-item {
+            background-color: rgba(227, 242, 253, 0.9);
+            padding: 1rem;
+            border-radius: 8px;
+            width: 30%;
+            min-width: 150px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .gift-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Party photo styling */
+        .party-photo {
+            display: block;
+            width: 100%;
+            max-width: 500px;
+            margin: 1.5rem auto;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <!-- Semi-transparent overlay to improve text readability -->
+    <div class="page-overlay"></div>
+    
+    <div class="container">
+        <header>
+            <div class="birthday-decoration balloon-left">🎈</div>
+            <div class="birthday-decoration balloon-right">🎈</div>
+            <h1>NACHO'S AMAZING 6TH BIRTHDAY</h1>
+            <div class="subtitle">Celebrating Our Sweet Tuxedo Beauty</div>
+            <div class="birthday-decoration cake">🎂</div>
+        </header>
+        
+        <!-- Party Success Banner -->
+        <div class="party-success-banner">
+            <h2><span class="party-emoji">🎉</span> WHAT A PARTY! <span class="party-emoji">🎉</span></h2>
+            <div class="party-details">
+                <p>Nacho's 6th birthday celebration was a huge success with all her friends coming over to celebrate the big occasion!</p>
+            </div>
+        </div>
+        
+        <!-- Party Photo -->
+        <img src="../nach_party_hat.jpg" alt="Nacho wearing a party hat" class="party-photo">
+        
+        <!-- Present Competition Section with Fixed Podium -->
+        <div class="present-competition">
+            <h3>🏆 Present Competition Results 🏆</h3>
+            <img src="../nacho_presents.jpg" alt="Nacho with her birthday presents" class="present-image">
+            
+            <div class="podium-container">
+                <div class="podium-place second-place">
+                    <div class="podium-number">2</div>
+                    <div class="podium-name">Tash &amp; Chris<br>Pig</div>
+                    <div class="podium-note">(RIP 2025-2025)</div>
+                </div>
+                <div class="podium-place first-place">
+                    <div class="podium-number">1</div>
+                    <div class="podium-name">Sam<br>Frog</div>
+                </div>
+                <div class="podium-place third-place">
+                    <div class="podium-number">3</div>
+                    <div class="podium-name">Danny<br>HB Bone</div>
+                </div>
+            </div>
+            
+            <div class="memoriam">
+                <p>In loving memory of Tash and Chris Pig (2026-2026) 🐷</p>
+                <p>Gone too soon, but died doing what it loved most - getting squeaked by Nacho.</p>
+                <p>Its squeaks may be silenced, but its memory lives on in our hearts.</p>
+            </div>
+        </div>
+        
+        <div class="hero-section">
+            <div class="hero-image">
+                <div class="birthday-hat">🎩</div>
+                <img src="../nacho1.jpg" alt="Nacho the Birthday Greyhound">
+            </div>
+            <div class="hero-text">
+                <div class="greyhound-info">
+                    <p><strong>Birthday Star:</strong> Nacho | <strong>Age:</strong> 6!</p>
+                    <p><strong>Birthday Mood:</strong> Lazily Excited</p>
+                </div>
+                <p>We celebrated <span class="highlight">Nacho's</span> 6th birthday! This extraordinary greyhound's elegant silhouette and gentle demeanor have brightened our lives for six wonderful years. With her striking black tuxedo coat that seemed tailor-made for the birthday festivities, Nacho wasn't just a dog—she was the guest of honor at the most sophisticated of canine soirées!</p>
+            </div>
+        </div>
+        
+        <div class="content">
+            <h2><span class="paw-print">🐾</span> Birthday Reflections <span class="paw-print">🐾</span></h2>
+            
+            <p>As Nacho celebrated turning 6, her soulful eyes carried even more wisdom of her noble lineage. When she gazed at her guests, there was a special birthday understanding that transcended words—a connection that spoke of six years of cherished companionship.</p>
+            
+            <h2><span class="paw-print">🐾</span> Birthday Personality <span class="paw-print">🐾</span></h2>
+            
+            <p>What makes 6-year-old Nacho truly special is her incredibly sweet disposition that has remained constant through the years. Despite her racing heritage, she's perfected her true calling as a professional relaxation expert. Her birthday was celebrated with the same gentleness she's known for—each interaction soft, considered, and filled with quiet birthday affection.</p>
+            
+            <p>With the patience of a saint and the heart of a teddy bear, <span class="highlight">Birthday Nacho</span> moves through life at her own perfectly unhurried pace. Her 6th birthday was a masterclass in the art of celebratory leisure, teaching everyone around her about the importance of savoring life's special moments.</p>
+            
+            <h2><span class="paw-print">🐾</span> Birthday Gifts for Our Lazy Queen <span class="paw-print">🐾</span></h2>
+            
+            <p>If there were Olympic medals for birthday lounging, Nacho would be a gold medalist. For her special 6th birthday, we prepared the most comfortable spots in every room and transformed them into sanctuaries of birthday rest. With limbs elegantly arranged and her tuxedo coat gleaming in whatever patch of birthday sunlight she discovered, Nacho elevated birthday napping to an art form.</p>
+            
+            <div class="gift-ideas">
+                <div class="gift-item">
+                    <div class="gift-icon">🛌</div>
+                    <p>Extra Soft Bed</p>
+                </div>
+                <div class="gift-item">
+                    <div class="gift-icon">🦴</div>
+                    <p>Gourmet Treats</p>
+                </div>
+                <div class="gift-item">
+                    <div class="gift-icon">🧸</div>
+                    <p>New Squeaky Toy</p>
+                </div>
+            </div>
+            
+            <p>Don't be fooled by her relaxed birthday demeanor though—during the party, Nacho showcased the legendary greyhound speed in brief, joyful bursts before returning to her true birthday passion: perfecting the ideal celebratory napping position.</p>
+            
+            <div class="gallery">
+                <a href="../nacho_adventure.jpg" class="gallery-item" target="_blank">Birthday Adventures</a>
+                <a href="../nacho_smile.jpg" class="gallery-item" target="_blank">Birthday Smiles</a>
+                <a href="../nacho_naps.jpg" class="gallery-item" target="_blank">Birthday Naps</a>
+            </div>
+        </div>
+        
+        <!-- Countdown to 7th Birthday -->
+        <div class="birthday-countdown">
+            <h3>🎉 Countdown to Nacho's 7th Birthday! 🎉</h3>
+            <p>April 6th, 2026</p>
+            <div class="birthday-age">365 days until she turns 7!</div>
+            
+            <div class="countdown-timer">
+                <div class="countdown-box">
+                    <div id="countdown-days" class="countdown-number">365</div>
+                    <div class="countdown-label">Days</div>
+                </div>
+                <div class="countdown-box">
+                    <div id="countdown-hours" class="countdown-number">00</div>
+                    <div class="countdown-label">Hours</div>
+                </div>
+                <div class="countdown-box">
+                    <div id="countdown-minutes" class="countdown-number">00</div>
+                    <div class="countdown-label">Minutes</div>
+                </div>
+                <div class="countdown-box">
+                    <div id="countdown-seconds" class="countdown-number">00</div>
+                    <div class="countdown-label">Seconds</div>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Celebrating Nacho's Amazing 6th Birthday and looking forward to her 7th! © 2025</p>
+        </footer>
+    </div>
+    
+    <script>
+        // Set the date we're counting down to - April 6th, 2026
+        const countDownDate = new Date("Apr 6, 2026 00:00:00").getTime();
+        
+        // Update the countdown every 1 second
+        const countdownTimer = setInterval(function() {
+            // Get today's date and time
+            const now = new Date().getTime();
+            
+            // Find the distance between now and the countdown date
+            const distance = countDownDate - now;
+            
+            // Time calculations for days, hours, minutes and seconds
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            
+            // Display the result in the corresponding elements
+            document.getElementById("countdown-days").textContent = days.toString().padStart(2, '0');
+            document.getElementById("countdown-hours").textContent = hours.toString().padStart(2, '0');
+            document.getElementById("countdown-minutes").textContent = minutes.toString().padStart(2, '0');
+            document.getElementById("countdown-seconds").textContent = seconds.toString().padStart(2, '0');
+            
+            // If the countdown is finished, display birthday message
+            if (distance < 0) {
+                clearInterval(countdownTimer);
+                document.querySelector(".countdown-timer").innerHTML = "<h2 style='color: #e65100; margin: 1rem;'>HAPPY 7TH BIRTHDAY NACHO! 🎉🎂🐾</h2>";
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

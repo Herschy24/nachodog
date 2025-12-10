@@ -6,179 +6,227 @@
     <title>Nacho's Christmas Wishes</title>
     <meta name="description" content="Merry Christmas from Nacho! Festive photos and holiday cheer.">
     <style>
-        :root{--red:#b71c1c;--green:#1b5e20;--accent:#fff9c4}
+        /* CHRISTMAS COLOR PALETTE */
+        :root{
+            --bg1: #1b5e20; /* Deep Green */
+            --bg2: #b71c1c; /* Deep Red */
+            --accent: #fff9c4; /* Creamy Yellow/Gold */
+            --highlight: #ffee58; /* Gold Highlight */
+        }
         *{box-sizing:border-box;margin:0;padding:0}
         html,body{height:100%}
-        body{
-            background: linear-gradient(180deg,#07202a 0%,#082b2e 60%);
-            color:#fff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            -webkit-font-smoothing:antialiased;
-            -moz-osx-font-smoothing:grayscale;
-            line-height:1.4;
-            padding:2rem;
-        }
-        .site{max-width:960px;margin:0 auto;background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.02));border-radius:12px;padding:1.5rem}
-        header{display:flex;align-items:center;gap:1rem}
-        .logo{width:84px;height:84px;border-radius:50%;overflow:hidden;border:3px solid rgba(255,255,255,0.12)}
+        /* BACKGROUND GRADIENT: Red to Green */
+        body{background:linear-gradient(180deg,var(--bg1),var(--bg2));color:#fff;font-family:Segoe UI, Tahoma, Geneva, Verdana, sans-serif;padding:2rem}
+        .wrap{max-width:1000px;margin:0 auto;background:rgba(255,255,255,0.1);border-radius:12px;padding:1.5rem;box-shadow:0 0 20px rgba(0,0,0,0.5)}
+        header{display:flex;gap:1rem;align-items:center}
+        .logo{width:96px;height:96px;border-radius:50%;overflow:hidden;border:3px solid var(--highlight)}
         .logo img{width:100%;height:100%;object-fit:cover;display:block}
-        h1{font-size:1.6rem;color:var(--accent);}
-        p.lead{color:#e8f5e9;margin-top:0.25rem}
+        h1{font-size:2.5rem;color:var(--accent);text-shadow: 2px 2px #000}
+        p.lead{color:var(--highlight);margin-top:.25rem;font-weight:600}
+        .grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.5rem}
+        .card{background:linear-gradient(180deg,rgba(255,255,255,0.15),rgba(0,0,0,0.2));border-radius:10px;overflow:hidden;box-shadow:0 5px 20px rgba(0,0,0,0.5);border: 1px solid rgba(255,255,255,0.1)}
+        .card img{width:100%;height:100%;display:block;object-fit:cover;transition: transform 0.3s ease;height:300px;}
+        .card:hover img{transform: scale(1.05);}
+        .cta{display:flex;gap:1rem;margin-top:1.5rem}
+        .btn{background:#388e3c;color:#fff;padding:.8rem 1.5rem;border-radius:5px;text-decoration:none;font-weight:700;box-shadow:0 4px #1b5e20;transition: all 0.2s;}
+        .btn:hover{background:#4caf50;box-shadow:0 2px #1b5e20;transform: translateY(2px);}
+        .btn.alt{background:#d32f2f;box-shadow:0 4px #b71c1c;}
+        .btn.alt:hover{background:#e53935;box-shadow:0 2px #b71c1c;transform: translateY(2px);}
 
-        .photos{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem}
-        .photo{background:rgba(255,255,255,0.02);border-radius:10px;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,0.5);}
-        .photo img{width:100%;height:100%;display:block;object-fit:cover}
+        /* CHRISTMAS COUNTDOWN STYLES */
+        .christmas-countdown h3{color:var(--accent);font-size:1.8rem;text-align:center;margin-top:2rem;text-shadow: 1px 1px #000;}
+        .countdown-timer{display:flex;justify-content:center;gap:1rem;margin-top:1rem;padding:1rem;background:rgba(255,255,255,0.05);border-radius:10px;}
+        .countdown-box{text-align:center;padding:1rem;background:var(--bg1);border-radius:8px;box-shadow:0 0 10px rgba(0,0,0,0.5);}
+        .countdown-number{font-size:2.5rem;font-weight:900;color:var(--highlight);}
+        .countdown-label{font-size:0.8rem;color:#e6f0e6;text-transform:uppercase;}
 
-        .cta{display:flex;gap:1rem;align-items:center;margin-top:1rem}
-        .btn{background:var(--red);color:white;padding:.6rem .9rem;border-radius:8px;text-decoration:none;font-weight:600;box-shadow:0 6px 10px rgba(183,28,28,0.2)}
-        .btn.secondary{background:var(--green);box-shadow:0 6px 10px rgba(27,94,32,0.18)}
+        /* HERO SECTION STYLES */
+        .hero-section{display:flex;gap:2rem;margin-top:2rem;align-items:center;background:rgba(0,0,0,0.2);padding:1.5rem;border-radius:10px;}
+        .hero-image{width:40%;max-width:300px;position:relative;border-radius:10px;overflow:hidden;box-shadow:0 0 15px rgba(0,0,0,0.7);}
+        .hero-image img{width:100%;display:block;border-radius:10px;}
+        .hero-text{width:60%;}
+        .christmas-info{margin-bottom:1rem;font-size:1.1rem;color:var(--highlight);}
+        .highlight{color:var(--highlight);font-weight:700;}
+        
+        /* CONTENT STYLES */
+        .content h2{color:var(--accent);margin-top:1.5rem;margin-bottom:0.5rem;font-size:1.6rem;}
+        .paw-print{color:#a93131;font-size:1.5em;margin:0 0.25em;}
 
-        footer{margin-top:1.25rem;color:rgba(255,255,255,0.7);font-size:.9rem}
+        /* PODIUM/MEMORIAM STYLES (Kept for structure, adjusted text) */
+        .present-competition{margin-top:2rem;padding:1.5rem;background:rgba(255,255,255,0.05);border-radius:10px;text-align:center;}
+        .present-competition h3{color:var(--highlight);margin-bottom:1rem;}
+        .present-image{max-width:80%;height:auto;margin:1rem auto;border-radius:8px;}
+        .podium-container{display:flex;justify-content:center;gap:10px;margin:1.5rem 0;}
+        .podium-place{padding:10px;border-radius:6px;font-weight:600;color:#fff;width:30%;}
+        .first-place{background:#d4af37;order:2;height:120px;display:flex;flex-direction:column;justify-content:center;box-shadow:0 5px #a18833;}
+        .second-place{background:#a9a9a9;order:1;height:100px;display:flex;flex-direction:column;justify-content:center;box-shadow:0 5px #808080;}
+        .third-place{background:#8b4513;order:3;height:80px;display:flex;flex-direction:column;justify-content:center;box-shadow:0 5px #6d3a0f;}
+        .podium-number{font-size:2em;font-weight:900;line-height:1;}
+        .podium-name, .podium-note{font-size:0.85rem;}
+        .memoriam{margin-top:1rem;font-style:italic;color:#ccc;}
+        .memoriam p{margin:0.25rem 0;}
 
-        @media (max-width:640px){.photos{grid-template-columns:1fr}.logo{width:64px;height:64px}.site{padding:1rem}}
+        /* GIFT IDEAS STYLES (Adjusted for Christmas) */
+        .gift-ideas{display:flex;justify-content:space-around;gap:1rem;margin:1.5rem 0;}
+        .gift-item{text-align:center;background:rgba(255,255,255,0.1);padding:1rem;border-radius:10px;flex:1;}
+        .gift-icon{font-size:2.5rem;margin-bottom:0.5rem;color:var(--accent);}
+        .gift-item p{color:#fff;}
+
+        /* GALLERY STYLES */
+        .gallery{display:flex;gap:1rem;margin-top:1.5rem;justify-content:center;}
+        .gallery-item{background:#d32f2f;color:#fff;padding:.6rem 1rem;border-radius:5px;text-decoration:none;font-weight:600;}
+
+        /* FOOTER STYLES */
+        footer{margin-top:2rem;color:rgba(255,255,255,0.7);font-size:.9rem;text-align:center;}
+        
+        @media (max-width:700px){
+            .grid{grid-template-columns:1fr}
+            .logo{width:72px;height:72px}
+            .hero-section{flex-direction:column;}
+            .hero-image, .hero-text{width:100%;max-width:none;}
+            .countdown-timer{flex-wrap:wrap;}
+            .countdown-box{flex-basis:45%;}
+            .podium-container{flex-wrap:wrap;}
+            .podium-place{width:100%;height:auto!important;}
+        }
     </style>
 </head>
 <body>
-    <!-- Semi-transparent overlay to improve text readability -->
-    <div class="site">
+    <div class="wrap" role="main">
         <header>
-            <div class="logo"><img src="nacho_christmas_1.jpg" alt="Nacho in a Christmas sweater"></div>
+            <div class="logo"><img src="nacho_christmas_1.jpg" alt="Nacho in a Santa hat"></div>
             <div>
-                <h1>Nacho's Christmas Wishes 🎄</h1>
-                <p class="lead">Warm holiday snuggles from our tuxedo greyhound — enjoy a couple festive photos and have a merry day.</p>
+                <h1>Nacho wishes you a Merry Christmas! 🐾</h1>
+                <p class="lead">Tuxedo tail wagging and festive ears on — enjoy a couple of Nacho's favorite holiday snapshots.</p>
             </div>
         </header>
 
-        <section class="photos" aria-label="Christmas photos of Nacho">
-            <div class="photo"><img src="nacho_christmas_1.jpg" alt="Nacho smiling with Christmas lights"></div>
-            <div class="photo"><img src="nacho_christmas_2.jpg" alt="Nacho wearing a festive hat"></div>
+        <section class="grid" aria-label="Christmas photos of Nacho">
+            <div class="card"><img src="nacho_christmas_1.jpg" alt="Nacho smiling with Christmas lights"></div>
+            <div class="card"><img src="nacho_christmas_2.jpg" alt="Nacho wearing a festive scarf"></div>
         </section>
 
         <div class="cta">
-            <a class="btn" href="/birthday/">See Nacho's Birthday Page</a>
-            <a class="btn secondary" href="#message">Leave a Holiday Message</a>
+            <a class="btn alt" href="#countdown">See the Christmas Countdown</a>
+            <a class="btn" href="#message">Leave a Holiday Message</a>
         </div>
 
-        <section id="message" style="margin-top:1rem;background:rgba(255,255,255,0.02);padding:1rem;border-radius:8px;">
-            <h2 style="font-size:1rem;margin-bottom:.5rem;color:var(--accent)">Holiday Message</h2>
-            <p style="color:#eee">Wishing Nacho a cozy holiday season — love from everyone who shares her naps.</p>
+        <section id="message" style="margin-top:1rem;padding:1rem;border-radius:8px;background:rgba(255,255,255,0.05);">
+            <h2 style="margin-bottom:.5rem;color:var(--accent)">Holiday Wishes from the Greyhound</h2>
+            <p style="color:#eee">May your holidays be cozy and full of naps, treats, and gentle head pats — from Nacho.</p>
         </section>
         
-        <!-- Present Competition Section with Fixed Podium -->
+        <div class="christmas-countdown" id="countdown">
+            <h3>🎉 Countdown to Christmas Day! 🎉</h3>
+            <p style="text-align:center; color: var(--highlight);">December 25th, 2025</p>
+            <div class="countdown-timer">
+                <div class="countdown-box">
+                    <div id="countdown-days" class="countdown-number">--</div>
+                    <div class="countdown-label">Days</div>
+                </div>
+                <div class="countdown-box">
+                    <div id="countdown-hours" class="countdown-number">--</div>
+                    <div class="countdown-label">Hours</div>
+                </div>
+                <div class="countdown-box">
+                    <div id="countdown-minutes" class="countdown-number">--</div>
+                    <div class="countdown-label">Minutes</div>
+                </div>
+                <div class="countdown-box">
+                    <div id="countdown-seconds" class="countdown-number">--</div>
+                    <div class="countdown-label">Seconds</div>
+                </div>
+            </div>
+        </div>
+
         <div class="present-competition">
-            <h3>🏆 Present Competition Results 🏆</h3>
-            <img src="nacho_presents.jpg" alt="Nacho with her birthday presents" class="present-image">
+            <h3>🎁 The Great Present Destruction Results 🎁</h3>
+            <img src="nacho_presents.jpg" alt="Nacho with her Christmas presents" class="present-image">
             
             <div class="podium-container">
                 <div class="podium-place second-place">
                     <div class="podium-number">2</div>
-                    <div class="podium-name">Tash &amp; Chris<br>Pig</div>
-                    <div class="podium-note">(RIP 2025-2025)</div>
+                    <div class="podium-name">Tash &amp; Chris<br>Squeaky Pig</div>
+                    <div class="podium-note">(Destroyed: Dec 25th, 10:05 AM)</div>
                 </div>
                 <div class="podium-place first-place">
                     <div class="podium-number">1</div>
-                    <div class="podium-name">Sam<br>Frog</div>
+                    <div class="podium-name">Sam<br>Christmas Frog</div>
                 </div>
                 <div class="podium-place third-place">
                     <div class="podium-number">3</div>
-                    <div class="podium-name">Danny<br>HB Bone</div>
+                    <div class="podium-name">Danny<br>Festive Bone</div>
+                    <div class="podium-note">(Still mostly intact)</div>
                 </div>
             </div>
             
             <div class="memoriam">
-                <p>In loving memory of Tash and Chris Pig (2026-2026) 🐷</p>
-                <p>Gone too soon, but died doing what it loved most - getting squeaked by Nacho.</p>
-                <p>Its squeaks may be silenced, but its memory lives on in our hearts.</p>
+                <p>In loving memory of Tash and Chris's Squeaky Pig 🐷</p>
+                <p>Gone too soon, but died doing what it loved most - getting squeaked fiercely by Nacho on Christmas morning.</p>
+                <p>Its memory lives on in the shredded stuffing and our hearts.</p>
             </div>
         </div>
         
         <div class="hero-section">
             <div class="hero-image">
-                <div class="birthday-hat">🎩</div>
-                <img src="nacho1.jpg" alt="Nacho the Birthday Greyhound">
+                <img src="nacho1.jpg" alt="Nacho the Festive Greyhound">
             </div>
             <div class="hero-text">
-                <div class="greyhound-info">
-                    <p><strong>Birthday Star:</strong> Nacho | <strong>Age:</strong> 6!</p>
-                    <p><strong>Birthday Mood:</strong> Lazily Excited</p>
+                <div class="christmas-info">
+                    <p><strong>Christmas Star:</strong> Nacho | <strong>Favorite Activity:</strong> Winter Naps</p>
+                    <p><strong>Holiday Mood:</strong> Lazily Excited for Treats</p>
                 </div>
-                <p>We celebrated <span class="highlight">Nacho's</span> 6th birthday! This extraordinary greyhound's elegant silhouette and gentle demeanor have brightened our lives for six wonderful years. With her striking black tuxedo coat that seemed tailor-made for the birthday festivities, Nacho wasn't just a dog—she was the guest of honor at the most sophisticated of canine soirées!</p>
+                <p>This extraordinary greyhound's elegant silhouette and gentle demeanor shine brightly during the holidays. With her striking black tuxedo coat that seems tailor-made for the **winter festivities**, Nacho is ready to enjoy a season of coziness and cheer!</p>
             </div>
         </div>
         
         <div class="content">
-            <h2><span class="paw-print">🐾</span> Birthday Reflections <span class="paw-print">🐾</span></h2>
+            <h2><span class="paw-print">🐾</span> Holiday Reflections <span class="paw-print">🐾</span></h2>
             
-            <p>As Nacho celebrated turning 6, her soulful eyes carried even more wisdom of her noble lineage. When she gazed at her guests, there was a special birthday understanding that transcended words—a connection that spoke of six years of cherished companionship.</p>
+            <p>As the holiday season begins, Nacho's soulful eyes carry an extra sparkle reflecting the Christmas lights. When she gazes at her guests, there's a special festive understanding that transcends words—a connection that speaks of warm holiday companionship.</p>
             
-            <h2><span class="paw-print">🐾</span> Birthday Personality <span class="paw-print">🐾</span></h2>
+            <h2><span class="paw-print">🐾</span> Festive Personality <span class="paw-print">🐾</span></h2>
             
-            <p>What makes 6-year-old Nacho truly special is her incredibly sweet disposition that has remained constant through the years. Despite her racing heritage, she's perfected her true calling as a professional relaxation expert. Her birthday was celebrated with the same gentleness she's known for—each interaction soft, considered, and filled with quiet birthday affection.</p>
+            <p>What makes Nacho truly special is her incredibly sweet disposition. She's perfected her true calling as a professional relaxation expert. Her Christmas season is celebrated with the same gentleness she's known for—each interaction soft, considered, and filled with quiet **holiday affection**.</p>
             
-            <p>With the patience of a saint and the heart of a teddy bear, <span class="highlight">Birthday Nacho</span> moves through life at her own perfectly unhurried pace. Her 6th birthday was a masterclass in the art of celebratory leisure, teaching everyone around her about the importance of savoring life's special moments.</p>
+            <p>With the patience of a saint and the heart of a teddy bear, <span class="highlight">Festive Nacho</span> moves through the holiday at her own perfectly unhurried pace. She teaches everyone around her about the importance of savoring life's cozy moments.</p>
             
-            <h2><span class="paw-print">🐾</span> Birthday Gifts for Our Lazy Queen <span class="paw-print">🐾</span></h2>
+            <h2><span class="paw-print">🐾</span> Gift Ideas for Our Lazy Queen <span class="paw-print">🐾</span></h2>
             
-            <p>If there were Olympic medals for birthday lounging, Nacho would be a gold medalist. For her special 6th birthday, we prepared the most comfortable spots in every room and transformed them into sanctuaries of birthday rest. With limbs elegantly arranged and her tuxedo coat gleaming in whatever patch of birthday sunlight she discovered, Nacho elevated birthday napping to an art form.</p>
+            <p>If there were Olympic medals for holiday lounging, Nacho would be a gold medalist. For her special holiday, we prepared the most comfortable spots in every room and transformed them into sanctuaries of rest. With limbs elegantly arranged and her tuxedo coat gleaming in whatever patch of winter sunlight she discovers, Nacho elevates **holiday napping** to an art form.</p>
             
             <div class="gift-ideas">
                 <div class="gift-item">
-                    <div class="gift-icon">🛌</div>
-                    <p>Extra Soft Bed</p>
+                    <div class="gift-icon">🎁</div>
+                    <p>Wrapped Presents</p>
                 </div>
                 <div class="gift-item">
-                    <div class="gift-icon">🦴</div>
-                    <p>Gourmet Treats</p>
+                    <div class="gift-icon">🍖</div>
+                    <p>Gourmet Ham Bone</p>
                 </div>
                 <div class="gift-item">
-                    <div class="gift-icon">🧸</div>
-                    <p>New Squeaky Toy</p>
+                    <div class="gift-icon">🧣</div>
+                    <p>New Christmas Scarf</p>
                 </div>
             </div>
             
-            <p>Don't be fooled by her relaxed birthday demeanor though—during the party, Nacho showcased the legendary greyhound speed in brief, joyful bursts before returning to her true birthday passion: perfecting the ideal celebratory napping position.</p>
+            <p>Don't be fooled by her relaxed demeanor though—during the celebration, Nacho may showcase the legendary greyhound speed in brief, joyful bursts before returning to her true holiday passion: perfecting the ideal celebratory napping position.</p>
             
             <div class="gallery">
-                <a href="nacho_adventure.jpg" class="gallery-item" target="_blank">Birthday Adventures</a>
-                <a href="nacho_smile.jpg" class="gallery-item" target="_blank">Birthday Smiles</a>
-                <a href="nacho_naps.jpg" class="gallery-item" target="_blank">Birthday Naps</a>
-            </div>
-        </div>
-        
-        <!-- Countdown to 7th Birthday -->
-        <div class="birthday-countdown">
-            <h3>🎉 Countdown to Nacho's 7th Birthday! 🎉</h3>
-            <p>April 6th, 2026</p>
-            <div class="birthday-age">365 days until she turns 7!</div>
-            
-            <div class="countdown-timer">
-                <div class="countdown-box">
-                    <div id="countdown-days" class="countdown-number">365</div>
-                    <div class="countdown-label">Days</div>
-                </div>
-                <div class="countdown-box">
-                    <div id="countdown-hours" class="countdown-number">00</div>
-                    <div class="countdown-label">Hours</div>
-                </div>
-                <div class="countdown-box">
-                    <div id="countdown-minutes" class="countdown-number">00</div>
-                    <div class="countdown-label">Minutes</div>
-                </div>
-                <div class="countdown-box">
-                    <div id="countdown-seconds" class="countdown-number">00</div>
-                    <div class="countdown-label">Seconds</div>
-                </div>
+                <a href="nacho_adventure.jpg" class="gallery-item" target="_blank">Winter Adventures</a>
+                <a href="nacho_smile.jpg" class="gallery-item" target="_blank">Festive Smiles</a>
+                <a href="nacho_naps.jpg" class="gallery-item" target="_blank">Holiday Naps</a>
             </div>
         </div>
         
         <footer>
-            <p>Celebrating Nacho's Amazing 6th Birthday and looking forward to her 7th! © 2025</p>
+            <p>Merry Christmas and Happy Holidays from Nacho! © 2025</p>
         </footer>
     </div>
     
     <script>
-        // Set the date we're counting down to - April 6th, 2026
-        const countDownDate = new Date("Apr 6, 2026 00:00:00").getTime();
+        // Set the date we're counting down to - Christmas Day, December 25th, 2025
+        const countDownDate = new Date("Dec 25, 2025 00:00:00").getTime();
         
         // Update the countdown every 1 second
         const countdownTimer = setInterval(function() {
@@ -195,15 +243,23 @@
             const seconds = Math.floor((distance % (1000 * 60)) / 1000);
             
             // Display the result in the corresponding elements
-            document.getElementById("countdown-days").textContent = days.toString().padStart(2, '0');
-            document.getElementById("countdown-hours").textContent = hours.toString().padStart(2, '0');
-            document.getElementById("countdown-minutes").textContent = minutes.toString().padStart(2, '0');
-            document.getElementById("countdown-seconds").textContent = seconds.toString().padStart(2, '0');
+            const updateElement = (id, value) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = value.toString().padStart(2, '0');
+            };
+
+            updateElement("countdown-days", days);
+            updateElement("countdown-hours", hours);
+            updateElement("countdown-minutes", minutes);
+            updateElement("countdown-seconds", seconds);
             
-            // If the countdown is finished, display birthday message
+            // If the countdown is finished, display a Christmas message
             if (distance < 0) {
                 clearInterval(countdownTimer);
-                document.querySelector(".countdown-timer").innerHTML = "<h2 style='color: #e65100; margin: 1rem;'>HAPPY 7TH BIRTHDAY NACHO! 🎉🎂🐾</h2>";
+                const countdownSection = document.querySelector(".christmas-countdown");
+                if (countdownSection) {
+                    countdownSection.innerHTML = "<h3 style='color: var(--accent); margin: 1rem;'>MERRY CHRISTMAS NACHO! 🎉🎄🐾</h3>";
+                }
             }
         }, 1000);
     </script>
