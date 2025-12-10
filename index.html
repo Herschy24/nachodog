@@ -3,478 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nacho's Birthday Celebration</title>
+    <title>Nacho's Christmas Wishes</title>
+    <meta name="description" content="Merry Christmas from Nacho! Festive photos and holiday cheer.">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root{--red:#b71c1c;--green:#1b5e20;--accent:#fff9c4}
+        *{box-sizing:border-box;margin:0;padding:0}
+        html,body{height:100%}
+        body{
+            background: linear-gradient(180deg,#07202a 0%,#082b2e 60%);
+            color:#fff;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            -webkit-font-smoothing:antialiased;
+            -moz-osx-font-smoothing:grayscale;
+            line-height:1.4;
+            padding:2rem;
         }
-        
-        body {
-            background-image: url('nacho_bday.jpeg');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            background-repeat: no-repeat;
-            color: #333;
-            line-height: 1.6;
-        }
-        
-        /* Add a semi-transparent overlay to improve text readability */
-        .page-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.7);
-            z-index: -1;
-        }
-        
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 2rem;
-            position: relative;
-        }
-        
-        header {
-            text-align: center;
-            padding: 2rem 0 1rem;
-            background-color: rgba(173, 216, 230, 0.8);
-            border-radius: 12px;
-            margin-bottom: 2rem;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        /* Birthday decorations for header */
-        .birthday-decoration {
-            position: absolute;
-            font-size: 1.5rem;
-            opacity: 0.7;
-        }
-        
-        .balloon-left {
-            top: 10px;
-            left: 20px;
-        }
-        
-        .balloon-right {
-            top: 10px;
-            right: 20px;
-        }
-        
-        .cake {
-            bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-        
-        h1 {
-            font-size: 2.5rem;
-            color: #1a5276;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
-            margin-bottom: 0.5rem;
-        }
-        
-        .subtitle {
-            font-size: 1.2rem;
-            color: #2874a6;
-            font-style: italic;
-            margin-bottom: 1rem;
-        }
-        
-        .hero-section {
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            gap: 2rem;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-        }
-        
-        .hero-image {
-            flex: 1;
-            min-width: 200px;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-            position: relative;
-        }
-        
-        /* Birthday hat for Nacho's image */
-        .birthday-hat {
-            position: absolute;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 2.5rem;
-            z-index: 10;
-        }
-        
-        .hero-image img {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-        
-        .hero-text {
-            flex: 2;
-            min-width: 300px;
-        }
-        
-        .content {
-            background-color: rgba(255, 255, 255, 0.9);
-            border-radius: 12px;
-            padding: 2rem;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-        
-        h2 {
-            color: #1a5276;
-            margin-bottom: 1rem;
-            border-bottom: 2px solid #add8e6;
-            padding-bottom: 0.5rem;
-        }
-        
-        p {
-            margin-bottom: 1.5rem;
-            font-size: 1.1rem;
-        }
-        
-        .highlight {
-            color: #2874a6;
-            font-weight: bold;
-        }
-        
-        .gallery {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-            margin-top: 2rem;
-        }
-        
-        .gallery-item {
-            width: 200px;
-            height: 60px;
-            background-color: #4a9fd7;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-        
-        .gallery-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-            background-color: #3498db;
-        }
-        
-        footer {
-            text-align: center;
-            margin-top: 2rem;
-            padding: 1rem;
-            background-color: rgba(173, 216, 230, 0.8);
-            border-radius: 12px;
-            color: #1a5276;
-        }
-        
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 2rem;
-            }
-            
-            .container {
-                padding: 1rem;
-            }
-            
-            .gallery-item {
-                width: 100%;
-                margin-bottom: 0.5rem;
-            }
-            
-            .hero-section {
-                flex-direction: column;
-                gap: 1rem;
-            }
-        }
-        
-        .paw-print {
-            font-size: 1.5rem;
-            display: inline-block;
-            margin: 0 0.5rem;
-        }
-        
-        .greyhound-info {
-            background-color: rgba(230, 247, 255, 0.9);
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1.5rem;
-            border-left: 4px solid #4a9fd7;
-        }
-        
-        .birthday-age {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: #e65100;
-            margin-top: 0.5rem;
-        }
+        .site{max-width:960px;margin:0 auto;background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.02));border-radius:12px;padding:1.5rem}
+        header{display:flex;align-items:center;gap:1rem}
+        .logo{width:84px;height:84px;border-radius:50%;overflow:hidden;border:3px solid rgba(255,255,255,0.12)}
+        .logo img{width:100%;height:100%;object-fit:cover;display:block}
+        h1{font-size:1.6rem;color:var(--accent);}
+        p.lead{color:#e8f5e9;margin-top:0.25rem}
 
-        /* Party success banner */
-        .party-success-banner {
-            background-color: rgba(76, 175, 80, 0.85);
-            color: white;
-            text-align: center;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            border: 2px solid #4caf50;
-        }
+        .photos{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem}
+        .photo{background:rgba(255,255,255,0.02);border-radius:10px;overflow:hidden;box-shadow:0 6px 18px rgba(0,0,0,0.5);}
+        .photo img{width:100%;height:100%;display:block;object-fit:cover}
 
-        .party-success-banner h2 {
-            color: white;
-            border-bottom: 2px solid rgba(255, 255, 255, 0.5);
-            margin-bottom: 0.5rem;
-        }
+        .cta{display:flex;gap:1rem;align-items:center;margin-top:1rem}
+        .btn{background:var(--red);color:white;padding:.6rem .9rem;border-radius:8px;text-decoration:none;font-weight:600;box-shadow:0 6px 10px rgba(183,28,28,0.2)}
+        .btn.secondary{background:var(--green);box-shadow:0 6px 10px rgba(27,94,32,0.18)}
 
-        .party-details {
-            font-size: 1.2rem;
-            margin-bottom: 1rem;
-        }
+        footer{margin-top:1.25rem;color:rgba(255,255,255,0.7);font-size:.9rem}
 
-        .party-emoji {
-            font-size: 1.5rem;
-            margin: 0 0.5rem;
-        }
-        
-        /* Present competition section */
-        .present-competition {
-            background-color: rgba(255, 236, 179, 0.9);
-            padding: 1.5rem;
-            border-radius: 8px;
-            margin-bottom: 1.5rem;
-            text-align: center;
-            border: 2px dashed #ff9800;
-        }
-        
-        .present-competition h3 {
-            color: #e65100;
-            margin-bottom: 0.5rem;
-        }
-        
-        .present-image {
-            width: 100%;
-            max-width: 400px;
-            border-radius: 12px;
-            margin: 1rem auto;
-            display: block;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-        }
-        
-        /* Improved Podium styling */
-        .podium-container {
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
-            margin: 1.5rem 0;
-            gap: 15px;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        
-        .podium-place {
-            text-align: center;
-            padding: 0.5rem 0.25rem;
-            width: 32%;
-            border-radius: 8px 8px 0 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-        }
-        
-        .first-place {
-            background-color: #ffd700;
-            height: 120px;
-            color: #5D4037;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-        
-        .second-place {
-            background-color: #c0c0c0;
-            height: 100px;
-            color: #5D4037;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-        
-        .third-place {
-            background-color: #cd7f32;
-            height: 80px;
-            color: #fff;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-        
-        .podium-number {
-            font-size: 1.8rem;
-            font-weight: bold;
-            margin-bottom: 0.3rem;
-        }
-        
-        .podium-name {
-            font-weight: bold;
-            font-size: 0.9rem;
-            line-height: 1.2;
-            margin-bottom: 0.2rem;
-            word-wrap: break-word;
-            padding: 0 0.25rem;
-        }
-        
-        .podium-note {
-            font-size: 0.75rem;
-            line-height: 1.1;
-        }
-        
-        @media (max-width: 480px) {
-            .podium-place {
-                width: 30%;
-            }
-            
-            .podium-number {
-                font-size: 1.5rem;
-            }
-            
-            .podium-name {
-                font-size: 0.8rem;
-            }
-            
-            .podium-note {
-                font-size: 0.7rem;
-            }
-        }
-        
-        /* Memoriam styling */
-        .memoriam {
-            background-color: rgba(236, 236, 236, 0.9);
-            border-left: 4px solid #9e9e9e;
-            padding: 1rem;
-            border-radius: 8px;
-            margin: 1.5rem 0;
-            text-align: center;
-            font-style: italic;
-        }
-        
-        /* Birthday countdown section */
-        .birthday-countdown {
-            background-color: rgba(255, 236, 179, 0.9);
-            padding: 1.5rem;
-            border-radius: 8px;
-            margin-bottom: 1.5rem;
-            text-align: center;
-            border: 2px dashed #ff9800;
-        }
-        
-        .birthday-countdown h3 {
-            color: #e65100;
-            margin-bottom: 0.5rem;
-        }
-        
-        /* Countdown timer styling */
-        .countdown-timer {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            margin-top: 1rem;
-            flex-wrap: wrap;
-        }
-        
-        .countdown-box {
-            background-color: #1a5276;
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            min-width: 80px;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
-        }
-        
-        .countdown-number {
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
-        
-        .countdown-label {
-            font-size: 0.8rem;
-            text-transform: uppercase;
-        }
-        
-        /* Gift suggestion section */
-        .gift-ideas {
-            display: flex;
-            justify-content: space-around;
-            flex-wrap: wrap;
-            margin: 1.5rem 0;
-            gap: 1rem;
-        }
-        
-        .gift-item {
-            background-color: rgba(227, 242, 253, 0.9);
-            padding: 1rem;
-            border-radius: 8px;
-            width: 30%;
-            min-width: 150px;
-            text-align: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        
-        .gift-icon {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
-        }
-
-        /* Party photo styling */
-        .party-photo {
-            display: block;
-            width: 100%;
-            max-width: 500px;
-            margin: 1.5rem auto;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        }
+        @media (max-width:640px){.photos{grid-template-columns:1fr}.logo{width:64px;height:64px}.site{padding:1rem}}
     </style>
 </head>
 <body>
     <!-- Semi-transparent overlay to improve text readability -->
-    <div class="page-overlay"></div>
-    
-    <div class="container">
+    <div class="site">
         <header>
-            <div class="birthday-decoration balloon-left">🎈</div>
-            <div class="birthday-decoration balloon-right">🎈</div>
-            <h1>NACHO'S AMAZING 6TH BIRTHDAY</h1>
-            <div class="subtitle">Celebrating Our Sweet Tuxedo Beauty</div>
-            <div class="birthday-decoration cake">🎂</div>
-        </header>
-        
-        <!-- Party Success Banner -->
-        <div class="party-success-banner">
-            <h2><span class="party-emoji">🎉</span> WHAT A PARTY! <span class="party-emoji">🎉</span></h2>
-            <div class="party-details">
-                <p>Nacho's 6th birthday celebration was a huge success with all her friends coming over to celebrate the big occasion!</p>
+            <div class="logo"><img src="nacho_christmas_1.jpg" alt="Nacho in a Christmas sweater"></div>
+            <div>
+                <h1>Nacho's Christmas Wishes 🎄</h1>
+                <p class="lead">Warm holiday snuggles from our tuxedo greyhound — enjoy a couple festive photos and have a merry day.</p>
             </div>
+        </header>
+
+        <section class="photos" aria-label="Christmas photos of Nacho">
+            <div class="photo"><img src="nacho_christmas_1.jpg" alt="Nacho smiling with Christmas lights"></div>
+            <div class="photo"><img src="nacho_christmas_2.jpg" alt="Nacho wearing a festive hat"></div>
+        </section>
+
+        <div class="cta">
+            <a class="btn" href="/birthday/">See Nacho's Birthday Page</a>
+            <a class="btn secondary" href="#message">Leave a Holiday Message</a>
         </div>
-        
-        <!-- Party Photo -->
-        <img src="nach_party_hat.jpg" alt="Nacho wearing a party hat" class="party-photo">
+
+        <section id="message" style="margin-top:1rem;background:rgba(255,255,255,0.02);padding:1rem;border-radius:8px;">
+            <h2 style="font-size:1rem;margin-bottom:.5rem;color:var(--accent)">Holiday Message</h2>
+            <p style="color:#eee">Wishing Nacho a cozy holiday season — love from everyone who shares her naps.</p>
+        </section>
         
         <!-- Present Competition Section with Fixed Podium -->
         <div class="present-competition">
