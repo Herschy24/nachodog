@@ -89,6 +89,13 @@
             .podium-container{flex-wrap:wrap;}
             .podium-place{width:100%;height:auto!important;}
         }
+
+        /* POLL SPECIFIC STYLES */
+        #poll-section iframe {
+            max-width: 500px; /* Constrain the poll width for better design */
+            margin: 0 auto;
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -107,15 +114,26 @@
         </section>
 
         <div class="cta">
-            <a class="btn alt" href="#countdown">See the Christmas Countdown</a>
-            <a class="btn" href="#message">Leave a Holiday Message</a>
+            <a class="btn alt" href="#poll-section">Vote for Nacho's Gift!</a>
+            <a class="btn" href="#countdown">See the Countdown</a>
         </div>
 
-        <section id="message" style="margin-top:1rem;padding:1rem;border-radius:8px;background:rgba(255,255,255,0.05);">
-            <h2 style="margin-bottom:.5rem;color:var(--accent)">Holiday Wishes from the Greyhound</h2>
-            <p style="color:#eee">May your holidays be cozy and full of naps, treats, and gentle head pats — from Nacho.</p>
+        <section id="poll-section" style="margin-top:1.5rem;padding:1.5rem;border-radius:10px;background:rgba(255,255,255,0.05);text-align:center;">
+            <h2 style="margin-bottom:1rem;color:var(--accent);">Vote for Nacho's Next Gift! 🎁</h2>
+            <p style="color:#eee; margin-bottom: 1rem;">Help us decide what Nacho gets for Christmas! (The vote automatically saves and updates.)</p>
+            
+            <iframe 
+                src="https://strawpoll.com/bVg8BAaoMyY/embed/iframe" 
+                width="100%" 
+                height="350" 
+                style="border: 2px solid var(--highlight); border-radius: 10px;" 
+                frameborder="0"
+                allowfullscreen>
+            </iframe>
+            <p style="color:#eee; margin-top: 1rem; font-size: 0.9em;">
+                The poll displays the results after you vote!
+            </p>
         </section>
-        
         <div class="christmas-countdown" id="countdown">
             <h3>🎉 Countdown to Christmas Day! 🎉</h3>
             <p style="text-align:center; color: var(--highlight);">December 25th, 2025</p>
@@ -173,10 +191,10 @@
             </div>
             <div class="hero-text">
                 <div class="christmas-info">
-                    <p><strong>Christmas Star:</strong> Nacho | <strong>Favorite Activity:</strong> Summer Naps</p>
+                    <p><strong>Christmas Star:</strong> Nacho | <strong>Favorite Activity:</strong> Holiday Naps</p>
                     <p><strong>Holiday Mood:</strong> Lazily Excited for Treats</p>
                 </div>
-                <p>This extraordinary greyhound's elegant silhouette and gentle demeanor shine brightly during the holidays. With her striking black tuxedo coat that seems tailor-made for the **Summer festivities**, Nacho is ready to enjoy a season of coziness and cheer!</p>
+                <p>This extraordinary greyhound's elegant silhouette and gentle demeanor shine brightly during the holidays. With her striking black tuxedo coat that seems tailor-made for the **winter festivities**, Nacho is ready to enjoy a season of coziness and cheer!</p>
             </div>
         </div>
         
@@ -193,7 +211,7 @@
             
             <h2><span class="paw-print">🐾</span> Gift Ideas for Our Lazy Queen <span class="paw-print">🐾</span></h2>
             
-            <p>If there were Olympic medals for holiday lounging, Nacho would be a gold medalist. For her special holiday, we prepared the most comfortable spots in every room and transformed them into sanctuaries of rest. With limbs elegantly arranged and her tuxedo coat gleaming in whatever patch of Summer sunlight she discovers, Nacho elevates **holiday napping** to an art form.</p>
+            <p>If there were Olympic medals for holiday lounging, Nacho would be a gold medalist. For her special holiday, we prepared the most comfortable spots in every room and transformed them into sanctuaries of rest. With limbs elegantly arranged and her tuxedo coat gleaming in whatever patch of sunlight she discovers, Nacho elevates **holiday napping** to an art form.</p>
             
             <div class="gift-ideas">
                 <div class="gift-item">
@@ -213,7 +231,7 @@
             <p>Don't be fooled by her relaxed demeanor though—during the celebration, Nacho may showcase the legendary greyhound speed in brief, joyful bursts before returning to her true holiday passion: perfecting the ideal celebratory napping position.</p>
             
             <div class="gallery">
-                <a href="nacho_adventure.jpg" class="gallery-item" target="_blank">Summer Adventures</a>
+                <a href="nacho_adventure.jpg" class="gallery-item" target="_blank">Winter Adventures</a>
                 <a href="nacho_smile.jpg" class="gallery-item" target="_blank">Festive Smiles</a>
                 <a href="nacho_naps.jpg" class="gallery-item" target="_blank">Holiday Naps</a>
             </div>
