@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Commissioner's Cup | Jan 24</title>
+    <style>
+        :root { --golf-green: #004d2c; --soft-gray: #f4f7f6; --text-dark: #2c3e50; }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            color: var(--text-dark); 
+            line-height: 1.6; 
+            margin: 0; 
+            padding: 15px;
+            background-color: var(--soft-gray);
+        }
+
+        /* The Tiled Collage Effect */
+        .collage-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('Dylan_shiel.jpg');
+            background-size: 120px; /* Adjust this to make the "tiles" smaller or larger */
+            background-repeat: repeat;
+            opacity: 0.15; /* Makes it "Opaque"/Translucent so you can read the text */
+            z-index: -1;
+        }
+
+        .container { 
+            max-width: 650px; 
+            margin: 20px auto; 
+            background: rgba(255, 255, 255, 0.95); /* Slight transparency on the white box */
+            padding: 25px; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+            border-top: 15px solid var(--golf-green); 
+            position: relative; 
+        }
+        
+        h1 { color: var(--golf-green); text-align: center; font-size: 2.2em; text-transform: uppercase; margin-bottom: 5px; letter-spacing: -1px; }
+        .subtitle { text-align: center; color: #7f8c8d; margin-bottom: 10px; font-weight: 600; font-size: 0.9em; text-transform: uppercase; }
+        .tee-time-header { text-align: center; color: #d32f2f; font-weight: bold; font-size: 1.1em; margin-bottom: 30px; }
+        
+        #countdown-box { background: var(--golf-green); color: white; text-align: center; padding: 20px; border-radius: 10px; margin-bottom: 30px; }
+        #timer { font-size: 1.8em; font-weight: bold; font-variant-numeric: tabular-nums; }
+        .label { font-size: 0.65em; text-transform: uppercase; letter-spacing: 2px; opacity: 0.9; margin-bottom: 8px; }
+
+        .section { margin-bottom: 35px; }
+        h2 { border-bottom: 2px solid #eee; color: var(--golf-green); padding-bottom: 8px; font-size: 1.3em; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { text-align: left; font-size: 0.75em; color: #95a5a6; text-transform: uppercase; padding: 10px; border-bottom: 2px solid #eee; }
+        td { padding: 12px 10px; border-bottom: 1px solid #f1f1f1; font-size: 0.95em; }
+        .rank-num { font-weight: bold; color: var(--golf-green); width: 30px; }
+        .status-tag { font-size: 0.8em; background: #ebf5ee; color: #1e5631; padding: 3px 8px; border-radius: 4px; font-weight: 600; }
+
+        #teams-display { display: none; border: 2px solid var(--golf-green); padding: 20px; border-radius: 10px; background: #f9fdfa; }
+        .team-slot { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e0e0e0; }
+
+        ul { padding-left: 20px; }
+        li { margin-bottom: 10px; }
+        .commish-note { background: #fff9c4; padding: 15px; border-radius: 8px; border-left: 5px solid #fbc02d; font-style: italic; font-size: 0.9em; }
+        .footer { text-align: center; margin-top: 40px; font-size: 0.75em; color: #bdc3c7; }
+    </style>
+</head>
+<body>
+
+<div class="collage-bg"></div>
+
+<div class="container">
+    <h1>The Commissioner's Cup</h1>
+    <p class="subtitle">Official Tournament Hub • Jan 24, 2026</p>
+    <p class="tee-time-header">⛳ FIRST TEE TIME: 9:26 AM</p>
+
+    <div id="countdown-box">
+        <div class="label">Team Pairings Announced In:</div>
+        <div id="timer">Loading...</div>
+    </div>
+
+    <div id="teams-display" class="section">
+        <h2>Official Team Pairings</h2>
+        <div class="team-slot"><span><strong>Group 1 (9:26)</strong>: Team A + Team B</span></div>
+        <div class="team-slot"><span><strong>Group 2 (9:34)</strong>: Team C + Team D</span></div>
+        <div class="team-slot"><span><strong>Group 3 (9:42)</strong>: Team E + [Solo/Pacer]</span></div>
+    </div>
+
+    <div class="section">
+        <h2>Power Rankings</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Player</th>
+                    <th>Form Guide</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td class="rank-num">1</td><td>Sam</td><td><span class="status-tag">The Favorite</span></td></tr>
+                <tr><td class="rank-num">2</td><td>Danny</td><td><span class="status-tag">On the prowl</span></td></tr>
+                <tr><td class="rank-num">3</td><td>Riz</td><td><span class="status-tag">Teeing off first</span></td></tr>
+                <tr><td class="rank-num">4</td><td>TommyC</td><td><span class="status-tag">Reliable</span></td></tr>
+                <tr><td class="rank-num">5</td><td>TK</td><td><span class="status-tag">Wildcard</span></td></tr>
+                <tr><td class="rank-num">6</td><td>Melly</td><td><span class="status-tag">Tee-to-green specialist</span></td></tr>
+                <tr><td class="rank-num">7</td><td>Charlie</td><td><span class="status-tag">The Strategist</span></td></tr>
+                <tr><td class="rank-num">8</td><td>Hirsch</td><td><span class="status-tag">Work to do</span></td></tr>
+                <tr><td class="rank-num">9</td><td>Willyk</td><td><span class="status-tag">Needs a big day</span></td></tr>
+                <tr><td class="rank-num">10</td><td>Jacob</td><td><span class="status-tag">The Underdog</span></td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <h2>The Game: 2-Man Scramble</h2>
+        <ul>
+            <li><strong>The Drive:</strong> Both you and your partner tee off.</li>
+            <li><strong>The Choice:</strong> Pick the best shot.</li>
+            <li><strong>The Next Shot:</strong> Both of you hit from that spot.</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <div class="commish-note">
+            <strong>Commish's Note:</strong> Should winning team get 50% off buy in for next Tipping Comp? 
+        </div>
+    </div>
+
+    <div class="footer">
+        &copy; 2026 The Commissioner's Cup. No slow play. No excuses.
+    </div>
+</div>
+
+<script>
+    var countDownDate = new Date("Jan 23, 2026 12:00:00").getTime();
+    var x = setInterval(function() {
+        var now = new Date().getTime();
+        var distance = countDownDate - now;
+        var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+        document.getElementById("timer").innerHTML = days + "d " + hours + "h " + minutes + "m " + seconds + "s ";
+        if (distance < 0) {
+            clearInterval(x);
+            document.getElementById("countdown-box").style.display = "none";
+            document.getElementById("teams-display").style.display = "block";
+        }
+    }, 1000);
+</script>
+
+</body>
+</html>
