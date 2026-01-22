@@ -12,51 +12,24 @@
             padding: 20px;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
             color: var(--text-dark);
-            background-color: #f4f7f6; /* Base color under the image */
+            background-color: #f4f7f6;
         }
 
-        /* FADED TILED BACKGROUND */
         body::before {
             content: "";
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
+            position: fixed; left: 0; top: 0; width: 100%; height: 100%;
             background-image: url('Dylan_shiel.jpg');
-            background-size: 140px; /* Size of individual tiles */
+            background-size: 140px;
             background-repeat: repeat;
-            opacity: 0.15; /* Low opacity to make it "opaque" and faded */
+            opacity: 0.15;
             z-index: -1;
         }
 
-        .content-wrapper {
-            max-width: 600px;
-            margin: 0 auto;
-        }
+        .content-wrapper { max-width: 600px; margin: 0 auto; }
 
-        h1 { 
-            color: var(--golf-green); 
-            text-align: center; 
-            font-size: 2.5em; 
-            text-transform: uppercase; 
-            margin-bottom: 5px; 
-            letter-spacing: -1px;
-        }
-
-        .subtitle { 
-            text-align: center; 
-            color: #555; 
-            margin-bottom: 5px; 
-            font-weight: bold; 
-            text-transform: uppercase; 
-            letter-spacing: 1px;
-        }
-
-        .tee-time-header { 
-            text-align: center; 
-            color: #d32f2f; 
-            font-weight: 900; 
-            font-size: 1.3em; 
-            margin-bottom: 30px;
-        }
+        h1 { color: var(--golf-green); text-align: center; font-size: 2.5em; text-transform: uppercase; margin-bottom: 5px; letter-spacing: -1px; }
+        .subtitle { text-align: center; color: #555; margin-bottom: 5px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+        .tee-time-header { text-align: center; color: #d32f2f; font-weight: 900; font-size: 1.3em; margin-bottom: 30px; }
         
         #countdown-box { 
             text-align: center; 
@@ -64,44 +37,46 @@
             border: 2px solid var(--golf-green);
             border-radius: 10px; 
             margin-bottom: 40px;
-            background: rgba(255, 255, 255, 0.4); /* Slight mist to help read timer */
+            background: rgba(255, 255, 255, 0.6);
         }
-
-        #timer { 
-            font-size: 2.2em; 
-            font-weight: 800; 
-            color: var(--golf-green);
-        }
+        #timer { font-size: 2.2em; font-weight: 800; color: var(--golf-green); }
+        #timer-label { font-size: 0.8em; text-transform: uppercase; font-weight: bold; margin-bottom: 5px; }
 
         .section { margin-bottom: 40px; }
-        h2 { 
-            border-bottom: 3px solid var(--golf-green); 
-            color: var(--golf-green); 
-            padding-bottom: 5px; 
-            font-size: 1.5em; 
-            text-transform: uppercase;
+        h2 { border-bottom: 3px solid var(--golf-green); color: var(--golf-green); padding-bottom: 5px; font-size: 1.5em; text-transform: uppercase; }
+
+        /* HIDE HEADING INITIALLY */
+        #pairing-title { display: none; }
+
+        .team-entry { 
+            display: none; 
+            background: rgba(255, 255, 255, 0.85);
+            margin-bottom: 15px;
+            padding: 18px;
+            border-radius: 12px;
+            border-left: 8px solid var(--golf-green);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+            animation: fadeIn 0.5s ease;
         }
-        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .group-label { color: var(--golf-green); font-size: 0.8em; text-transform: uppercase; font-weight: 900; }
+        .tee-time-badge { font-size: 0.85em; font-weight: 800; color: #d32f2f; background: #fff0f0; padding: 4px 10px; border-radius: 20px; border: 1px solid #ffcccc; }
+        .names-row { font-size: 1.5em; font-weight: 800; margin-bottom: 10px; display: block; }
+        .handicap-footer { font-size: 0.85em; font-weight: 700; color: #666; text-transform: uppercase; border-top: 1px solid #eee; padding-top: 8px; display: flex; align-items: center; }
+        .hc-val { background: #eee; color: #333; padding: 2px 8px; border-radius: 4px; margin-left: 8px; font-family: monospace; }
+        .hc-val.active { background: var(--golf-green); color: white; }
+
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th { text-align: left; font-size: 0.8em; color: #666; text-transform: uppercase; padding: 10px; border-bottom: 2px solid #ccc; }
         td { padding: 12px 10px; border-bottom: 1px solid #ddd; font-weight: 600; }
-        
-        .status-tag { 
-            font-size: 0.85em; 
-            color: var(--golf-green); 
-            font-style: italic;
-        }
+        .status-tag { font-size: 0.85em; color: var(--golf-green); font-style: italic; }
 
-        #teams-display { display: none; }
+        ul.rules-list { line-height: 1.6; padding-left: 20px; font-weight: 500; margin-top: 10px; }
+        ul.rules-list li { margin-bottom: 10px; }
 
-        .commish-note { 
-            background: rgba(0, 77, 44, 0.05); 
-            padding: 15px; 
-            border-left: 5px solid var(--golf-green); 
-            font-style: italic;
-            font-weight: 500;
-        }
-
+        .commish-note { background: rgba(0, 77, 44, 0.05); padding: 15px; border-left: 5px solid var(--golf-green); font-style: italic; font-weight: 500; }
         .footer { text-align: center; margin-top: 50px; font-size: 0.8em; color: #888; }
     </style>
 </head>
@@ -113,37 +88,30 @@
     <p class="tee-time-header">⛳ FIRST TEE TIME: 9:26 AM @ Freeway Golf</p>
 
     <div id="countdown-box">
-        <div style="font-size: 0.8em; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Pairings Reveal In:</div>
-        <div id="timer">00:00:00:00</div>
+        <div id="timer-label">Team drop in:</div>
+        <div id="timer">--:--:--:--</div>
     </div>
 
     <div id="teams-display" class="section">
-        <h2>Official Team Pairings</h2>
-        <p><strong>Group 1 (9:26):</strong> TBA</p>
-        <p><strong>Group 2 (9:34):</strong> TBA</p>
-        <p><strong>Group 3 (9:42):</strong> TBA</p>
+        <h2 id="pairing-title">Official Team Pairings</h2>
+        <div id="pairings-list"></div>
+        <div id="timer-target"></div>
     </div>
 
     <div class="section">
         <h2>Official Power Rankings</h2>
         <table>
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Player</th>
-                    <th>Form Guide</th>
-                </tr>
-            </thead>
+            <thead><tr><th>#</th><th>Player</th><th>Form Guide</th></tr></thead>
             <tbody>
                 <tr><td>1</td><td>Sam</td><td class="status-tag">The Prodigy</td></tr>
                 <tr><td>2</td><td>Danny</td><td class="status-tag">Fore Left</td></tr>
                 <tr><td>3</td><td>Riz</td><td class="status-tag">Teeing off first</td></tr>
                 <tr><td>4</td><td>TommyC</td><td class="status-tag">Putter Spanker</td></tr>
                 <tr><td>5</td><td>TK</td><td class="status-tag">Wildcard</td></tr>
-                <tr><td>6</td><td>Melly</td><td class="status-tag">Lessons Paying dividends</td></tr>
-                <tr><td>7</td><td>Charlie</td><td class="status-tag">Gets tips from Shanks</td></tr>
+                <tr><td>6</td><td>Willyk</td><td class="status-tag">Might leave after 12</td></tr>
+                <tr><td>7</td><td>Melly</td><td class="status-tag">Lessons paying dividends</td></tr>
                 <tr><td>8</td><td>Hirsch</td><td class="status-tag">Tries Really hard</td></tr>
-                <tr><td>9</td><td>Willyk</td><td class="status-tag">Might leave after 12</td></tr>
+                <tr><td>9</td><td>Charlie</td><td class="status-tag">Gets tips from Shanks</td></tr>
                 <tr><td>10</td><td>Jacob</td><td class="status-tag">The Underdog</td></tr>
             </tbody>
         </table>
@@ -151,11 +119,16 @@
 
     <div class="section">
         <h2>The Game: 2-Man Scramble</h2>
-        <p>Both tee off, pick the best shot, both hit from there until holed out.</p>
+        <ul class="rules-list">
+            <li>Both players tee off, pick the best shot, and both play from there until holed out.</li>
+            <li>Each team gets <strong>1 Breakfast ball</strong> on the first tee and <strong>1 additional mulligan</strong> to use during the round.</li>
+            <li>If a team has a handicap, it will be subtracted from their final gross score.</li>
+            <li>In the event of a tie, a beer/cider sculling competition will be held at the <strong>19th hole</strong>. Each team nominates one player to participate; the fastest scull wins.</li>
+        </ul>
     </div>
 
     <div class="commish-note">
-        <strong>Commish's Note:</strong> Should winning team get 50% off buy in for next Tipping Comp? 
+        <strong>Competition Prize:</strong> The winning team shall be appointed Commissioner and Treasurer respectively. They also reserve the right to nominate successors to take their place.
     </div>
 
     <div class="footer">
@@ -164,19 +137,82 @@
 </div>
 
 <script>
-    var countDownDate = new Date("Jan 23, 2026 12:00:00").getTime();
-    var x = setInterval(function() {
-        var now = new Date().getTime();
-        var distance = countDownDate - now;
-        var days = Math.floor(distance / (1000 * 60 * 60 * 24));
-        var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-        var seconds = Math.floor((distance % (1000 * 60)) / 1000);
-        document.getElementById("timer").innerHTML = days + "d " + hours + "h " + minutes + "m " + seconds + "s ";
-        if (distance < 0) {
-            clearInterval(x);
-            document.getElementById("countdown-box").style.display = "none";
+    const dropSchedule = {
+        g1: "Jan 23, 2026 12:00:00",
+        g2: "Jan 23, 2026 12:30:00",
+        g3: "Jan 23, 2026 13:00:00",
+        g4: "Jan 23, 2026 13:30:00",
+        g5: "Jan 23, 2026 14:00:00"
+    };
+
+    const _0xData = [
+        { i: "g1", t: "OToyNiBBTQ==", n: "Uml6ICYgV2lsbHlr", h: "MA==" },
+        { i: "g2", t: "OToyNiBBTQ==", n: "SGlyc2NoICYgVG9tbXlD", h: "MA==" },
+        { i: "g3", t: "OTozNCBBTQ==", n: "RGFubnkgJiBUSw==", h: "MA==" },
+        { i: "g4", t: "OTozNCBBTQ==", n: "Q2hhcmxpZSAmIE1lbGx5", h: "NQ==" },
+        { i: "g5", t: "OTo0MiBBTQ==", n: "U2FtICYgSmFjb2I=", h: "MA==" }
+    ];
+
+    function _d(s) { return atob(s); }
+
+    const listContainer = document.getElementById('pairings-list');
+    const timerBox = document.getElementById('countdown-box');
+    const timerLabel = document.getElementById('timer-label');
+    const timerTarget = document.getElementById('timer-target');
+    const pairingTitle = document.getElementById('pairing-title');
+    
+    _0xData.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.id = item.i;
+        div.className = 'team-entry';
+        const hVal = parseInt(_d(item.h));
+        div.innerHTML = `
+            <div class="card-top">
+                <span class="group-label">Group ${index + 1}</span>
+                <span class="tee-time-badge">⛳ TEE TIME: ${_d(item.t)}</span>
+            </div>
+            <span class="names-row">${_d(item.n)}</span>
+            <div class="handicap-footer">
+                HANDICAP: <span class="hc-val ${hVal > 0 ? 'active' : ''}">${hVal} STROKES</span>
+            </div>
+        `;
+        listContainer.appendChild(div);
+    });
+
+    const x = setInterval(function() {
+        const now = new Date().getTime();
+        let nextTarget = null;
+        let anyReleased = false;
+
+        _0xData.forEach((item) => {
+            const releaseTime = new Date(dropSchedule[item.i]).getTime();
+            if (now >= releaseTime) {
+                document.getElementById(item.i).style.display = "block";
+                anyReleased = true;
+            } else if (!nextTarget) {
+                nextTarget = releaseTime;
+            }
+        });
+
+        if (anyReleased) { 
             document.getElementById("teams-display").style.display = "block";
+            pairingTitle.style.display = "block"; // REVEAL HEADING
+            timerTarget.appendChild(timerBox);
+            timerLabel.innerHTML = "Next team reveal in:";
+            timerBox.style.marginTop = "20px";
+            timerBox.style.background = "rgba(255, 255, 255, 0.8)";
+        }
+
+        if (nextTarget) {
+            let distance = nextTarget - now;
+            let d = Math.floor(distance / (1000 * 60 * 60 * 24));
+            let h = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            let m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            let s = Math.floor((distance % (1000 * 60)) / 1000);
+            document.getElementById("timer").innerHTML = d + "d " + h + "h " + m + "m " + s + "s ";
+        } else {
+            timerBox.style.display = "none";
+            clearInterval(x);
         }
     }, 1000);
 </script>
