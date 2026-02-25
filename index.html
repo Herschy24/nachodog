@@ -6,16 +6,18 @@
     <title>Nacho's 7th Birthday! 🎉</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Space Grotesk', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            cursor: none;
         }
 
         body {
+            /* CSS gradient — fallback if WebGL unavailable */
             background: linear-gradient(135deg, #1a0030, #6a0080, #3d007a, #4a0080);
             background-size: 400% 400%;
             animation: gradientShift 15s ease-in-out infinite;
@@ -31,40 +33,48 @@
             100% { background-position: 0% 50%; }
         }
 
-        /* Confetti */
-        .confetti {
+        /* Three.js background canvas */
+        #bg-canvas {
             position: fixed;
-            top: -20px;
-            z-index: 9999;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
             pointer-events: none;
         }
 
-        @keyframes confetti-fall-left {
-            0% {
-                transform: translateY(-20px) rotate(0deg) translateX(0);
-                opacity: 1;
-            }
-            80% {
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(110vh) rotate(720deg) translateX(-60px);
-                opacity: 0;
-            }
+        /* Custom cursor */
+        #custom-cursor {
+            position: fixed;
+            width: 36px;
+            height: 36px;
+            pointer-events: none;
+            z-index: 99999;
+            transform: translate(-50%, -50%);
+            will-change: left, top;
+            transition: opacity 0.2s;
         }
 
-        @keyframes confetti-fall-right {
-            0% {
-                transform: translateY(-20px) rotate(0deg) translateX(0);
-                opacity: 1;
-            }
-            80% {
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(110vh) rotate(720deg) translateX(60px);
-                opacity: 0;
-            }
+        /* Sparkle trail */
+        .sparkle {
+            position: fixed;
+            pointer-events: none;
+            z-index: 99998;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            animation: sparkle-fade 600ms ease-out forwards;
+        }
+
+        @keyframes sparkle-fade {
+            0%   { transform: translate(-50%, -50%) scale(1);   opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(0);   opacity: 0; }
+        }
+
+        /* Disable custom UI on touch */
+        @media (pointer: coarse) {
+            * { cursor: auto; }
+            #custom-cursor { display: none; }
         }
 
         .container {
@@ -75,22 +85,25 @@
             z-index: 1;
         }
 
-        /* Header */
+        /* ── Header ─────────────────────────────────────────────── */
         header {
             text-align: center;
             padding: 2.5rem 2rem 2rem;
-            background: linear-gradient(135deg, #4a0080, #ff4081);
+            background: rgba(74, 0, 128, 0.38);
+            backdrop-filter: blur(20px) saturate(200%);
+            -webkit-backdrop-filter: blur(20px) saturate(200%);
+            border: 1px solid rgba(255, 100, 180, 0.22);
             border-radius: 16px;
             margin-bottom: 2rem;
-            box-shadow: 0 8px 32px rgba(255, 64, 129, 0.4);
+            box-shadow: 0 8px 32px rgba(255, 64, 129, 0.25), inset 0 1px 0 rgba(255,255,255,0.1);
             position: relative;
             overflow: hidden;
             animation: headerPulse 4s ease-in-out infinite;
         }
 
         @keyframes headerPulse {
-            0%, 100% { box-shadow: 0 8px 32px rgba(255, 64, 129, 0.4); }
-            50%       { box-shadow: 0 8px 48px rgba(255, 64, 129, 0.8); }
+            0%, 100% { box-shadow: 0 8px 32px rgba(255, 64, 129, 0.25), inset 0 1px 0 rgba(255,255,255,0.1); }
+            50%       { box-shadow: 0 8px 48px rgba(255, 64, 129, 0.55), inset 0 1px 0 rgba(255,255,255,0.1); }
         }
 
         .birthday-decoration {
@@ -99,33 +112,16 @@
             opacity: 0.8;
         }
 
-        .balloon-left {
-            top: 12px;
-            left: 24px;
-        }
-
-        .balloon-right {
-            top: 12px;
-            right: 24px;
-        }
-
-        .balloon-bottom-left {
-            bottom: 10px;
-            left: 60px;
-            font-size: 1.5rem;
-        }
-
-        .balloon-bottom-right {
-            bottom: 10px;
-            right: 60px;
-            font-size: 1.5rem;
-        }
+        .balloon-left         { top: 12px; left: 24px; }
+        .balloon-right        { top: 12px; right: 24px; }
+        .balloon-bottom-left  { bottom: 10px; left: 60px; font-size: 1.5rem; }
+        .balloon-bottom-right { bottom: 10px; right: 60px; font-size: 1.5rem; }
 
         h1 {
             font-family: 'Fredoka One', cursive;
             font-size: 2.8rem;
             color: #ffffff;
-            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.4);
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.4), 0 0 30px rgba(255,64,129,0.4);
             margin-bottom: 0.4rem;
             letter-spacing: 1px;
         }
@@ -136,30 +132,53 @@
             font-weight: 600;
         }
 
-        /* Entrance animations */
-        .countdown-section,
-        .hero-section,
-        .gallery-section,
-        .lore-card,
-        .stats-section {
-            opacity: 0;
-            transform: translateY(40px);
+        /* ── Section titles — neon glow ─────────────────────────── */
+        .section-title {
+            font-size: 1.8rem;
+            margin-bottom: 1.2rem;
+            text-align: center;
+            animation: neonGlow 3s ease-in-out infinite;
         }
 
-        .visible {
-            opacity: 1 !important;
-            transform: translateY(0) !important;
-            transition: opacity 0.7s ease, transform 0.7s ease;
+        @keyframes neonGlow {
+            0%, 100% {
+                color: #ff4081;
+                text-shadow: 0 0 8px rgba(255,64,129,0.9),
+                             0 0 24px rgba(255,64,129,0.5),
+                             0 0 50px rgba(255,64,129,0.2);
+            }
+            50% {
+                color: #ffd600;
+                text-shadow: 0 0 8px rgba(255,214,0,0.9),
+                             0 0 24px rgba(255,214,0,0.5),
+                             0 0 50px rgba(255,214,0,0.2);
+            }
         }
 
-        /* Countdown */
+        /* Scroll-driven scale — progressive enhancement (Chrome/Safari/Edge) */
+        @supports (animation-timeline: view()) {
+            .section-title {
+                animation: neonGlow 3s ease-in-out infinite, titleScale linear both;
+                animation-timeline: auto, view();
+                animation-range: normal, entry 0% entry 60%;
+            }
+
+            @keyframes titleScale {
+                from { scale: 0.95; }
+                to   { scale: 1;    }
+            }
+        }
+
+        /* ── Countdown ──────────────────────────────────────────── */
         .countdown-section {
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
             border-radius: 16px;
             padding: 2rem;
             margin-bottom: 2rem;
             text-align: center;
-            border: 1px solid rgba(255, 64, 129, 0.3);
+            border: 1px solid rgba(255, 64, 129, 0.22);
         }
 
         .countdown-section h2 {
@@ -176,17 +195,14 @@
         }
 
         .countdown-box {
-            background: #2d0060;
+            background: rgba(45, 0, 96, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border-radius: 12px;
             padding: 1rem 1.4rem;
             min-width: 90px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
             border: 1px solid rgba(255, 214, 0, 0.3);
-            transition: transform 0.2s ease;
-        }
-
-        .countdown-box:hover {
-            transform: scale(1.08);
         }
 
         .countdown-number {
@@ -210,11 +226,11 @@
             font-size: 2rem;
             color: #ffd600;
             font-weight: bold;
-            text-shadow: 0 0 20px rgba(255, 214, 0, 0.6);
+            text-shadow: 0 0 20px rgba(255,214,0,0.6);
             padding: 1rem;
         }
 
-        /* Hero section */
+        /* ── Hero ───────────────────────────────────────────────── */
         .hero-section {
             display: flex;
             flex-direction: row;
@@ -229,8 +245,8 @@
             min-width: 220px;
             border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 8px 32px rgba(255, 64, 129, 0.4);
-            border: 3px solid rgba(255, 64, 129, 0.5);
+            box-shadow: 0 8px 32px rgba(255,64,129,0.4);
+            border: 3px solid rgba(255,64,129,0.5);
         }
 
         .hero-image img {
@@ -242,6 +258,12 @@
         .hero-text {
             flex: 2;
             min-width: 280px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
         }
 
         .hero-text h2 {
@@ -251,7 +273,7 @@
         }
 
         .hero-text p {
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             color: rgba(255, 255, 255, 0.9);
             margin-bottom: 0.8rem;
         }
@@ -261,17 +283,9 @@
             font-weight: bold;
         }
 
-        /* Photo gallery */
+        /* ── Gallery ────────────────────────────────────────────── */
         .gallery-section {
             margin-bottom: 2rem;
-        }
-
-        .section-title {
-            font-size: 1.8rem;
-            color: #ff4081;
-            margin-bottom: 1.2rem;
-            text-align: center;
-            text-shadow: 0 0 20px rgba(255, 64, 129, 0.4);
         }
 
         .gallery-grid {
@@ -283,16 +297,15 @@
         .gallery-item {
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-            border: 2px solid rgba(255, 255, 255, 0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
         }
 
         .gallery-item:hover {
-            transform: scale(1.08);
-            box-shadow: 0 0 30px rgba(255, 64, 129, 0.7);
-            border-color: rgba(255, 64, 129, 0.5);
+            transform: scale(1.06);
+            box-shadow: 0 0 30px rgba(255,64,129,0.7);
+            border-color: rgba(255,64,129,0.5);
         }
 
         .gallery-item img {
@@ -302,17 +315,19 @@
             display: block;
         }
 
-        /* Lore cards */
+        /* ── Lore cards ─────────────────────────────────────────── */
         .lore-section {
             margin-bottom: 2rem;
         }
 
         .lore-card {
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
             border-radius: 16px;
             padding: 2rem;
             margin-bottom: 1.5rem;
-            border: 1px solid rgba(255, 64, 129, 0.25);
+            border: 1px solid rgba(255, 64, 129, 0.2);
         }
 
         .lore-card h2 {
@@ -328,7 +343,7 @@
             line-height: 1.7;
         }
 
-        /* Trait cards */
+        /* ── Traits ─────────────────────────────────────────────── */
         .traits-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -337,7 +352,9 @@
         }
 
         .trait-card {
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
             border-radius: 12px;
             padding: 1.5rem 1rem;
             text-align: center;
@@ -360,10 +377,9 @@
         .trait-desc {
             font-size: 0.9rem;
             color: rgba(255, 255, 255, 0.78);
-            font-style: normal;
         }
 
-        /* Stats */
+        /* ── Stats ──────────────────────────────────────────────── */
         .stats-section {
             margin-bottom: 2rem;
         }
@@ -375,18 +391,15 @@
         }
 
         .stat-card {
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
             border-radius: 12px;
             padding: 1.2rem 1.4rem;
             flex: 1;
             min-width: 140px;
             text-align: center;
-            border: 1px solid rgba(255, 64, 129, 0.25);
-            transition: transform 0.2s ease;
-        }
-
-        .stat-card:hover {
-            transform: scale(1.08);
+            border: 1px solid rgba(255, 64, 129, 0.2);
         }
 
         .stat-value {
@@ -402,104 +415,87 @@
             color: rgba(255, 255, 255, 0.7);
         }
 
-        /* Lightbox */
+        /* ── Lightbox ───────────────────────────────────────────── */
         .lightbox {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.92);
             z-index: 10000;
             justify-content: center;
             align-items: center;
         }
 
-        .lightbox.active {
-            display: flex;
-        }
+        .lightbox.active { display: flex; }
 
         .lightbox img {
             max-height: 90vh;
             max-width: 90vw;
             border-radius: 8px;
-            box-shadow: 0 0 40px rgba(255, 64, 129, 0.5);
+            box-shadow: 0 0 40px rgba(255,64,129,0.5);
         }
 
         .lightbox-close {
             position: absolute;
-            top: 20px;
-            right: 30px;
+            top: 20px; right: 30px;
             font-size: 2.5rem;
             color: white;
             background: none;
             border: none;
-            cursor: pointer;
             line-height: 1;
             opacity: 0.8;
         }
 
-        .lightbox-close:hover {
-            opacity: 1;
-        }
+        .lightbox-close:hover { opacity: 1; }
 
-        /* Footer */
+        /* ── Footer ─────────────────────────────────────────────── */
         footer {
             text-align: center;
             padding: 1.5rem;
-            background: rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
             border-radius: 12px;
             color: rgba(255, 255, 255, 0.6);
             font-size: 0.95rem;
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        /* Responsive */
+        /* ── Responsive ─────────────────────────────────────────── */
         @media (max-width: 768px) {
-            h1 {
-                font-size: 2rem;
-            }
-
-            .container {
-                padding: 1rem;
-            }
-
-            .hero-section {
-                flex-direction: column;
-            }
-
-            .hero-text {
-                min-width: unset;
-            }
-
-            .gallery-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .traits-grid {
-                grid-template-columns: 1fr;
-            }
+            h1 { font-size: 2rem; }
+            .container { padding: 1rem; }
+            .hero-section { flex-direction: column; }
+            .hero-text { min-width: unset; }
+            .gallery-grid { grid-template-columns: repeat(2, 1fr); }
+            .traits-grid { grid-template-columns: 1fr; }
         }
 
         @media (max-width: 480px) {
-            h1 {
-                font-size: 1.6rem;
-            }
+            h1 { font-size: 1.6rem; }
+            .gallery-grid { grid-template-columns: 1fr; }
+            .stat-card { min-width: 120px; }
+        }
 
-            .gallery-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .stat-card {
-                min-width: 120px;
+        /* Disable 3D tilt on touch/mobile */
+        @media (hover: none) {
+            .stat-card, .lore-card, .trait-card, .countdown-box {
+                transform: none !important;
             }
         }
     </style>
 </head>
 <body>
 
+    <!-- Three.js particle canvas -->
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- Custom paw cursor -->
+    <div id="custom-cursor"></div>
+
     <div class="container">
+
         <header>
             <div class="birthday-decoration balloon-left">🎈</div>
             <div class="birthday-decoration balloon-right">🎈</div>
@@ -549,37 +545,19 @@
         <div class="gallery-section">
             <h2 class="section-title">📸 Nacho Through the Years</h2>
             <div class="gallery-grid">
-                <div class="gallery-item">
-                    <img src="nacho1.jpg" alt="Nacho">
-                </div>
-                <div class="gallery-item">
-                    <img src="nacho_smile.jpg" alt="Nacho smiling">
-                </div>
-                <div class="gallery-item">
-                    <img src="nacho_naps.jpg" alt="Nacho napping">
-                </div>
-                <div class="gallery-item">
-                    <img src="nacho_adventure.jpg" alt="Nacho on adventure">
-                </div>
-                <div class="gallery-item">
-                    <img src="nacho_bday.jpeg" alt="Nacho's birthday">
-                </div>
-                <div class="gallery-item">
-                    <img src="nacho_presents.jpg" alt="Nacho with presents">
-                </div>
-                <div class="gallery-item">
-                    <img src="nacho_christmas_1.jpg" alt="Nacho at Christmas">
-                </div>
-                <div class="gallery-item">
-                    <img src="nacho_christmas_2.jpg" alt="Nacho at Christmas 2">
-                </div>
-                <div class="gallery-item">
-                    <img src="nach_party_hat.jpg" alt="Nacho in party hat">
-                </div>
+                <div class="gallery-item"><img src="nacho1.jpg" alt="Nacho"></div>
+                <div class="gallery-item"><img src="nacho_smile.jpg" alt="Nacho smiling"></div>
+                <div class="gallery-item"><img src="nacho_naps.jpg" alt="Nacho napping"></div>
+                <div class="gallery-item"><img src="nacho_adventure.jpg" alt="Nacho on adventure"></div>
+                <div class="gallery-item"><img src="nacho_bday.jpeg" alt="Nacho's birthday"></div>
+                <div class="gallery-item"><img src="nacho_presents.jpg" alt="Nacho with presents"></div>
+                <div class="gallery-item"><img src="nacho_christmas_1.jpg" alt="Nacho at Christmas"></div>
+                <div class="gallery-item"><img src="nacho_christmas_2.jpg" alt="Nacho at Christmas 2"></div>
+                <div class="gallery-item"><img src="nach_party_hat.jpg" alt="Nacho in party hat"></div>
             </div>
         </div>
 
-        <!-- Lore: Racing History -->
+        <!-- Lore -->
         <div class="lore-section">
             <h2 class="section-title">📖 The Nacho Lore</h2>
 
@@ -588,9 +566,8 @@
                 <p>Before Nacho discovered the noble art of competitive lounging, she walked the hallowed ovals of professional greyhound racing. Her track record was nothing short of legendary — classified, but legendary. Insiders confirm she was very, very fast. One fateful day she retired to pursue her true calling: sleeping on premium furniture and accepting belly rubs from devoted admirers.</p>
             </div>
 
-            <!-- Lore: Personality -->
             <div class="lore-card">
-                <h2>🌟 Personality & Traits</h2>
+                <h2>🌟 Personality &amp; Traits</h2>
                 <div class="traits-grid">
                     <div class="trait-card">
                         <span class="trait-emoji">🎩</span>
@@ -611,7 +588,7 @@
             </div>
         </div>
 
-        <!-- Fun Stats -->
+        <!-- Stats -->
         <div class="stats-section">
             <h2 class="section-title">📊 Nacho by the Numbers</h2>
             <div class="stats-row">
@@ -645,6 +622,7 @@
         <footer>
             &copy; 2026 nachodog.club &mdash; Celebrating 7 Years of Nacho
         </footer>
+
     </div>
 
     <!-- Lightbox -->
@@ -653,144 +631,361 @@
         <img id="lightbox-img" src="" alt="">
     </div>
 
+    <!-- CDN Libraries (synchronous, in order) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r169/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+    (function () {
 
-            // ── Confetti ──────────────────────────────────────────────
-            const colors = ['#ff4081', '#ffd600', '#ff9800', '#9c27b0', '#00bcd4', '#76ff03'];
-            const confettiCount = 80;
+        // ── 1. Three.js Particle Background ──────────────────────────
+        function initThreeJS() {
+            if (typeof THREE === 'undefined') return;
+            try {
+                const canvas = document.getElementById('bg-canvas');
+                const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: false, alpha: false });
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setClearColor(0x0d001a, 1);
 
-            for (let i = 0; i < confettiCount; i++) {
-                const el = document.createElement('div');
-                el.classList.add('confetti');
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                camera.position.z = 60;
 
-                const size = Math.floor(Math.random() * 11) + 8; // 8–18px
-                el.style.width = size + 'px';
-                el.style.height = size + 'px';
+                const COUNT = 600;
+                const positions = new Float32Array(COUNT * 3);
+                const colors    = new Float32Array(COUNT * 3);
 
-                const shape = Math.floor(Math.random() * 3);
-                if (shape === 1) {
-                    el.style.borderRadius = '50%';
-                } else if (shape === 2) {
-                    el.style.clipPath = 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)';
+                for (let i = 0; i < COUNT; i++) {
+                    positions[i * 3]     = (Math.random() - 0.5) * 200;
+                    positions[i * 3 + 1] = (Math.random() - 0.5) * 200;
+                    positions[i * 3 + 2] = (Math.random() - 0.5) * 100;
+
+                    const c = Math.random();
+                    if (c < 0.35) {
+                        // pink
+                        colors[i*3] = 1.0; colors[i*3+1] = 0.25; colors[i*3+2] = 0.50;
+                    } else if (c < 0.65) {
+                        // gold
+                        colors[i*3] = 1.0; colors[i*3+1] = 0.84; colors[i*3+2] = 0.00;
+                    } else {
+                        // lavender
+                        colors[i*3] = 0.85; colors[i*3+1] = 0.70; colors[i*3+2] = 1.00;
+                    }
                 }
 
-                const animation = i % 2 === 0 ? 'confetti-fall-left' : 'confetti-fall-right';
-                el.style.animation = animation + ' linear infinite';
-                el.style.left = Math.random() * 100 + 'vw';
-                el.style.animationDelay = (Math.random() * 8) + 's';
-                el.style.animationDuration = (Math.random() * 4 + 4) + 's';
-                el.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                document.body.appendChild(el);
-            }
+                const geo = new THREE.BufferGeometry();
+                geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geo.setAttribute('color',    new THREE.BufferAttribute(colors,    3));
 
-            // ── Entrance animations (Intersection Observer) ───────────
-            const animatedEls = document.querySelectorAll(
-                '.countdown-section, .hero-section, .gallery-section, .lore-card, .stats-section'
-            );
-            const delays = [0, 0.1, 0.15, 0.2, 0.1, 0.15, 0.2, 0.1, 0.15];
-
-            const entranceObserver = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('visible');
-                        entranceObserver.unobserve(entry.target);
-                    }
+                const mat = new THREE.PointsMaterial({
+                    size: 1.8,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.85,
+                    sizeAttenuation: true
                 });
-            }, { threshold: 0.1 });
 
-            animatedEls.forEach((el, i) => {
-                el.style.transitionDelay = (delays[i] || 0) + 's';
-                entranceObserver.observe(el);
+                const particles = new THREE.Points(geo, mat);
+                scene.add(particles);
+
+                let t = 0;
+                (function tick() {
+                    requestAnimationFrame(tick);
+                    t += 0.005;
+                    particles.rotation.y = t * 0.04;
+                    particles.rotation.x = Math.sin(t * 0.025) * 0.08;
+                    camera.position.x = Math.sin(t * 0.18) * 2.5;
+                    camera.position.y = Math.cos(t * 0.12) * 1.5;
+                    camera.lookAt(scene.position);
+                    renderer.render(scene, camera);
+                })();
+
+                window.addEventListener('resize', function () {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                });
+            } catch (e) {
+                // WebGL unavailable — CSS gradient fallback active
+            }
+        }
+
+        // ── 2. GSAP ScrollTrigger Animations ─────────────────────────
+        function initGSAP() {
+            if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') return;
+            gsap.registerPlugin(ScrollTrigger);
+
+            // Header: dramatic scale-in on load
+            gsap.from('header', {
+                scale: 0.85, opacity: 0, duration: 1.0,
+                ease: 'power3.out', delay: 0.2
             });
 
-            // ── Stats counter animation ───────────────────────────────
-            const statValues = document.querySelectorAll('.stat-value[data-target]');
-            let statsAnimated = false;
+            // Sections slide up on scroll
+            ['.countdown-section', '.hero-section', '.gallery-section',
+             '.lore-section', '.stats-section'
+            ].forEach(function (sel) {
+                gsap.from(sel, {
+                    y: 60, opacity: 0, duration: 0.8, ease: 'power3.out',
+                    scrollTrigger: { trigger: sel, start: 'top 88%', once: true }
+                });
+            });
 
-            const statsObserver = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting && !statsAnimated) {
-                        statsAnimated = true;
-                        statValues.forEach(el => {
-                            const target = parseInt(el.dataset.target, 10);
-                            const prefix = el.dataset.prefix || '';
-                            const suffix = el.dataset.suffix || '';
-                            const duration = 1000;
-                            const startTime = performance.now();
+            // Staggered children
+            gsap.from('.stat-card', {
+                y: 40, opacity: 0, duration: 0.6, stagger: 0.10, ease: 'power3.out',
+                scrollTrigger: { trigger: '.stats-section', start: 'top 85%', once: true }
+            });
 
+            gsap.from('.gallery-item', {
+                y: 30, opacity: 0, duration: 0.5, stagger: 0.07, ease: 'power2.out',
+                scrollTrigger: { trigger: '.gallery-section', start: 'top 85%', once: true }
+            });
+
+            gsap.from('.trait-card', {
+                y: 30, opacity: 0, duration: 0.6, stagger: 0.12, ease: 'power3.out',
+                scrollTrigger: { trigger: '.traits-grid', start: 'top 85%', once: true }
+            });
+        }
+
+        // ── 3. H1 Letter-by-Letter Reveal ────────────────────────────
+        function initH1LetterReveal() {
+            if (typeof gsap === 'undefined') return;
+            var h1 = document.querySelector('h1');
+            if (!h1) return;
+
+            var text = h1.textContent;
+            h1.innerHTML = '';
+
+            Array.from(text).forEach(function (char) {
+                var span = document.createElement('span');
+                span.style.display = 'inline-block';
+                span.style.whiteSpace = 'pre';
+                span.textContent = char;
+                h1.appendChild(span);
+            });
+
+            gsap.from(h1.querySelectorAll('span'), {
+                y: -40, opacity: 0, rotationX: 90,
+                transformOrigin: '0% 50% -20px',
+                duration: 0.4, stagger: 0.04,
+                ease: 'back.out(1.7)', delay: 0.4
+            });
+        }
+
+        // ── 4. 3D Card Tilt ───────────────────────────────────────────
+        function initCardTilt() {
+            if (window.matchMedia('(hover: none)').matches) return;
+
+            var cards = document.querySelectorAll(
+                '.stat-card, .lore-card, .trait-card, .countdown-box'
+            );
+
+            cards.forEach(function (card) {
+                card.addEventListener('mouseenter', function () {
+                    card.style.transition = 'transform 0.1s ease, box-shadow 0.15s ease';
+                });
+
+                card.addEventListener('mousemove', function (e) {
+                    var r = card.getBoundingClientRect();
+                    var rx = -((e.clientY - (r.top  + r.height / 2)) / (r.height / 2)) * 12;
+                    var ry =  ((e.clientX - (r.left + r.width  / 2)) / (r.width  / 2)) * 12;
+                    card.style.transform =
+                        'perspective(1000px) rotateX(' + rx + 'deg) rotateY(' + ry + 'deg) scale3d(1.03,1.03,1.03)';
+                    card.style.boxShadow =
+                        '0 20px 40px rgba(0,0,0,0.35), 0 0 20px rgba(255,64,129,0.25)';
+                });
+
+                card.addEventListener('mouseleave', function () {
+                    card.style.transition = 'transform 0.5s ease, box-shadow 0.4s ease';
+                    card.style.transform  = '';
+                    card.style.boxShadow  = '';
+                });
+            });
+        }
+
+        // ── 5. Custom Paw Cursor + Sparkle Trail ─────────────────────
+        function initCustomCursor() {
+            if (window.matchMedia('(pointer: coarse)').matches) return;
+
+            var cursor = document.getElementById('custom-cursor');
+            cursor.innerHTML =
+                '<svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" width="36" height="36">' +
+                  '<ellipse cx="20" cy="27" rx="10" ry="8"  fill="#ff4081" opacity="0.92"/>' +
+                  '<circle  cx="11" cy="16" r="5"           fill="#ff4081" opacity="0.85"/>' +
+                  '<circle  cx="29" cy="16" r="5"           fill="#ff4081" opacity="0.85"/>' +
+                  '<circle  cx="15" cy="9"  r="4"           fill="#ffd600" opacity="0.90"/>' +
+                  '<circle  cx="25" cy="9"  r="4"           fill="#ffd600" opacity="0.90"/>' +
+                '</svg>';
+
+            var curX = -100, curY = -100;
+            var tgtX = -100, tgtY = -100;
+            var lastSparkle = 0;
+            var sparkleColors = ['#ff4081', '#ffd600', '#ff9800', '#c084fc', '#ff6eb4'];
+
+            document.addEventListener('mousemove', function (e) {
+                tgtX = e.clientX;
+                tgtY = e.clientY;
+                var now = performance.now();
+                if (now - lastSparkle > 30) {
+                    spawnSparkle(e.clientX, e.clientY);
+                    lastSparkle = now;
+                }
+            });
+
+            (function trackCursor() {
+                curX += (tgtX - curX) * 0.18;
+                curY += (tgtY - curY) * 0.18;
+                cursor.style.left = curX + 'px';
+                cursor.style.top  = curY + 'px';
+                requestAnimationFrame(trackCursor);
+            })();
+
+            function spawnSparkle(x, y) {
+                var el = document.createElement('div');
+                el.className = 'sparkle';
+                var size = Math.random() * 7 + 4;
+                el.style.left       = (x + (Math.random() - 0.5) * 24) + 'px';
+                el.style.top        = (y + (Math.random() - 0.5) * 24) + 'px';
+                el.style.width      = size + 'px';
+                el.style.height     = size + 'px';
+                el.style.background = sparkleColors[Math.floor(Math.random() * sparkleColors.length)];
+                document.body.appendChild(el);
+                setTimeout(function () { el.remove(); }, 650);
+            }
+        }
+
+        // ── 6. canvas-confetti ────────────────────────────────────────
+        function initConfetti() {
+            if (typeof confetti === 'undefined') return;
+
+            var palette = ['#ff4081', '#ffd600', '#9c27b0', '#00e676', '#ff9800'];
+
+            // Burst from both sides
+            setTimeout(function () {
+                confetti({ particleCount: 120, spread: 70, origin: { x: 0.2, y: 0.6 }, colors: palette });
+                confetti({ particleCount: 120, spread: 70, origin: { x: 0.8, y: 0.6 }, colors: palette });
+            }, 600);
+
+            // Ambient drizzle after burst settles
+            function drizzle() {
+                confetti({
+                    particleCount: 3,
+                    angle: 90,
+                    spread: 55,
+                    origin: { x: Math.random(), y: -0.02 },
+                    colors: ['#ff4081', '#ffd600', '#c084fc'],
+                    gravity: 0.5,
+                    ticks: 220,
+                    scalar: 0.85
+                });
+                setTimeout(drizzle, 450);
+            }
+            setTimeout(drizzle, 3500);
+        }
+
+        // ── 7. Stats Counter Animation ────────────────────────────────
+        function initStatsCounter() {
+            var statValues = document.querySelectorAll('.stat-value[data-target]');
+            var animated   = false;
+
+            var observer = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (entry.isIntersecting && !animated) {
+                        animated = true;
+                        statValues.forEach(function (el) {
+                            var target   = parseInt(el.dataset.target, 10);
+                            var prefix   = el.dataset.prefix || '';
+                            var suffix   = el.dataset.suffix || '';
+                            var start    = performance.now();
+                            var duration = 1000;
                             function tick(now) {
-                                const elapsed = now - startTime;
-                                const progress = Math.min(elapsed / duration, 1);
-                                const current = Math.floor(progress * target);
-                                el.textContent = prefix + current + suffix;
-                                if (progress < 1) {
-                                    requestAnimationFrame(tick);
-                                } else {
-                                    el.textContent = prefix + target + suffix;
-                                }
+                                var p = Math.min((now - start) / duration, 1);
+                                el.textContent = prefix + Math.floor(p * target) + suffix;
+                                if (p < 1) requestAnimationFrame(tick);
+                                else el.textContent = prefix + target + suffix;
                             }
-
                             requestAnimationFrame(tick);
                         });
                     }
                 });
             }, { threshold: 0.3 });
 
-            const statsSection = document.querySelector('.stats-section');
-            if (statsSection) statsObserver.observe(statsSection);
+            var statsSection = document.querySelector('.stats-section');
+            if (statsSection) observer.observe(statsSection);
+        }
 
-            // ── Gallery Lightbox ──────────────────────────────────────
-            const lightbox = document.getElementById('lightbox');
-            const lightboxImg = document.getElementById('lightbox-img');
-            const lightboxClose = document.getElementById('lightbox-close');
+        // ── 8. Gallery Lightbox ───────────────────────────────────────
+        function initLightbox() {
+            var lightbox      = document.getElementById('lightbox');
+            var lightboxImg   = document.getElementById('lightbox-img');
+            var lightboxClose = document.getElementById('lightbox-close');
 
-            document.querySelectorAll('.gallery-item img').forEach(img => {
-                img.addEventListener('click', () => {
+            document.querySelectorAll('.gallery-item img').forEach(function (img) {
+                img.addEventListener('click', function () {
                     lightboxImg.src = img.src;
                     lightboxImg.alt = img.alt;
                     lightbox.classList.add('active');
                 });
             });
 
-            lightbox.addEventListener('click', (e) => {
+            lightbox.addEventListener('click', function (e) {
                 if (e.target === lightbox) lightbox.classList.remove('active');
             });
-
-            lightboxClose.addEventListener('click', () => {
-                lightbox.classList.remove('active');
-            });
-
-            document.addEventListener('keydown', (e) => {
+            lightboxClose.addEventListener('click', function () { lightbox.classList.remove('active'); });
+            document.addEventListener('keydown', function (e) {
                 if (e.key === 'Escape') lightbox.classList.remove('active');
             });
+        }
 
-        });
+        // ── 9. Countdown Timer ────────────────────────────────────────
+        function initCountdown() {
+            var target = new Date('Apr 6, 2026 00:00:00').getTime();
 
-        // Countdown timer
-        const countDownDate = new Date("Apr 6, 2026 00:00:00").getTime();
-
-        const countdownTimer = setInterval(function() {
-            const now = new Date().getTime();
-            const distance = countDownDate - now;
-
-            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-            document.getElementById("countdown-days").textContent = days.toString().padStart(2, '0');
-            document.getElementById("countdown-hours").textContent = hours.toString().padStart(2, '0');
-            document.getElementById("countdown-minutes").textContent = minutes.toString().padStart(2, '0');
-            document.getElementById("countdown-seconds").textContent = seconds.toString().padStart(2, '0');
-
-            if (distance < 0) {
-                clearInterval(countdownTimer);
-                document.getElementById("countdown-timer").style.display = "none";
-                const msg = document.getElementById("birthday-message");
-                msg.style.display = "block";
+            function update() {
+                var diff = target - Date.now();
+                if (diff < 0) {
+                    document.getElementById('countdown-timer').style.display = 'none';
+                    document.getElementById('birthday-message').style.display = 'block';
+                    return;
+                }
+                var d = Math.floor(diff / 86400000);
+                var h = Math.floor((diff % 86400000) / 3600000);
+                var m = Math.floor((diff % 3600000) / 60000);
+                var s = Math.floor((diff % 60000) / 1000);
+                document.getElementById('countdown-days').textContent    = String(d).padStart(2, '0');
+                document.getElementById('countdown-hours').textContent   = String(h).padStart(2, '0');
+                document.getElementById('countdown-minutes').textContent = String(m).padStart(2, '0');
+                document.getElementById('countdown-seconds').textContent = String(s).padStart(2, '0');
             }
-        }, 1000);
+
+            update();
+            setInterval(update, 1000);
+        }
+
+        // ── Bootstrap ─────────────────────────────────────────────────
+        function init() {
+            initThreeJS();
+            initH1LetterReveal();
+            initGSAP();
+            initCardTilt();
+            initCustomCursor();
+            initConfetti();
+            initStatsCounter();
+            initLightbox();
+            initCountdown();
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+
+    })();
     </script>
 </body>
 </html>
