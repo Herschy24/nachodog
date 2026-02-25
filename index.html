@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nacho's 7th Birthday! 🎉</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -13,26 +16,30 @@
         }
 
         body {
-            background: linear-gradient(135deg, #1a0030, #4a0080);
+            background: linear-gradient(135deg, #1a0030, #6a0080, #3d007a, #4a0080);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease-in-out infinite;
             min-height: 100vh;
             color: #ffffff;
             line-height: 1.6;
             overflow-x: hidden;
         }
 
+        @keyframes gradientShift {
+            0%   { background-position: 0% 50%; }
+            50%  { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
         /* Confetti */
         .confetti {
             position: fixed;
             top: -20px;
-            width: 12px;
-            height: 12px;
-            border-radius: 2px;
             z-index: 9999;
             pointer-events: none;
-            animation: confetti-fall linear infinite;
         }
 
-        @keyframes confetti-fall {
+        @keyframes confetti-fall-left {
             0% {
                 transform: translateY(-20px) rotate(0deg) translateX(0);
                 opacity: 1;
@@ -41,7 +48,21 @@
                 opacity: 1;
             }
             100% {
-                transform: translateY(110vh) rotate(720deg) translateX(40px);
+                transform: translateY(110vh) rotate(720deg) translateX(-60px);
+                opacity: 0;
+            }
+        }
+
+        @keyframes confetti-fall-right {
+            0% {
+                transform: translateY(-20px) rotate(0deg) translateX(0);
+                opacity: 1;
+            }
+            80% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(110vh) rotate(720deg) translateX(60px);
                 opacity: 0;
             }
         }
@@ -64,6 +85,12 @@
             box-shadow: 0 8px 32px rgba(255, 64, 129, 0.4);
             position: relative;
             overflow: hidden;
+            animation: headerPulse 4s ease-in-out infinite;
+        }
+
+        @keyframes headerPulse {
+            0%, 100% { box-shadow: 0 8px 32px rgba(255, 64, 129, 0.4); }
+            50%       { box-shadow: 0 8px 48px rgba(255, 64, 129, 0.8); }
         }
 
         .birthday-decoration {
@@ -95,6 +122,7 @@
         }
 
         h1 {
+            font-family: 'Fredoka One', cursive;
             font-size: 2.8rem;
             color: #ffffff;
             text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.4);
@@ -106,6 +134,22 @@
             font-size: 1.3rem;
             color: #ffd600;
             font-weight: 600;
+        }
+
+        /* Entrance animations */
+        .countdown-section,
+        .hero-section,
+        .gallery-section,
+        .lore-card,
+        .stats-section {
+            opacity: 0;
+            transform: translateY(40px);
+        }
+
+        .visible {
+            opacity: 1 !important;
+            transform: translateY(0) !important;
+            transition: opacity 0.7s ease, transform 0.7s ease;
         }
 
         /* Countdown */
@@ -237,11 +281,12 @@
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
             border: 2px solid rgba(255, 255, 255, 0.1);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
         }
 
         .gallery-item:hover {
             transform: scale(1.05);
-            box-shadow: 0 8px 32px rgba(255, 64, 129, 0.5);
+            box-shadow: 0 0 30px rgba(255, 64, 129, 0.7);
             border-color: rgba(255, 64, 129, 0.5);
         }
 
@@ -345,6 +390,48 @@
         .stat-label {
             font-size: 0.85rem;
             color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Lightbox */
+        .lightbox {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .lightbox.active {
+            display: flex;
+        }
+
+        .lightbox img {
+            max-height: 90vh;
+            max-width: 90vw;
+            border-radius: 8px;
+            box-shadow: 0 0 40px rgba(255, 64, 129, 0.5);
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 2.5rem;
+            color: white;
+            background: none;
+            border: none;
+            cursor: pointer;
+            line-height: 1;
+            opacity: 0.8;
+        }
+
+        .lightbox-close:hover {
+            opacity: 1;
         }
 
         /* Footer */
@@ -519,19 +606,19 @@
             <h2 class="section-title">📊 Nacho by the Numbers</h2>
             <div class="stats-row">
                 <div class="stat-card">
-                    <span class="stat-value">🏃 ~45 mph</span>
+                    <span class="stat-value" data-target="45" data-prefix="🏃 ~" data-suffix=" mph">🏃 ~45 mph</span>
                     <div class="stat-label">Top Speed</div>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-value">🎂 7</span>
+                    <span class="stat-value" data-target="7" data-prefix="🎂 ">🎂 7</span>
                     <div class="stat-label">Birthday #</div>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-value">💤 ~16 hrs</span>
+                    <span class="stat-value" data-target="16" data-prefix="💤 ~" data-suffix=" hrs">💤 ~16 hrs</span>
                     <div class="stat-label">Daily Nap Hours</div>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-value">🧸 1</span>
+                    <span class="stat-value" data-target="1" data-prefix="🧸 ">🧸 1</span>
                     <div class="stat-label">Toys Survived 2025 (Sam's Frog)</div>
                 </div>
                 <div class="stat-card">
@@ -550,22 +637,124 @@
         </footer>
     </div>
 
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox">
+        <button class="lightbox-close" id="lightbox-close">&times;</button>
+        <img id="lightbox-img" src="" alt="">
+    </div>
+
     <script>
-        // Confetti generator
         document.addEventListener('DOMContentLoaded', function() {
+
+            // ── Confetti ──────────────────────────────────────────────
             const colors = ['#ff4081', '#ffd600', '#ff9800', '#9c27b0', '#00bcd4', '#76ff03'];
-            const confettiCount = 40;
+            const confettiCount = 80;
 
             for (let i = 0; i < confettiCount; i++) {
                 const el = document.createElement('div');
                 el.classList.add('confetti');
+
+                const size = Math.floor(Math.random() * 11) + 8; // 8–18px
+                el.style.width = size + 'px';
+                el.style.height = size + 'px';
+
+                const shape = Math.floor(Math.random() * 3);
+                if (shape === 1) {
+                    el.style.borderRadius = '50%';
+                } else if (shape === 2) {
+                    el.style.clipPath = 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)';
+                }
+
+                const animation = i % 2 === 0 ? 'confetti-fall-left' : 'confetti-fall-right';
+                el.style.animation = animation + ' linear infinite';
                 el.style.left = Math.random() * 100 + 'vw';
                 el.style.animationDelay = (Math.random() * 8) + 's';
                 el.style.animationDuration = (Math.random() * 4 + 4) + 's';
                 el.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                el.style.transform = 'rotate(' + (Math.random() * 360) + 'deg)';
                 document.body.appendChild(el);
             }
+
+            // ── Entrance animations (Intersection Observer) ───────────
+            const animatedEls = document.querySelectorAll(
+                '.countdown-section, .hero-section, .gallery-section, .lore-card, .stats-section'
+            );
+            const delays = [0, 0.1, 0.15, 0.2, 0.1, 0.15, 0.2, 0.1, 0.15];
+
+            const entranceObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        entranceObserver.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            animatedEls.forEach((el, i) => {
+                el.style.transitionDelay = (delays[i] || 0) + 's';
+                entranceObserver.observe(el);
+            });
+
+            // ── Stats counter animation ───────────────────────────────
+            const statValues = document.querySelectorAll('.stat-value[data-target]');
+            let statsAnimated = false;
+
+            const statsObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting && !statsAnimated) {
+                        statsAnimated = true;
+                        statValues.forEach(el => {
+                            const target = parseInt(el.dataset.target, 10);
+                            const prefix = el.dataset.prefix || '';
+                            const suffix = el.dataset.suffix || '';
+                            const duration = 1000;
+                            const startTime = performance.now();
+
+                            function tick(now) {
+                                const elapsed = now - startTime;
+                                const progress = Math.min(elapsed / duration, 1);
+                                const current = Math.floor(progress * target);
+                                el.textContent = prefix + current + suffix;
+                                if (progress < 1) {
+                                    requestAnimationFrame(tick);
+                                } else {
+                                    el.textContent = prefix + target + suffix;
+                                }
+                            }
+
+                            requestAnimationFrame(tick);
+                        });
+                    }
+                });
+            }, { threshold: 0.3 });
+
+            const statsSection = document.querySelector('.stats-section');
+            if (statsSection) statsObserver.observe(statsSection);
+
+            // ── Gallery Lightbox ──────────────────────────────────────
+            const lightbox = document.getElementById('lightbox');
+            const lightboxImg = document.getElementById('lightbox-img');
+            const lightboxClose = document.getElementById('lightbox-close');
+
+            document.querySelectorAll('.gallery-item img').forEach(img => {
+                img.addEventListener('click', () => {
+                    lightboxImg.src = img.src;
+                    lightboxImg.alt = img.alt;
+                    lightbox.classList.add('active');
+                });
+            });
+
+            lightbox.addEventListener('click', (e) => {
+                if (e.target === lightbox) lightbox.classList.remove('active');
+            });
+
+            lightboxClose.addEventListener('click', () => {
+                lightbox.classList.remove('active');
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') lightbox.classList.remove('active');
+            });
+
         });
 
         // Countdown timer
