@@ -485,18 +485,6 @@
             }
         }
 
-        /* ── Dog Chaser ─────────────────────────────────────────────── */
-        #dog-chaser {
-            position: fixed;
-            pointer-events: none;
-            z-index: 9000;
-            will-change: left, top, transform;
-            filter: drop-shadow(0 2px 6px rgba(255,64,129,0.4));
-        }
-
-        @media (pointer: coarse) {
-            #dog-chaser { display: none; }
-        }
 
         /* ── Racing Record ───────────────────────────────────────────── */
         .racing-record-section { margin-bottom: 2rem; }
@@ -1092,75 +1080,6 @@
             });
         }
 
-        // ── 9. Greyhound Mouse Chaser ────────────────────────────────
-        function initGreyhoundChaser() {
-            if (window.matchMedia('(pointer: coarse)').matches) return;
-
-            var el = document.createElement('div');
-            el.id = 'dog-chaser';
-            el.innerHTML =
-                '<svg viewBox="0 0 120 70" xmlns="http://www.w3.org/2000/svg" width="90" height="53">' +
-                  // Body — arched greyhound silhouette
-                  '<path d="M10 48 C10 48 8 38 14 30 C20 22 32 18 44 17 C56 16 68 20 78 18 C88 16 96 12 102 14 C108 16 110 22 108 28 C106 34 100 36 96 40 C92 44 88 52 80 54 C72 56 60 54 50 55 C40 56 28 58 20 56 C12 54 10 48 10 48 Z" fill="#111"/>' +
-                  // Head & snout
-                  '<path d="M102 14 C108 12 114 14 116 18 C118 22 114 26 110 27 C106 28 102 26 100 22 C98 18 98 15 102 14 Z" fill="#111"/>' +
-                  '<path d="M114 18 C118 17 122 20 121 24 C120 27 116 27 114 25 C112 23 112 19 114 18 Z" fill="#111"/>' +
-                  // Ear
-                  '<path d="M106 14 C109 10 112 9 113 12 C114 15 110 18 107 17 Z" fill="#1a1a1a"/>' +
-                  // Eye
-                  '<circle cx="112" cy="19" r="2.2" fill="white"/>' +
-                  '<circle cx="112.6" cy="19" r="1" fill="#333"/>' +
-                  // Front legs (extended forward)
-                  '<path d="M80 54 L78 66 L82 66 L84 54 Z" fill="#111"/>' +
-                  '<path d="M70 55 L68 67 L72 67 L74 55 Z" fill="#111"/>' +
-                  // Back legs (extended backward)
-                  '<path d="M26 55 L22 67 L26 67 L28 55 Z" fill="#111"/>' +
-                  '<path d="M36 55 L33 67 L37 67 L38 55 Z" fill="#111"/>' +
-                  // Tail — curves upward
-                  '<path d="M12 46 C8 42 4 36 6 28 C8 22 12 20 14 24" stroke="#111" stroke-width="3" fill="none" stroke-linecap="round"/>' +
-                '</svg>';
-            document.body.appendChild(el);
-
-            var dogX = -200, dogY = -200;
-            var vx = 0, vy = 0;
-            var mouseX = -200, mouseY = -200;
-            var facingLeft = false;
-            var started = false;
-
-            document.addEventListener('mousemove', function (e) {
-                mouseX = e.clientX;
-                mouseY = e.clientY;
-                if (!started) {
-                    dogX = e.clientX - 100;
-                    dogY = e.clientY;
-                    started = true;
-                }
-            });
-
-            (function chase() {
-                requestAnimationFrame(chase);
-                if (!started) return;
-
-                var ax = (mouseX - dogX) * 0.055;
-                var ay = (mouseY - dogY) * 0.055;
-                vx = (vx + ax) * 0.80;
-                vy = (vy + ay) * 0.80;
-                dogX += vx;
-                dogY += vy;
-
-                var speed = Math.sqrt(vx * vx + vy * vy);
-                var bob = Math.sin(Date.now() * 0.018) * Math.min(speed, 5);
-
-                if (vx < -0.5) facingLeft = true;
-                else if (vx > 0.5) facingLeft = false;
-
-                var scaleX = facingLeft ? -1 : 1;
-                el.style.left = dogX + 'px';
-                el.style.top  = (dogY + bob) + 'px';
-                el.style.transform = 'translate(-50%, -50%) scaleX(' + scaleX + ')';
-            })();
-        }
-
         // ── 10. Countdown Timer ───────────────────────────────────────
         function initCountdown() {
             var target = new Date('Apr 6, 2026 00:00:00').getTime();
@@ -1196,7 +1115,6 @@
             initConfetti();
             initStatsCounter();
             initLightbox();
-            initGreyhoundChaser();
             initCountdown();
         }
 
