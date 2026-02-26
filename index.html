@@ -484,6 +484,92 @@
                 transform: none !important;
             }
         }
+
+        /* ── Dog Chaser ─────────────────────────────────────────────── */
+        #dog-chaser {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9000;
+            will-change: left, top, transform;
+            filter: drop-shadow(0 2px 6px rgba(255,64,129,0.4));
+        }
+
+        @media (pointer: coarse) {
+            #dog-chaser { display: none; }
+        }
+
+        /* ── Racing Record ───────────────────────────────────────────── */
+        .racing-record-section { margin-bottom: 2rem; }
+
+        .race-bio-strip {
+            display: flex; flex-wrap: wrap; gap: 1rem;
+            justify-content: center;
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 0.9rem 1.2rem;
+            margin-bottom: 1.2rem;
+            font-size: 0.95rem; color: rgba(255,255,255,0.8);
+        }
+
+        .race-summary-row {
+            margin-bottom: 1.2rem;
+        }
+
+        .race-highlights {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .race-highlight-card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 1.1rem 1.3rem;
+        }
+
+        .race-highlight-card.gold {
+            background: rgba(255,214,0,0.07);
+            border-color: rgba(255,214,0,0.25);
+        }
+
+        .race-highlight-card .rh-label {
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #ff4081;
+            font-weight: 600;
+            margin-bottom: 0.35rem;
+        }
+
+        .race-highlight-card.gold .rh-label { color: #ffd600; }
+
+        .race-highlight-card .rh-main {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 0.2rem;
+        }
+
+        .race-highlight-card .rh-sub {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.65);
+        }
+
+        .race-callout {
+            text-align: center;
+            background: rgba(255,214,0,0.08);
+            border: 1px solid rgba(255,214,0,0.25);
+            border-radius: 12px;
+            padding: 0.9rem;
+            margin: 1.2rem 0 0;
+            font-size: 0.95rem; color: #ffd600;
+        }
     </style>
 </head>
 <body>
@@ -585,6 +671,71 @@
                         <div class="trait-desc">Patience of a saint, heart of a teddy bear</div>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Racing Record -->
+        <div class="racing-record-section">
+            <h2 class="section-title">🏁 Official Racing Record</h2>
+
+            <!-- Bio strip -->
+            <div class="race-bio-strip">
+                <span>🐾 Hot Grille × Tzar Norma</span>
+                <span>🎂 Born 06/04/2019</span>
+                <span>🏋️ Trainer: John McCallum</span>
+                <span>📍 Craigieburn, VIC</span>
+            </div>
+
+            <!-- Career summary cards -->
+            <div class="stats-row race-summary-row">
+                <div class="stat-card">
+                    <span class="stat-value">27</span>
+                    <div class="stat-label">Starts</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value">4</span>
+                    <div class="stat-label">Wins</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value">4</span>
+                    <div class="stat-label">Places</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value">15%</span>
+                    <div class="stat-label">Win Rate</div>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value">$4,770</span>
+                    <div class="stat-label">Prize Money</div>
+                </div>
+            </div>
+
+            <!-- Highlights -->
+            <div class="race-highlights">
+                <div class="race-highlight-card gold">
+                    <div class="rh-label">🎂 Birthday Win</div>
+                    <div class="rh-main">Won on her 2nd birthday</div>
+                    <div class="rh-sub">06/04/21 · HVL · 350m · Beat Barunga Bullet at $14</div>
+                </div>
+                <div class="race-highlight-card gold">
+                    <div class="rh-label">⚡ Best Time</div>
+                    <div class="rh-main">16.96 sec over 300m</div>
+                    <div class="rh-sub">28/09/21 · Healesville · Rated "Fast" · Won 🏆</div>
+                </div>
+                <div class="race-highlight-card">
+                    <div class="rh-label">🐾 Famous Rival</div>
+                    <div class="rh-main">Raced against Maverick Nacho</div>
+                    <div class="rh-sub">03/10/21 · HVL · 350m · We don't talk about the result</div>
+                </div>
+                <div class="race-highlight-card">
+                    <div class="rh-label">🏠 Home Track</div>
+                    <div class="rh-main">Healesville (HVL), Victoria</div>
+                    <div class="rh-sub">Career span: March 2021 – October 2022</div>
+                </div>
+            </div>
+
+            <div class="race-callout">
+                🎂 Won on her 2nd birthday · ⚡ 16.96 sec personal best · 🐾 Once raced a dog named "Maverick Nacho"
             </div>
         </div>
 
@@ -726,7 +877,7 @@
 
             // Sections slide up on scroll
             ['.countdown-section', '.hero-section', '.gallery-section',
-             '.lore-section', '.stats-section'
+             '.lore-section', '.racing-record-section', '.stats-section'
             ].forEach(function (sel) {
                 gsap.from(sel, {
                     y: 60, opacity: 0, duration: 0.8, ease: 'power3.out',
@@ -941,7 +1092,76 @@
             });
         }
 
-        // ── 9. Countdown Timer ────────────────────────────────────────
+        // ── 9. Greyhound Mouse Chaser ────────────────────────────────
+        function initGreyhoundChaser() {
+            if (window.matchMedia('(pointer: coarse)').matches) return;
+
+            var el = document.createElement('div');
+            el.id = 'dog-chaser';
+            el.innerHTML =
+                '<svg viewBox="0 0 120 70" xmlns="http://www.w3.org/2000/svg" width="90" height="53">' +
+                  // Body — arched greyhound silhouette
+                  '<path d="M10 48 C10 48 8 38 14 30 C20 22 32 18 44 17 C56 16 68 20 78 18 C88 16 96 12 102 14 C108 16 110 22 108 28 C106 34 100 36 96 40 C92 44 88 52 80 54 C72 56 60 54 50 55 C40 56 28 58 20 56 C12 54 10 48 10 48 Z" fill="#111"/>' +
+                  // Head & snout
+                  '<path d="M102 14 C108 12 114 14 116 18 C118 22 114 26 110 27 C106 28 102 26 100 22 C98 18 98 15 102 14 Z" fill="#111"/>' +
+                  '<path d="M114 18 C118 17 122 20 121 24 C120 27 116 27 114 25 C112 23 112 19 114 18 Z" fill="#111"/>' +
+                  // Ear
+                  '<path d="M106 14 C109 10 112 9 113 12 C114 15 110 18 107 17 Z" fill="#1a1a1a"/>' +
+                  // Eye
+                  '<circle cx="112" cy="19" r="2.2" fill="white"/>' +
+                  '<circle cx="112.6" cy="19" r="1" fill="#333"/>' +
+                  // Front legs (extended forward)
+                  '<path d="M80 54 L78 66 L82 66 L84 54 Z" fill="#111"/>' +
+                  '<path d="M70 55 L68 67 L72 67 L74 55 Z" fill="#111"/>' +
+                  // Back legs (extended backward)
+                  '<path d="M26 55 L22 67 L26 67 L28 55 Z" fill="#111"/>' +
+                  '<path d="M36 55 L33 67 L37 67 L38 55 Z" fill="#111"/>' +
+                  // Tail — curves upward
+                  '<path d="M12 46 C8 42 4 36 6 28 C8 22 12 20 14 24" stroke="#111" stroke-width="3" fill="none" stroke-linecap="round"/>' +
+                '</svg>';
+            document.body.appendChild(el);
+
+            var dogX = -200, dogY = -200;
+            var vx = 0, vy = 0;
+            var mouseX = -200, mouseY = -200;
+            var facingLeft = false;
+            var started = false;
+
+            document.addEventListener('mousemove', function (e) {
+                mouseX = e.clientX;
+                mouseY = e.clientY;
+                if (!started) {
+                    dogX = e.clientX - 100;
+                    dogY = e.clientY;
+                    started = true;
+                }
+            });
+
+            (function chase() {
+                requestAnimationFrame(chase);
+                if (!started) return;
+
+                var ax = (mouseX - dogX) * 0.055;
+                var ay = (mouseY - dogY) * 0.055;
+                vx = (vx + ax) * 0.80;
+                vy = (vy + ay) * 0.80;
+                dogX += vx;
+                dogY += vy;
+
+                var speed = Math.sqrt(vx * vx + vy * vy);
+                var bob = Math.sin(Date.now() * 0.018) * Math.min(speed, 5);
+
+                if (vx < -0.5) facingLeft = true;
+                else if (vx > 0.5) facingLeft = false;
+
+                var scaleX = facingLeft ? -1 : 1;
+                el.style.left = dogX + 'px';
+                el.style.top  = (dogY + bob) + 'px';
+                el.style.transform = 'translate(-50%, -50%) scaleX(' + scaleX + ')';
+            })();
+        }
+
+        // ── 10. Countdown Timer ───────────────────────────────────────
         function initCountdown() {
             var target = new Date('Apr 6, 2026 00:00:00').getTime();
 
@@ -976,6 +1196,7 @@
             initConfetti();
             initStatsCounter();
             initLightbox();
+            initGreyhoundChaser();
             initCountdown();
         }
 
