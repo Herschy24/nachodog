@@ -56,21 +56,17 @@
     const XML_PATH     = 'payouts.xml';
     const REFRESH_MS   = 300_000;       // refresh every 5 minutes
 
-    // Stooq via allorigins CORS proxy — no API key needed
-    const STOOQ_URL  = 'https://stooq.com/q/l/?s=gcqf.au&f=sd2t2ohlcv&h&e=csv';
-    const GCQF_API   = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(STOOQ_URL);
+    // Yahoo Finance via allorigins CORS proxy — no API key needed
+    const YAHOO_URL = 'https://query1.finance.yahoo.com/v8/finance/chart/GCQF.AX?interval=1d&range=1d';
+    const GCQF_API  = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(YAHOO_URL);
 
     async function fetchGcqfPrice() {
       const resp = await fetch(GCQF_API);
       if (!resp.ok) throw new Error(`Proxy returned ${resp.status}`);
-      const text = await resp.text();
-      // CSV format: Symbol,Date,Time,Open,High,Low,Close,Volume
-      const lines = text.trim().split('\n');
-      if (lines.length < 2) throw new Error('No data in response');
-      const cols = lines[1].split(',');
-      const close = parseFloat(cols[6]);
-      if (isNaN(close) || close <= 0) throw new Error('Invalid price in response');
-      return close;
+      const data = await resp.json();
+      const price = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
+      if (!price || price <= 0) throw new Error('Price not found in response');
+      return price;
     }
 
     async function fetchPayoutsXml() {
