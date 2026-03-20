@@ -56,18 +56,20 @@
     const XML_PATH     = 'payouts.xml';
     const REFRESH_MS   = 300_000;       // refresh every 5 minutes
 
-    // Yahoo Finance v8 — works from GitHub Pages (no API key needed)
-    const GCQF_API = 'https://query1.finance.yahoo.com/v8/finance/chart/GCQF.AX?interval=1d&range=1d';
+    // Stooq — free, no API key, CORS-friendly for browser requests
+    const GCQF_API = 'https://stooq.com/q/l/?s=gcqf.au&f=sd2t2ohlcv&h&e=csv';
 
     async function fetchGcqfPrice() {
       const resp = await fetch(GCQF_API);
-      if (!resp.ok) throw new Error(`Yahoo Finance returned ${resp.status}`);
-      const data = await resp.json();
-      const result = data?.chart?.result?.[0];
-      if (!result) throw new Error('Unexpected response from Yahoo Finance');
-      const price = result.meta?.regularMarketPrice;
-      if (!price) throw new Error('Price not found in response');
-      return price;
+      if (!resp.ok) throw new Error(`Stooq returned ${resp.status}`);
+      const text = await resp.text();
+      // CSV format: Symbol,Date,Time,Open,High,Low,Close,Volume
+      const lines = text.trim().split('\n');
+      if (lines.length < 2) throw new Error('No data in Stooq response');
+      const cols = lines[1].split(',');
+      const close = parseFloat(cols[6]);
+      if (isNaN(close) || close <= 0) throw new Error('Invalid price in Stooq response');
+      return close;
     }
 
     async function fetchPayoutsXml() {
@@ -149,7 +151,7 @@
         render(xml, price);
       } catch (err) {
         const hdr = document.getElementById('header');
-        hdr.innerHTML = `<span class="error">Could not load GCQF price: ${err.message}. Retrying in 5 min…</span>`;
+        hdr.innerHTML = `<span class="error">Could not load GCQF price (${err.message}). Retrying in 5 min…</span>`;
         setTimeout(loadAndRender, REFRESH_MS);
         return;
       }
