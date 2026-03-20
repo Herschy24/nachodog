@@ -56,19 +56,20 @@
     const XML_PATH     = 'payouts.xml';
     const REFRESH_MS   = 300_000;       // refresh every 5 minutes
 
-    // Stooq — free, no API key, CORS-friendly for browser requests
-    const GCQF_API = 'https://stooq.com/q/l/?s=gcqf.au&f=sd2t2ohlcv&h&e=csv';
+    // Stooq via allorigins CORS proxy — no API key needed
+    const STOOQ_URL  = 'https://stooq.com/q/l/?s=gcqf.au&f=sd2t2ohlcv&h&e=csv';
+    const GCQF_API   = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(STOOQ_URL);
 
     async function fetchGcqfPrice() {
       const resp = await fetch(GCQF_API);
-      if (!resp.ok) throw new Error(`Stooq returned ${resp.status}`);
+      if (!resp.ok) throw new Error(`Proxy returned ${resp.status}`);
       const text = await resp.text();
       // CSV format: Symbol,Date,Time,Open,High,Low,Close,Volume
       const lines = text.trim().split('\n');
-      if (lines.length < 2) throw new Error('No data in Stooq response');
+      if (lines.length < 2) throw new Error('No data in response');
       const cols = lines[1].split(',');
       const close = parseFloat(cols[6]);
-      if (isNaN(close) || close <= 0) throw new Error('Invalid price in Stooq response');
+      if (isNaN(close) || close <= 0) throw new Error('Invalid price in response');
       return close;
     }
 
