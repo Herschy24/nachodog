@@ -50,17 +50,24 @@
   <div id="payouts"></div>
 
   <script>
-    const STARTING_AUD = 1200;        // your fixed pot
-    const STAKE_SOL    = 5.06;         // SOL staked
-    const PRICE_API    = 'https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=aud';
+    const STARTING_AUD = 1400;          // total pot collected
+    const UNITS_GCQF   = 341;           // units of GCQF held
+    const BUY_PRICE    = 3.96;          // purchase price per unit (AUD)
     const XML_PATH     = 'payouts.xml';
-    const REFRESH_MS   = 60_000;
+    const REFRESH_MS   = 300_000;       // refresh every 5 minutes
 
-    async function fetchSolPrice() {
-      const resp = await fetch(PRICE_API);
-      if (resp.status === 429) throw new Error('RATE_LIMIT');
+    // Yahoo Finance v8 — works from GitHub Pages (no API key needed)
+    const GCQF_API = 'https://query1.finance.yahoo.com/v8/finance/chart/GCQF.AX?interval=1d&range=1d';
+
+    async function fetchGcqfPrice() {
+      const resp = await fetch(GCQF_API);
+      if (!resp.ok) throw new Error(`Yahoo Finance returned ${resp.status}`);
       const data = await resp.json();
-      return data.solana.aud;
+      const result = data?.chart?.result?.[0];
+      if (!result) throw new Error('Unexpected response from Yahoo Finance');
+      const price = result.meta?.regularMarketPrice;
+      if (!price) throw new Error('Price not found in response');
+      return price;
     }
 
     async function fetchPayoutsXml() {
@@ -70,23 +77,31 @@
       return new DOMParser().parseFromString(text, 'application/xml');
     }
 
-    function render(xml, solPrice) {
-      const finalPot  = solPrice * STAKE_SOL;
-      const profit    = finalPot - STARTING_AUD;
-      const header    = document.getElementById('header');
+    function render(xml, gcqfPrice) {
+      const finalPot   = gcqfPrice * UNITS_GCQF;
+      const invested   = BUY_PRICE * UNITS_GCQF;
+      const profit     = finalPot - STARTING_AUD;
+      const gainLoss   = finalPot - invested;
+      const header     = document.getElementById('header');
+
+      const profitStr   = profit >= 0   ? `+$${profit.toFixed(2)}`   : `-$${Math.abs(profit).toFixed(2)}`;
+      const gainLossStr = gainLoss >= 0 ? `+$${gainLoss.toFixed(2)}` : `-$${Math.abs(gainLoss).toFixed(2)}`;
+
       header.innerHTML = `
-        Starting pot: $${STARTING_AUD.toFixed(2)} AUD<br/>
-        Final pot: $${finalPot.toFixed(2)} AUD 
-        (5.06 SOL × ${solPrice.toFixed(2)} AUD/SOL)<br/>
-        Profit: $${profit.toFixed(2)} AUD
+        <strong>GCQF</strong> — ${UNITS_GCQF} units @ $${gcqfPrice.toFixed(4)} AUD<br/>
+        Current value: <strong>$${finalPot.toFixed(2)} AUD</strong> &nbsp;|&nbsp;
+        vs buy price ($${BUY_PRICE}): ${gainLossStr} AUD<br/>
+        Starting pot: $${STARTING_AUD.toFixed(2)} AUD &nbsp;|&nbsp;
+        Pot P&amp;L: <strong>${profitStr} AUD</strong><br/>
+        <small style="color:#888">Last updated: ${new Date().toLocaleTimeString('en-AU')} · refreshes every 5 min</small>
       `;
 
       const container = document.getElementById('payouts');
       container.innerHTML = '';
 
       xml.querySelectorAll('option').forEach(opt => {
-        const name     = opt.getAttribute('name');
-        const section  = document.createElement('section');
+        const name    = opt.getAttribute('name');
+        const section = document.createElement('section');
         section.innerHTML = `<h2>${name}</h2>`;
         container.appendChild(section);
 
@@ -94,10 +109,10 @@
         const numTiers = tiers.length;
 
         tiers.forEach(tier => {
-          const tierName = tier.getAttribute('name');
-          const baseRatio= parseFloat(tier.querySelector('payoutsBase').textContent);
-          const tppElem  = tier.querySelector('tieredProfitPayouts');
-          const tpp      = tppElem ? parseFloat(tppElem.textContent) : 0;
+          const tierName  = tier.getAttribute('name');
+          const baseRatio = parseFloat(tier.querySelector('payoutsBase').textContent);
+          const tppElem   = tier.querySelector('tieredProfitPayouts');
+          const tpp       = tppElem ? parseFloat(tppElem.textContent) : 0;
 
           let payoutAUD;
           if (name === 'Socialist') {
@@ -119,7 +134,7 @@
           div.innerHTML = `
             <div><strong>Tier:</strong> ${tierName}</div>
             <div>
-              <strong>Payout:</strong> 
+              <strong>Payout:</strong>
               <span class="amount">$${payoutAUD.toFixed(2)} AUD</span>
             </div>
           `;
@@ -130,18 +145,12 @@
 
     async function loadAndRender() {
       try {
-        const [price, xml] = await Promise.all([fetchSolPrice(), fetchPayoutsXml()]);
+        const [price, xml] = await Promise.all([fetchGcqfPrice(), fetchPayoutsXml()]);
         render(xml, price);
       } catch (err) {
         const hdr = document.getElementById('header');
-        if (err.message === 'RATE_LIMIT') {
-          hdr.innerHTML = `<span class="error">Rate limit reached — pausing updates.</span>`;
-        } else {
-          hdr.innerHTML = `<span class="error">Error: ${err.message}</span>`;
-        }
-        if (err.message !== 'RATE_LIMIT') {
-          setTimeout(loadAndRender, REFRESH_MS);
-        }
+        hdr.innerHTML = `<span class="error">Could not load GCQF price: ${err.message}. Retrying in 5 min…</span>`;
+        setTimeout(loadAndRender, REFRESH_MS);
         return;
       }
       setTimeout(loadAndRender, REFRESH_MS);
