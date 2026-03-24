@@ -223,6 +223,10 @@
       return close > 0 ? close : null;
     };
 
+    const TD_KEY = '__TWELVEDATA_KEY__';
+    const TD_URL = 'https://api.twelvedata.com/price?symbol=GCQF.AX&apikey=' + TD_KEY;
+    const parseTwelveData = d => { const p = parseFloat(d.price); return p > 0 ? p : null; };
+
     const Y7    = 'https://query1.finance.yahoo.com/v7/finance/quote?symbols=GCQF.AX';
     const parseYahooV7   = d => d?.quoteResponse?.result?.[0]?.regularMarketPrice;
     // allorigins /get wraps response: {contents:"...", status:{http_code:200}}
@@ -240,6 +244,7 @@
 
     // All sources fired IN PARALLEL — first to succeed wins
     const FETCH_TARGETS = [
+      { label: 'Twelve Data (direct)',       url: TD_URL,                                             parse: parseTwelveData },
       { label: 'corsproxy.io → Yahoo (q1)',      url: CP_IO   + encodeURIComponent(Y1),    parse: parseYahoo },
       { label: 'corsproxy.io → Yahoo (q2)',      url: CP_IO   + encodeURIComponent(Y2),    parse: parseYahoo },
       { label: 'corsproxy.io → Yahoo (v7)',      url: CP_IO   + encodeURIComponent(Y7),    parse: parseYahooV7 },
