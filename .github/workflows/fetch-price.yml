@@ -14,13 +14,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Fetch GCQF price from Twelve Data
+      - name: Install yfinance
+        run: pip install yfinance
+
+      - name: Fetch GCQF price from Yahoo Finance
         run: |
-          RESPONSE=$(curl -sf "https://api.twelvedata.com/price?symbol=GCQF&exchange=ASX&apikey=${{ secrets.TWELVEDATA_KEY }}")
-          echo "Response: $RESPONSE"
-          PRICE=$(echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['price'])" 2>/dev/null)
+          PRICE=$(python3 -c "
+import yfinance as yf
+t = yf.Ticker('GCQF.AX')
+price = t.fast_info['last_price']
+print(round(price, 4))
+")
+          echo "Price: $PRICE"
           if [ -z "$PRICE" ]; then
-            echo "Failed to parse price from response"
+            echo "Failed to fetch price"
             exit 1
           fi
           UPDATED=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
