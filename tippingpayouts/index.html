@@ -177,7 +177,7 @@
   </section>
 
   <section id="essendon-watch">
-    <h2>Essendon Watch 🔴 <small style="font-size:0.55em;color:#c00;animation:essendon-pulse 1.5s ease-in-out infinite;display:inline-block;">👆 click me for a surprise</small></h2>
+    <h2>Essendon Watch 🔴 <small style="font-size:0.55em;color:#c00;animation:essendon-pulse 1.5s ease-in-out infinite;display:inline-block;">👇 click me for a surprise</small></h2>
     <div class="watch-boxes">
       <div class="watch-box">
         <span class="watch-title">🏆 Last Finals Win</span>
@@ -222,34 +222,41 @@
       return close > 0 ? close : null;
     };
 
-    const Y7   = 'https://query1.finance.yahoo.com/v7/finance/quote?symbols=GCQF.AX';
-    const parseYahooV7 = d => d?.quoteResponse?.result?.[0]?.regularMarketPrice;
+    const Y7    = 'https://query1.finance.yahoo.com/v7/finance/quote?symbols=GCQF.AX';
+    const parseYahooV7   = d => d?.quoteResponse?.result?.[0]?.regularMarketPrice;
     // allorigins /get wraps response: {contents:"...", status:{http_code:200}}
-    const parseYahooViaGet  = d => { try { return parseYahoo(JSON.parse(d.contents)); }  catch(e) { return null; } };
-    const parseYahooV7ViaGet = d => { try { return parseYahooV7(JSON.parse(d.contents)); } catch(e) { return null; } };
-    const parseStooqViaGet  = d => { try { return parseStooqCsv(d.contents); }           catch(e) { return null; } };
+    const wrapGet = (innerParse) => d => { try { return innerParse(JSON.parse(d.contents)); } catch(e) { return null; } };
+    const parseStooqViaGet = d => { try { return parseStooqCsv(d.contents); } catch(e) { return null; } };
 
-    // Multiple source+proxy combos tried in order — first success wins
-    const STOOQ = 'https://stooq.com/q/l/?s=gcqf.au&f=sd2t2ohlcv&h&e=csv';
+    const STOOQ  = 'https://stooq.com/q/l/?s=gcqf.au&f=sd2t2ohlcv&h&e=csv';
     const AO_RAW = 'https://api.allorigins.win/raw?url=';
     const AO_GET = 'https://api.allorigins.win/get?url=';
+    const WO_GET = 'https://www.whateverorigin.com/get?url='; // allorigins alternative
     const CP_IO  = 'https://corsproxy.io/?url=';
     const CP_ORG = 'https://corsproxy.org/?';
     const TPROXY = 'https://thingproxy.freeboard.io/fetch/';
+    const CTABS  = 'https://api.codetabs.com/v1/proxy?quest=';
 
+    // All sources fired IN PARALLEL — first to succeed wins
     const FETCH_TARGETS = [
-      { label: 'corsproxy.org → Yahoo (q1)',  url: CP_ORG  + encodeURIComponent(Y1),    parse: parseYahoo },
-      { label: 'corsproxy.org → Yahoo (q2)',  url: CP_ORG  + encodeURIComponent(Y2),    parse: parseYahoo },
-      { label: 'corsproxy.org → Yahoo (v7)',  url: CP_ORG  + encodeURIComponent(Y7),    parse: parseYahooV7 },
-      { label: 'thingproxy → Yahoo (q1)',     url: TPROXY  + encodeURIComponent(Y1),    parse: parseYahoo },
-      { label: 'thingproxy → Yahoo (v7)',     url: TPROXY  + encodeURIComponent(Y7),    parse: parseYahooV7 },
-      { label: 'corsproxy.io → Yahoo (q2)',   url: CP_IO   + encodeURIComponent(Y2),    parse: parseYahoo },
-      { label: 'allorigins/get → Yahoo (q1)', url: AO_GET  + encodeURIComponent(Y1),    parse: parseYahooViaGet },
-      { label: 'allorigins/get → Yahoo (v7)', url: AO_GET  + encodeURIComponent(Y7),    parse: parseYahooV7ViaGet },
-      { label: 'corsproxy.org → Stooq',       url: CP_ORG  + encodeURIComponent(STOOQ), parse: parseStooqCsv, isText: true },
-      { label: 'thingproxy → Stooq',          url: TPROXY  + encodeURIComponent(STOOQ), parse: parseStooqCsv, isText: true },
-      { label: 'allorigins/get → Stooq',      url: AO_GET  + encodeURIComponent(STOOQ), parse: parseStooqViaGet },
-      { label: 'allorigins/raw → Stooq',      url: AO_RAW  + encodeURIComponent(STOOQ), parse: parseStooqCsv, isText: true },
+      { label: 'corsproxy.io → Yahoo (q1)',      url: CP_IO   + encodeURIComponent(Y1),    parse: parseYahoo },
+      { label: 'corsproxy.io → Yahoo (q2)',      url: CP_IO   + encodeURIComponent(Y2),    parse: parseYahoo },
+      { label: 'corsproxy.io → Yahoo (v7)',      url: CP_IO   + encodeURIComponent(Y7),    parse: parseYahooV7 },
+      { label: 'corsproxy.org → Yahoo (q1)',     url: CP_ORG  + encodeURIComponent(Y1),    parse: parseYahoo },
+      { label: 'corsproxy.org → Yahoo (v7)',     url: CP_ORG  + encodeURIComponent(Y7),    parse: parseYahooV7 },
+      { label: 'thingproxy → Yahoo (q1)',        url: TPROXY  + encodeURIComponent(Y1),    parse: parseYahoo },
+      { label: 'thingproxy → Yahoo (v7)',        url: TPROXY  + encodeURIComponent(Y7),    parse: parseYahooV7 },
+      { label: 'allorigins/get → Yahoo (q1)',    url: AO_GET  + encodeURIComponent(Y1),    parse: wrapGet(parseYahoo) },
+      { label: 'allorigins/get → Yahoo (v7)',    url: AO_GET  + encodeURIComponent(Y7),    parse: wrapGet(parseYahooV7) },
+      { label: 'whateverorigin → Yahoo (q1)',    url: WO_GET  + encodeURIComponent(Y1),    parse: wrapGet(parseYahoo) },
+      { label: 'whateverorigin → Yahoo (v7)',    url: WO_GET  + encodeURIComponent(Y7),    parse: wrapGet(parseYahooV7) },
+      { label: 'corsproxy.io → Stooq',           url: CP_IO   + encodeURIComponent(STOOQ), parse: parseStooqCsv, isText: true },
+      { label: 'corsproxy.org → Stooq',          url: CP_ORG  + encodeURIComponent(STOOQ), parse: parseStooqCsv, isText: true },
+      { label: 'thingproxy → Stooq',             url: TPROXY  + encodeURIComponent(STOOQ), parse: parseStooqCsv, isText: true },
+      { label: 'allorigins/raw → Stooq',         url: AO_RAW  + encodeURIComponent(STOOQ), parse: parseStooqCsv, isText: true },
+      { label: 'allorigins/get → Stooq',         url: AO_GET  + encodeURIComponent(STOOQ), parse: parseStooqViaGet },
+      { label: 'whateverorigin → Stooq',         url: WO_GET  + encodeURIComponent(STOOQ), parse: parseStooqViaGet },
+      { label: 'codetabs → Stooq',               url: CTABS   + encodeURIComponent(STOOQ), parse: parseStooqCsv, isText: true },
     ];
 
     let lastKnownPrice = null;
@@ -259,7 +266,7 @@
       document.getElementById('header').innerHTML = html;
     }
 
-    async function fetchWithTimeout(url, ms = 12000) {
+    async function fetchWithTimeout(url, ms = 15000) {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), ms);
       try {
@@ -273,25 +280,28 @@
     }
 
     async function fetchGcqfPrice() {
-      let log = [];
-      for (let i = 0; i < FETCH_TARGETS.length; i++) {
-        const target = FETCH_TARGETS[i];
-        setStatus(`<em>Fetching GCQF price… trying <strong>${target.label}</strong> (${i + 1}/${FETCH_TARGETS.length})</em>
-          ${log.length ? `<br/><small style="color:#888">${log.map(l => '✗ ' + l).join(' &nbsp; ')}</small>` : ''}`);
-        try {
-          const resp = await fetchWithTimeout(target.url, 8000);
-          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-          const body  = target.isText ? await resp.text() : await resp.json();
-          const price = target.parse(body);
-          if (!price || price <= 0) throw new Error('Price not found');
-          lastKnownPrice = price;
-          lastKnownPriceTime = new Date().toLocaleTimeString('en-AU');
-          return price;
-        } catch (e) {
-          log.push(`${target.label} (${e.message})`);
-        }
+      setStatus(`<em>Fetching GCQF price… connecting to ${FETCH_TARGETS.length} sources simultaneously</em>`);
+
+      // Fire all requests in parallel — first valid price wins
+      const attempts = FETCH_TARGETS.map(target =>
+        fetchWithTimeout(target.url, 15000)
+          .then(resp => { if (!resp.ok) throw new Error(`HTTP ${resp.status}`); return resp; })
+          .then(resp => target.isText ? resp.text() : resp.json())
+          .then(body => {
+            const price = target.parse(body);
+            if (!price || price <= 0) throw new Error('no price');
+            return price;
+          })
+      );
+
+      try {
+        const price = await Promise.any(attempts);
+        lastKnownPrice = price;
+        lastKnownPriceTime = new Date().toLocaleTimeString('en-AU');
+        return price;
+      } catch (e) {
+        throw new Error(`All ${FETCH_TARGETS.length} sources failed`);
       }
-      throw new Error('All ' + FETCH_TARGETS.length + ' sources failed');
     }
 
     async function fetchPayoutsXml() {
