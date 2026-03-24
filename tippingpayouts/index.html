@@ -3,20 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <title>Footy Tipping Payouts</title>
-   <style>
+  <style>
     body {
-      /* layout */
       font-family: sans-serif;
       padding: 1rem;
-
-      /* background */
       background-image: url('sam.png');
       background-size: cover;
       background-repeat: no-repeat;
       background-position: center center;
       background-attachment: fixed;
-
-      /* enforce black text */
       color: #000 !important;
       text-shadow: none !important;
     }
@@ -66,10 +61,6 @@
     #weekly-bet tr.pending td {
       color: #666;
     }
-    #weekly-bet tfoot td {
-      font-weight: bold;
-      background: #e8e8e8;
-    }
 
     /* Essendon Watch */
     #essendon-watch .watch-boxes {
@@ -84,18 +75,33 @@
       padding: 1rem 1.5rem;
       text-align: center;
       background: #fff8f8;
-      min-width: 200px;
+      min-width: 260px;
     }
-    #essendon-watch .watch-box .days {
-      font-size: 2.5rem;
+    #essendon-watch .timer-row {
+      display: flex;
+      gap: 0.75rem;
+      justify-content: center;
+      margin-bottom: 0.5rem;
+    }
+    #essendon-watch .timer-unit {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #essendon-watch .timer-unit .val {
+      font-size: 2.2rem;
       font-weight: bold;
       color: #c00;
-      display: block;
+      line-height: 1;
+    }
+    #essendon-watch .timer-unit small {
+      font-size: 0.75rem;
+      color: #888;
+      text-transform: uppercase;
     }
     #essendon-watch .watch-box .label {
       font-size: 0.85rem;
       color: #555;
-      margin-top: 0.25rem;
       display: block;
     }
   </style>
@@ -113,24 +119,34 @@
     <h2>Essendon Watch 🔴</h2>
     <div class="watch-boxes">
       <div class="watch-box">
-        <span class="days" id="days-final-win">—</span>
-        <span class="label">days since last FINAL win<br/>(4 Sep 2004)</span>
+        <div class="timer-row">
+          <span class="timer-unit"><span class="val" id="fw-d">0</span><small>days</small></span>
+          <span class="timer-unit"><span class="val" id="fw-h">00</span><small>hrs</small></span>
+          <span class="timer-unit"><span class="val" id="fw-m">00</span><small>min</small></span>
+          <span class="timer-unit"><span class="val" id="fw-s">00</span><small>sec</small></span>
+        </div>
+        <span class="label">since last FINAL win (4 Sep 2004)</span>
       </div>
       <div class="watch-box">
-        <span class="days" id="days-last-win">—</span>
-        <span class="label">days since last win<br/>(23 May 2025)</span>
+        <div class="timer-row">
+          <span class="timer-unit"><span class="val" id="lw-d">0</span><small>days</small></span>
+          <span class="timer-unit"><span class="val" id="lw-h">00</span><small>hrs</small></span>
+          <span class="timer-unit"><span class="val" id="lw-m">00</span><small>min</small></span>
+          <span class="timer-unit"><span class="val" id="lw-s">00</span><small>sec</small></span>
+        </div>
+        <span class="label">since last win (23 May 2025)</span>
       </div>
     </div>
   </section>
 
   <script>
-    const STARTING_AUD = 1400;          // total pot collected
+    const STARTING_AUD = 1400;          // total tipping pot collected
     const UNITS_GCQF   = 341;           // units of GCQF held
     const BUY_PRICE    = 3.96;          // purchase price per unit (AUD)
+    const ROLLING_POT  = 95.90;         // current rolling weekly bet total
     const XML_PATH     = 'payouts.xml';
     const REFRESH_MS   = 300_000;       // refresh every 5 minutes
 
-    // Yahoo Finance via allorigins CORS proxy — no API key needed
     const YAHOO_URL = 'https://query1.finance.yahoo.com/v8/finance/chart/GCQF.AX?interval=1d&range=1d';
     const GCQF_API  = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(YAHOO_URL);
 
@@ -149,7 +165,8 @@
     }
 
     async function fetchPayoutsXml() {
-      const resp = await fetch(XML_PATH);
+      // cache-busting timestamp prevents stale CDN/browser cache
+      const resp = await fetch(XML_PATH + '?v=' + Date.now());
       if (!resp.ok) throw new Error('Could not load payouts.xml');
       const text = await resp.text();
       return new DOMParser().parseFromString(text, 'application/xml');
@@ -157,8 +174,9 @@
 
     function render(xml, gcqfPrice, stale = false) {
       const finalPot   = gcqfPrice * UNITS_GCQF;
+      const totalPot   = finalPot + ROLLING_POT;   // GCQF + rolling bet combined
       const invested   = BUY_PRICE * UNITS_GCQF;
-      const profit     = finalPot - STARTING_AUD;
+      const profit     = totalPot - STARTING_AUD;
       const gainLoss   = finalPot - invested;
       const header     = document.getElementById('header');
 
@@ -171,9 +189,10 @@
 
       header.innerHTML = `
         <strong>GCQF</strong> — ${UNITS_GCQF} units @ $${gcqfPrice.toFixed(4)} AUD<br/>
-        Current value: <strong>$${finalPot.toFixed(2)} AUD</strong> &nbsp;|&nbsp;
-        vs buy price ($${BUY_PRICE}): ${gainLossStr} AUD<br/>
-        Starting pot: $${STARTING_AUD.toFixed(2)} AUD &nbsp;|&nbsp;
+        GCQF value: <strong>$${finalPot.toFixed(2)}</strong> &nbsp;|&nbsp;
+        Rolling bet: <strong>$${ROLLING_POT.toFixed(2)}</strong> &nbsp;|&nbsp;
+        Combined: <strong>$${totalPot.toFixed(2)} AUD</strong><br/>
+        vs buy price ($${BUY_PRICE}): ${gainLossStr} AUD &nbsp;|&nbsp;
         Pot P&amp;L: <strong>${profitStr} AUD</strong><br/>
         ${statusLine}
       `;
@@ -199,13 +218,13 @@
           let payoutAUD;
           if (name === 'Socialist') {
             if (profit < 0) {
-              payoutAUD = baseRatio * finalPot;
+              payoutAUD = baseRatio * totalPot;
             } else {
               payoutAUD = baseRatio * STARTING_AUD + profit / numTiers;
             }
           } else { // Capitalist
             if (profit < 0) {
-              payoutAUD = baseRatio * finalPot;
+              payoutAUD = baseRatio * totalPot;
             } else {
               payoutAUD = baseRatio * STARTING_AUD + profit * tpp;
             }
@@ -231,7 +250,6 @@
         render(xml, price, false);
       } catch (err) {
         if (lastKnownPrice !== null) {
-          // Re-fetch XML separately to still render (xml may be cached by browser)
           try {
             const xml = await fetchPayoutsXml();
             render(xml, lastKnownPrice, true);
@@ -312,17 +330,31 @@
     }
 
     // ── Essendon Watch ──────────────────────────────────────────────────────
-    function renderEssendonWatch() {
-      function daysSince(dateStr) {
-        return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
+    function tickEssendon() {
+      function elapsed(dateStr) {
+        const diff = Date.now() - new Date(dateStr).getTime();
+        const s = Math.floor(diff / 1000) % 60;
+        const m = Math.floor(diff / 60000) % 60;
+        const h = Math.floor(diff / 3600000) % 24;
+        const d = Math.floor(diff / 86400000);
+        return { d, h, m, s };
       }
-      document.getElementById('days-final-win').textContent = daysSince('2004-09-04');
-      document.getElementById('days-last-win').textContent  = daysSince('2025-05-23');
+      const fw = elapsed('2004-09-04');
+      const lw = elapsed('2025-05-23');
+      document.getElementById('fw-d').textContent = fw.d;
+      document.getElementById('fw-h').textContent = String(fw.h).padStart(2, '0');
+      document.getElementById('fw-m').textContent = String(fw.m).padStart(2, '0');
+      document.getElementById('fw-s').textContent = String(fw.s).padStart(2, '0');
+      document.getElementById('lw-d').textContent = lw.d;
+      document.getElementById('lw-h').textContent = String(lw.h).padStart(2, '0');
+      document.getElementById('lw-m').textContent = String(lw.m).padStart(2, '0');
+      document.getElementById('lw-s').textContent = String(lw.s).padStart(2, '0');
     }
 
     loadAndRender();
     renderWeeklyBet();
-    renderEssendonWatch();
+    tickEssendon();
+    setInterval(tickEssendon, 1000);
   </script>
 </body>
 </html>
