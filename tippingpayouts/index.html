@@ -99,10 +99,24 @@
       color: #888;
       text-transform: uppercase;
     }
-    #essendon-watch .watch-box .label {
-      font-size: 0.85rem;
-      color: #555;
+    #essendon-watch .watch-box .watch-title {
       display: block;
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #c00;
+      margin-bottom: 0.2rem;
+    }
+    #essendon-watch .watch-box .watch-subtitle {
+      display: block;
+      font-size: 0.8rem;
+      color: #555;
+      margin-bottom: 0.75rem;
+    }
+    #essendon-watch .watch-box .label {
+      font-size: 0.8rem;
+      color: #888;
+      display: block;
+      margin-top: 0.25rem;
     }
   </style>
 </head>
@@ -119,22 +133,26 @@
     <h2>Essendon Watch 🔴</h2>
     <div class="watch-boxes">
       <div class="watch-box">
+        <span class="watch-title">🏆 Last Premiership</span>
+        <span class="watch-subtitle">2004 AFL Grand Final — Essendon vs Port Adelaide</span>
         <div class="timer-row">
           <span class="timer-unit"><span class="val" id="fw-d">0</span><small>days</small></span>
           <span class="timer-unit"><span class="val" id="fw-h">00</span><small>hrs</small></span>
           <span class="timer-unit"><span class="val" id="fw-m">00</span><small>min</small></span>
           <span class="timer-unit"><span class="val" id="fw-s">00</span><small>sec</small></span>
         </div>
-        <span class="label">since last FINAL win (4 Sep 2004)</span>
+        <span class="label">since 4 Sep 2004</span>
       </div>
       <div class="watch-box">
+        <span class="watch-title">✅ Last Win</span>
+        <span class="watch-subtitle">Most recent AFL match victory</span>
         <div class="timer-row">
           <span class="timer-unit"><span class="val" id="lw-d">0</span><small>days</small></span>
           <span class="timer-unit"><span class="val" id="lw-h">00</span><small>hrs</small></span>
           <span class="timer-unit"><span class="val" id="lw-m">00</span><small>min</small></span>
           <span class="timer-unit"><span class="val" id="lw-s">00</span><small>sec</small></span>
         </div>
-        <span class="label">since last win (23 May 2025)</span>
+        <span class="label">since 23 May 2025</span>
       </div>
     </div>
   </section>
