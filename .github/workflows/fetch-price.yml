@@ -1,0 +1,36 @@
+name: Fetch GCQF Price
+
+on:
+  schedule:
+    # Every 15 min, Mon-Fri, 00:00-06:00 UTC = ASX market hours (10am-4pm AEST)
+    - cron: '*/15 0-5 * * 1-5'
+  workflow_dispatch: # allow manual trigger from Actions tab
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch GCQF price from Twelve Data
+        run: |
+          RESPONSE=$(curl -sf "https://api.twelvedata.com/price?symbol=GCQF.AX&apikey=${{ secrets.TWELVEDATA_KEY }}")
+          echo "Response: $RESPONSE"
+          PRICE=$(echo "$RESPONSE" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d['price'])" 2>/dev/null)
+          if [ -z "$PRICE" ]; then
+            echo "Failed to parse price from response"
+            exit 1
+          fi
+          UPDATED=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          echo "{\"price\": $PRICE, \"updated\": \"$UPDATED\"}" > tippingpayouts/price.json
+          echo "Saved price: $PRICE at $UPDATED"
+
+      - name: Commit updated price
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add tippingpayouts/price.json
+          git diff --cached --quiet && echo "No change in price, skipping commit" || git commit -m "chore: update GCQF price [skip ci]"
+          git push
