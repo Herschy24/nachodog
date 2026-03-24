@@ -8,39 +8,95 @@
       /* layout */
       font-family: sans-serif;
       padding: 1rem;
-  
+
       /* background */
       background-image: url('sam.png');
       background-size: cover;
       background-repeat: no-repeat;
       background-position: center center;
       background-attachment: fixed;
-  
+
       /* enforce black text */
       color: #000 !important;
       text-shadow: none !important;
     }
-  
+
     #header {
       margin-bottom: 1em;
     }
-  
+
     section {
       margin-bottom: 2rem;
     }
-  
+
     .payout {
       margin-bottom: 0.75rem;
       border-bottom: 1px solid #ddd;
       padding-bottom: 0.5rem;
     }
-  
+
     .amount {
       font-weight: bold;
     }
-  
+
     .error {
       color: #c00;
+    }
+
+    .stale-warning {
+      color: #b85c00;
+    }
+
+    /* Weekly bet table */
+    #weekly-bet table {
+      border-collapse: collapse;
+      min-width: 380px;
+    }
+    #weekly-bet th, #weekly-bet td {
+      border: 1px solid #bbb;
+      padding: 0.4rem 0.75rem;
+      text-align: left;
+    }
+    #weekly-bet th {
+      background: #f0f0f0;
+    }
+    #weekly-bet tr.won td {
+      background: #d4edda;
+    }
+    #weekly-bet tr.pending td {
+      color: #666;
+    }
+    #weekly-bet tfoot td {
+      font-weight: bold;
+      background: #e8e8e8;
+    }
+
+    /* Essendon Watch */
+    #essendon-watch .watch-boxes {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+    }
+    #essendon-watch .watch-box {
+      border: 2px solid #c00;
+      border-radius: 8px;
+      padding: 1rem 1.5rem;
+      text-align: center;
+      background: #fff8f8;
+      min-width: 200px;
+    }
+    #essendon-watch .watch-box .days {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #c00;
+      display: block;
+    }
+    #essendon-watch .watch-box .label {
+      font-size: 0.85rem;
+      color: #555;
+      margin-top: 0.25rem;
+      display: block;
     }
   </style>
 </head>
@@ -48,6 +104,24 @@
   <h1>Footy Tipping Payouts</h1>
   <p id="header"><em>Loading payouts…</em></p>
   <div id="payouts"></div>
+
+  <section id="weekly-bet">
+    <h2>Weekly Rolling Bet</h2>
+  </section>
+
+  <section id="essendon-watch">
+    <h2>Essendon Watch 🔴</h2>
+    <div class="watch-boxes">
+      <div class="watch-box">
+        <span class="days" id="days-final-win">—</span>
+        <span class="label">days since last FINAL win<br/>(4 Sep 2004)</span>
+      </div>
+      <div class="watch-box">
+        <span class="days" id="days-last-win">—</span>
+        <span class="label">days since last win<br/>(23 May 2025)</span>
+      </div>
+    </div>
+  </section>
 
   <script>
     const STARTING_AUD = 1400;          // total pot collected
@@ -60,12 +134,17 @@
     const YAHOO_URL = 'https://query1.finance.yahoo.com/v8/finance/chart/GCQF.AX?interval=1d&range=1d';
     const GCQF_API  = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(YAHOO_URL);
 
+    let lastKnownPrice = null;
+    let lastKnownPriceTime = null;
+
     async function fetchGcqfPrice() {
       const resp = await fetch(GCQF_API);
       if (!resp.ok) throw new Error(`Proxy returned ${resp.status}`);
       const data = await resp.json();
       const price = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
       if (!price || price <= 0) throw new Error('Price not found in response');
+      lastKnownPrice = price;
+      lastKnownPriceTime = new Date().toLocaleTimeString('en-AU');
       return price;
     }
 
@@ -76,7 +155,7 @@
       return new DOMParser().parseFromString(text, 'application/xml');
     }
 
-    function render(xml, gcqfPrice) {
+    function render(xml, gcqfPrice, stale = false) {
       const finalPot   = gcqfPrice * UNITS_GCQF;
       const invested   = BUY_PRICE * UNITS_GCQF;
       const profit     = finalPot - STARTING_AUD;
@@ -86,13 +165,17 @@
       const profitStr   = profit >= 0   ? `+$${profit.toFixed(2)}`   : `-$${Math.abs(profit).toFixed(2)}`;
       const gainLossStr = gainLoss >= 0 ? `+$${gainLoss.toFixed(2)}` : `-$${Math.abs(gainLoss).toFixed(2)}`;
 
+      const statusLine = stale
+        ? `<span class="stale-warning">⚠ Using last known price from ${lastKnownPriceTime} · retrying in 5 min</span>`
+        : `<small style="color:#888">Last updated: ${new Date().toLocaleTimeString('en-AU')} · refreshes every 5 min</small>`;
+
       header.innerHTML = `
         <strong>GCQF</strong> — ${UNITS_GCQF} units @ $${gcqfPrice.toFixed(4)} AUD<br/>
         Current value: <strong>$${finalPot.toFixed(2)} AUD</strong> &nbsp;|&nbsp;
         vs buy price ($${BUY_PRICE}): ${gainLossStr} AUD<br/>
         Starting pot: $${STARTING_AUD.toFixed(2)} AUD &nbsp;|&nbsp;
         Pot P&amp;L: <strong>${profitStr} AUD</strong><br/>
-        <small style="color:#888">Last updated: ${new Date().toLocaleTimeString('en-AU')} · refreshes every 5 min</small>
+        ${statusLine}
       `;
 
       const container = document.getElementById('payouts');
@@ -145,17 +228,101 @@
     async function loadAndRender() {
       try {
         const [price, xml] = await Promise.all([fetchGcqfPrice(), fetchPayoutsXml()]);
-        render(xml, price);
+        render(xml, price, false);
       } catch (err) {
-        const hdr = document.getElementById('header');
-        hdr.innerHTML = `<span class="error">Could not load GCQF price (${err.message}). Retrying in 5 min…</span>`;
+        if (lastKnownPrice !== null) {
+          // Re-fetch XML separately to still render (xml may be cached by browser)
+          try {
+            const xml = await fetchPayoutsXml();
+            render(xml, lastKnownPrice, true);
+          } catch (_) {
+            const hdr = document.getElementById('header');
+            hdr.innerHTML = `<span class="stale-warning">⚠ Using last known price from ${lastKnownPriceTime} · retrying in 5 min</span>`;
+          }
+        } else {
+          const hdr = document.getElementById('header');
+          hdr.innerHTML = `<span class="error">Could not load GCQF price (${err.message}). Retrying in 5 min…</span>`;
+        }
         setTimeout(loadAndRender, REFRESH_MS);
         return;
       }
       setTimeout(loadAndRender, REFRESH_MS);
     }
 
+    // ── Weekly Rolling Bet ──────────────────────────────────────────────────
+    const WEEKLY_BETS = [
+      { person: 'Sedy',    result: 'Won', potBefore: 50.00,  potAfter: 68.50 },
+      { person: 'Mosh',    result: 'Won', potBefore: 68.50,  potAfter: 95.90 },
+      { person: 'Riz',     result: null },
+      { person: 'Wilks',   result: null },
+      { person: 'TommyC',  result: null },
+      { person: 'Danny',   result: null },
+      { person: 'Jonsey',  result: null },
+      { person: 'Willy K', result: null },
+      { person: 'Jacob',   result: null },
+      { person: 'Hirsch',  result: null },
+      { person: 'Sam',     result: null },
+      { person: 'Mel',     result: null },
+      { person: 'TK',      result: null },
+      { person: 'Charlie', result: null },
+    ];
+
+    function renderWeeklyBet() {
+      const section = document.getElementById('weekly-bet');
+      const lastCompleted = [...WEEKLY_BETS].reverse().find(b => b.result !== null);
+      const currentPot = lastCompleted ? lastCompleted.potAfter : 50.00;
+
+      let rows = '';
+      WEEKLY_BETS.forEach((b, i) => {
+        if (b.result !== null) {
+          rows += `<tr class="won">
+            <td>${i + 1}</td>
+            <td>${b.person}</td>
+            <td>${b.result}</td>
+            <td>$${b.potBefore.toFixed(2)}</td>
+            <td>$${b.potAfter.toFixed(2)}</td>
+          </tr>`;
+        } else {
+          rows += `<tr class="pending">
+            <td>${i + 1}</td>
+            <td>${b.person}</td>
+            <td>—</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>`;
+        }
+      });
+
+      section.innerHTML = `
+        <h2>Weekly Rolling Bet</h2>
+        <p>Current pot: <strong>$${currentPot.toFixed(2)}</strong></p>
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Person</th>
+              <th>Result</th>
+              <th>Pot Before</th>
+              <th>Pot After</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+    }
+
+    // ── Essendon Watch ──────────────────────────────────────────────────────
+    function renderEssendonWatch() {
+      function daysSince(dateStr) {
+        return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
+      }
+      document.getElementById('days-final-win').textContent = daysSince('2004-09-04');
+      document.getElementById('days-last-win').textContent  = daysSince('2025-05-23');
+    }
+
     loadAndRender();
+    renderWeeklyBet();
+    renderEssendonWatch();
   </script>
 </body>
 </html>
