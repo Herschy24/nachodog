@@ -19,20 +19,16 @@ jobs:
 
       - name: Fetch GCQF price from Yahoo Finance
         run: |
-          PRICE=$(python3 -c "
-import yfinance as yf
-t = yf.Ticker('GCQF.AX')
-price = t.fast_info['last_price']
-print(round(price, 4))
-")
-          echo "Price: $PRICE"
-          if [ -z "$PRICE" ]; then
-            echo "Failed to fetch price"
-            exit 1
-          fi
-          UPDATED=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-          echo "{\"price\": $PRICE, \"updated\": \"$UPDATED\"}" > tippingpayouts/price.json
-          echo "Saved price: $PRICE at $UPDATED"
+          python3 - <<'EOF'
+          import yfinance as yf, json
+          from datetime import datetime, timezone
+          t = yf.Ticker('GCQF.AX')
+          price = round(t.fast_info['last_price'], 4)
+          updated = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+          with open('tippingpayouts/price.json', 'w') as f:
+              json.dump({'price': price, 'updated': updated}, f)
+          print(f'Saved price: {price} at {updated}')
+          EOF
 
       - name: Commit updated price
         run: |
