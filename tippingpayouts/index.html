@@ -165,37 +165,35 @@
     const XML_PATH     = 'payouts.xml';
     const REFRESH_MS   = 300_000;       // refresh every 5 minutes
 
+    const Y1 = 'https://query1.finance.yahoo.com/v8/finance/chart/GCQF.AX?interval=1d&range=1d';
+    const Y2 = 'https://query2.finance.yahoo.com/v8/finance/chart/GCQF.AX?interval=1d&range=1d';
+    const parseYahoo = d => d?.chart?.result?.[0]?.meta?.regularMarketPrice;
+    const parseStooqCsv = text => {
+      const lines = text.trim().split('\n');
+      if (lines.length < 2) return null;
+      const close = parseFloat(lines[1].split(',')[6]);
+      return close > 0 ? close : null;
+    };
+
     // Multiple source+proxy combos tried in order — first success wins
     const FETCH_TARGETS = [
-      {
-        url: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/GCQF.AX?interval=1d&range=1d'),
-        parse: d => d?.chart?.result?.[0]?.meta?.regularMarketPrice,
-      },
-      {
-        url: 'https://corsproxy.io/?url=' + encodeURIComponent('https://query2.finance.yahoo.com/v8/finance/chart/GCQF.AX?interval=1d&range=1d'),
-        parse: d => d?.chart?.result?.[0]?.meta?.regularMarketPrice,
-      },
-      {
-        url: 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/GCQF.AX?interval=1d&range=1d'),
-        parse: d => d?.chart?.result?.[0]?.meta?.regularMarketPrice,
-      },
-      {
-        // Stooq as a completely different data source — returns CSV
-        url: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://stooq.com/q/l/?s=gcqf.au&f=sd2t2ohlcv&h&e=csv'),
-        parse: text => {
-          // CSV format: Symbol,Date,Time,Open,High,Low,Close,Volume
-          const lines = text.trim().split('\n');
-          if (lines.length < 2) return null;
-          const cols = lines[1].split(',');
-          const close = parseFloat(cols[6]);
-          return close > 0 ? close : null;
-        },
-        isText: true,
-      },
+      { label: 'allorigins → Yahoo (q1)',   url: 'https://api.allorigins.win/raw?url='            + encodeURIComponent(Y1), parse: parseYahoo },
+      { label: 'corsproxy → Yahoo (q2)',    url: 'https://corsproxy.io/?url='                     + encodeURIComponent(Y2), parse: parseYahoo },
+      { label: 'codetabs → Yahoo (q1)',     url: 'https://api.codetabs.com/v1/proxy?quest='       + encodeURIComponent(Y1), parse: parseYahoo },
+      { label: 'corsproxy → Yahoo (q1)',    url: 'https://corsproxy.io/?url='                     + encodeURIComponent(Y1), parse: parseYahoo },
+      { label: 'allorigins → Yahoo (q2)',   url: 'https://api.allorigins.win/raw?url='            + encodeURIComponent(Y2), parse: parseYahoo },
+      { label: 'codetabs → Yahoo (q2)',     url: 'https://api.codetabs.com/v1/proxy?quest='       + encodeURIComponent(Y2), parse: parseYahoo },
+      { label: 'allorigins → Stooq',        url: 'https://api.allorigins.win/raw?url='            + encodeURIComponent('https://stooq.com/q/l/?s=gcqf.au&f=sd2t2ohlcv&h&e=csv'), parse: parseStooqCsv, isText: true },
+      { label: 'corsproxy → Stooq',         url: 'https://corsproxy.io/?url='                     + encodeURIComponent('https://stooq.com/q/l/?s=gcqf.au&f=sd2t2ohlcv&h&e=csv'), parse: parseStooqCsv, isText: true },
+      { label: 'codetabs → Stooq',          url: 'https://api.codetabs.com/v1/proxy?quest='       + encodeURIComponent('https://stooq.com/q/l/?s=gcqf.au&f=sd2t2ohlcv&h&e=csv'), parse: parseStooqCsv, isText: true },
     ];
 
     let lastKnownPrice = null;
     let lastKnownPriceTime = null;
+
+    function setStatus(html) {
+      document.getElementById('header').innerHTML = html;
+    }
 
     async function fetchWithTimeout(url, ms = 8000) {
       const controller = new AbortController();
@@ -211,22 +209,25 @@
     }
 
     async function fetchGcqfPrice() {
-      let lastErr;
-      for (const target of FETCH_TARGETS) {
+      let log = [];
+      for (let i = 0; i < FETCH_TARGETS.length; i++) {
+        const target = FETCH_TARGETS[i];
+        setStatus(`<em>Fetching GCQF price… trying <strong>${target.label}</strong> (${i + 1}/${FETCH_TARGETS.length})</em>
+          ${log.length ? `<br/><small style="color:#888">${log.map(l => '✗ ' + l).join(' &nbsp; ')}</small>` : ''}`);
         try {
           const resp = await fetchWithTimeout(target.url, 8000);
           if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-          const body   = target.isText ? await resp.text() : await resp.json();
-          const price  = target.parse(body);
+          const body  = target.isText ? await resp.text() : await resp.json();
+          const price = target.parse(body);
           if (!price || price <= 0) throw new Error('Price not found');
           lastKnownPrice = price;
           lastKnownPriceTime = new Date().toLocaleTimeString('en-AU');
           return price;
         } catch (e) {
-          lastErr = e;
+          log.push(`${target.label} (${e.message})`);
         }
       }
-      throw lastErr;
+      throw new Error('All ' + FETCH_TARGETS.length + ' sources failed');
     }
 
     async function fetchPayoutsXml() {
