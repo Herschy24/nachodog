@@ -165,10 +165,33 @@
     const XML_PATH     = 'payouts.xml';
     const REFRESH_MS   = 300_000;       // refresh every 5 minutes
 
-    const YAHOO_URL = 'https://query1.finance.yahoo.com/v8/finance/chart/GCQF.AX?interval=1d&range=1d';
-    const PROXIES = [
-      'https://api.allorigins.win/raw?url=',
-      'https://corsproxy.io/?url=',
+    // Multiple source+proxy combos tried in order — first success wins
+    const FETCH_TARGETS = [
+      {
+        url: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/GCQF.AX?interval=1d&range=1d'),
+        parse: d => d?.chart?.result?.[0]?.meta?.regularMarketPrice,
+      },
+      {
+        url: 'https://corsproxy.io/?url=' + encodeURIComponent('https://query2.finance.yahoo.com/v8/finance/chart/GCQF.AX?interval=1d&range=1d'),
+        parse: d => d?.chart?.result?.[0]?.meta?.regularMarketPrice,
+      },
+      {
+        url: 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/GCQF.AX?interval=1d&range=1d'),
+        parse: d => d?.chart?.result?.[0]?.meta?.regularMarketPrice,
+      },
+      {
+        // Stooq as a completely different data source — returns CSV
+        url: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://stooq.com/q/l/?s=gcqf.au&f=sd2t2ohlcv&h&e=csv'),
+        parse: text => {
+          // CSV format: Symbol,Date,Time,Open,High,Low,Close,Volume
+          const lines = text.trim().split('\n');
+          if (lines.length < 2) return null;
+          const cols = lines[1].split(',');
+          const close = parseFloat(cols[6]);
+          return close > 0 ? close : null;
+        },
+        isText: true,
+      },
     ];
 
     let lastKnownPrice = null;
@@ -189,13 +212,13 @@
 
     async function fetchGcqfPrice() {
       let lastErr;
-      for (const proxy of PROXIES) {
+      for (const target of FETCH_TARGETS) {
         try {
-          const resp = await fetchWithTimeout(proxy + encodeURIComponent(YAHOO_URL), 8000);
-          if (!resp.ok) throw new Error(`Proxy returned ${resp.status}`);
-          const data = await resp.json();
-          const price = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
-          if (!price || price <= 0) throw new Error('Price not found in response');
+          const resp = await fetchWithTimeout(target.url, 8000);
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+          const body   = target.isText ? await resp.text() : await resp.json();
+          const price  = target.parse(body);
+          if (!price || price <= 0) throw new Error('Price not found');
           lastKnownPrice = price;
           lastKnownPriceTime = new Date().toLocaleTimeString('en-AU');
           return price;
