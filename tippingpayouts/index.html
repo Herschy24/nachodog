@@ -166,20 +166,44 @@
     const REFRESH_MS   = 300_000;       // refresh every 5 minutes
 
     const YAHOO_URL = 'https://query1.finance.yahoo.com/v8/finance/chart/GCQF.AX?interval=1d&range=1d';
-    const GCQF_API  = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(YAHOO_URL);
+    const PROXIES = [
+      'https://api.allorigins.win/raw?url=',
+      'https://corsproxy.io/?url=',
+    ];
 
     let lastKnownPrice = null;
     let lastKnownPriceTime = null;
 
+    async function fetchWithTimeout(url, ms = 8000) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), ms);
+      try {
+        const resp = await fetch(url, { signal: controller.signal });
+        clearTimeout(timer);
+        return resp;
+      } catch (e) {
+        clearTimeout(timer);
+        throw e;
+      }
+    }
+
     async function fetchGcqfPrice() {
-      const resp = await fetch(GCQF_API);
-      if (!resp.ok) throw new Error(`Proxy returned ${resp.status}`);
-      const data = await resp.json();
-      const price = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
-      if (!price || price <= 0) throw new Error('Price not found in response');
-      lastKnownPrice = price;
-      lastKnownPriceTime = new Date().toLocaleTimeString('en-AU');
-      return price;
+      let lastErr;
+      for (const proxy of PROXIES) {
+        try {
+          const resp = await fetchWithTimeout(proxy + encodeURIComponent(YAHOO_URL), 8000);
+          if (!resp.ok) throw new Error(`Proxy returned ${resp.status}`);
+          const data = await resp.json();
+          const price = data?.chart?.result?.[0]?.meta?.regularMarketPrice;
+          if (!price || price <= 0) throw new Error('Price not found in response');
+          lastKnownPrice = price;
+          lastKnownPriceTime = new Date().toLocaleTimeString('en-AU');
+          return price;
+        } catch (e) {
+          lastErr = e;
+        }
+      }
+      throw lastErr;
     }
 
     async function fetchPayoutsXml() {
