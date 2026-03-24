@@ -14,6 +14,7 @@
       background-attachment: fixed;
       color: #000 !important;
       text-shadow: none !important;
+      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Cdefs%3E%3CradialGradient id='bg' cx='38%25' cy='28%25' r='70%25'%3E%3Cstop offset='0%25' stop-color='%23ffcc44'/%3E%3Cstop offset='40%25' stop-color='%23f07800'/%3E%3Cstop offset='80%25' stop-color='%23c04800'/%3E%3Cstop offset='100%25' stop-color='%236b2000'/%3E%3C/radialGradient%3E%3CradialGradient id='sh' cx='30%25' cy='20%25' r='50%25'%3E%3Cstop offset='0%25' stop-color='white' stop-opacity='0.7'/%3E%3Cstop offset='100%25' stop-color='white' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cellipse cx='26' cy='46' rx='16' ry='3.5' fill='black' opacity='0.4'/%3E%3Ccircle cx='23' cy='23' r='22' fill='%236b2000' opacity='0.5'/%3E%3Ccircle cx='23' cy='23' r='21' fill='url(%23bg)'/%3E%3Ccircle cx='23' cy='23' r='21' fill='none' stroke='%23ff9900' stroke-width='0.8' stroke-dasharray='2 1.2'/%3E%3Ccircle cx='23' cy='23' r='17' fill='none' stroke='%23ff6600' stroke-width='1.2' opacity='0.8'/%3E%3Ctext x='23' y='32' font-family='Arial%2Csans-serif' font-weight='bold' font-size='28' fill='%237a2800' text-anchor='middle' stroke='%237a2800' stroke-width='3' stroke-linejoin='round'%3E%E2%82%BF%3C/text%3E%3Ctext x='23' y='32' font-family='Arial%2Csans-serif' font-weight='bold' font-size='28' fill='white' text-anchor='middle'%3E%E2%82%BF%3C/text%3E%3Cellipse cx='15' cy='13' rx='10' ry='6' fill='url(%23sh)' transform='rotate(-25%2C15%2C13)'/%3E%3Ccircle cx='37' cy='9' r='2' fill='white' opacity='0.95'/%3E%3Ccircle cx='40' cy='14' r='1.2' fill='white' opacity='0.65'/%3E%3Ccircle cx='34' cy='7' r='1.2' fill='white' opacity='0.65'/%3E%3C/svg%3E") 23 23, auto;
     }
 
     #header {
@@ -63,6 +64,38 @@
     }
 
     /* Essendon Watch */
+    @keyframes essendon-pulse {
+      0%   { box-shadow: 0 0 8px 2px #c00, 0 0 20px 4px #ff000066; }
+      50%  { box-shadow: 0 0 20px 8px #c00, 0 0 50px 15px #ff0000aa; }
+      100% { box-shadow: 0 0 8px 2px #c00, 0 0 20px 4px #ff000066; }
+    }
+    @keyframes sec-shake {
+      0%,100% { transform: translateX(0); }
+      25%      { transform: translateX(-2px) rotate(-3deg); }
+      75%      { transform: translateX(2px) rotate(3deg); }
+    }
+    @keyframes scanlines {
+      0%   { background-position: 0 0; }
+      100% { background-position: 0 8px; }
+    }
+    #essendon-watch {
+      position: relative;
+    }
+    #essendon-watch::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent 0px,
+        transparent 3px,
+        rgba(200,0,0,0.04) 3px,
+        rgba(200,0,0,0.04) 4px
+      );
+      pointer-events: none;
+      animation: scanlines 0.3s linear infinite;
+      z-index: 1;
+    }
     #essendon-watch .watch-boxes {
       display: flex;
       gap: 2rem;
@@ -76,6 +109,16 @@
       text-align: center;
       background: #fff8f8;
       min-width: 260px;
+      position: relative;
+      z-index: 2;
+      animation: essendon-pulse 2s ease-in-out infinite;
+      transition: transform 0.15s ease, border-color 0.15s ease;
+      cursor: crosshair;
+    }
+    #essendon-watch .watch-box:hover {
+      transform: scale(1.04);
+      border-color: #ff0000;
+      background: #fff0f0;
     }
     #essendon-watch .timer-row {
       display: flex;
@@ -93,6 +136,10 @@
       font-weight: bold;
       color: #c00;
       line-height: 1;
+    }
+    #essendon-watch .timer-unit.secs .val {
+      animation: sec-shake 0.5s ease-in-out infinite;
+      display: inline-block;
     }
     #essendon-watch .timer-unit small {
       font-size: 0.75rem;
@@ -139,7 +186,7 @@
           <span class="timer-unit"><span class="val" id="fw-d">0</span><small>days</small></span>
           <span class="timer-unit"><span class="val" id="fw-h">00</span><small>hrs</small></span>
           <span class="timer-unit"><span class="val" id="fw-m">00</span><small>min</small></span>
-          <span class="timer-unit"><span class="val" id="fw-s">00</span><small>sec</small></span>
+          <span class="timer-unit secs"><span class="val" id="fw-s">00</span><small>sec</small></span>
         </div>
         <span class="label">since 4 Sep 2004</span>
       </div>
@@ -150,7 +197,7 @@
           <span class="timer-unit"><span class="val" id="lw-d">0</span><small>days</small></span>
           <span class="timer-unit"><span class="val" id="lw-h">00</span><small>hrs</small></span>
           <span class="timer-unit"><span class="val" id="lw-m">00</span><small>min</small></span>
-          <span class="timer-unit"><span class="val" id="lw-s">00</span><small>sec</small></span>
+          <span class="timer-unit secs"><span class="val" id="lw-s">00</span><small>sec</small></span>
         </div>
         <span class="label">since 23 May 2025</span>
       </div>
@@ -176,16 +223,14 @@
     };
 
     // Multiple source+proxy combos tried in order — first success wins
+    const STOOQ = 'https://stooq.com/q/l/?s=gcqf.au&f=sd2t2ohlcv&h&e=csv';
     const FETCH_TARGETS = [
-      { label: 'allorigins → Yahoo (q1)',   url: 'https://api.allorigins.win/raw?url='            + encodeURIComponent(Y1), parse: parseYahoo },
-      { label: 'corsproxy → Yahoo (q2)',    url: 'https://corsproxy.io/?url='                     + encodeURIComponent(Y2), parse: parseYahoo },
-      { label: 'codetabs → Yahoo (q1)',     url: 'https://api.codetabs.com/v1/proxy?quest='       + encodeURIComponent(Y1), parse: parseYahoo },
-      { label: 'corsproxy → Yahoo (q1)',    url: 'https://corsproxy.io/?url='                     + encodeURIComponent(Y1), parse: parseYahoo },
-      { label: 'allorigins → Yahoo (q2)',   url: 'https://api.allorigins.win/raw?url='            + encodeURIComponent(Y2), parse: parseYahoo },
-      { label: 'codetabs → Yahoo (q2)',     url: 'https://api.codetabs.com/v1/proxy?quest='       + encodeURIComponent(Y2), parse: parseYahoo },
-      { label: 'allorigins → Stooq',        url: 'https://api.allorigins.win/raw?url='            + encodeURIComponent('https://stooq.com/q/l/?s=gcqf.au&f=sd2t2ohlcv&h&e=csv'), parse: parseStooqCsv, isText: true },
-      { label: 'corsproxy → Stooq',         url: 'https://corsproxy.io/?url='                     + encodeURIComponent('https://stooq.com/q/l/?s=gcqf.au&f=sd2t2ohlcv&h&e=csv'), parse: parseStooqCsv, isText: true },
-      { label: 'codetabs → Stooq',          url: 'https://api.codetabs.com/v1/proxy?quest='       + encodeURIComponent('https://stooq.com/q/l/?s=gcqf.au&f=sd2t2ohlcv&h&e=csv'), parse: parseStooqCsv, isText: true },
+      { label: 'allorigins → Yahoo (q1)',  url: 'https://api.allorigins.win/raw?url='  + encodeURIComponent(Y1),    parse: parseYahoo },
+      { label: 'corsproxy → Yahoo (q2)',   url: 'https://corsproxy.io/?url='           + encodeURIComponent(Y2),    parse: parseYahoo },
+      { label: 'corsproxy → Yahoo (q1)',   url: 'https://corsproxy.io/?url='           + encodeURIComponent(Y1),    parse: parseYahoo },
+      { label: 'allorigins → Yahoo (q2)',  url: 'https://api.allorigins.win/raw?url='  + encodeURIComponent(Y2),    parse: parseYahoo },
+      { label: 'allorigins → Stooq',       url: 'https://api.allorigins.win/raw?url='  + encodeURIComponent(STOOQ), parse: parseStooqCsv, isText: true },
+      { label: 'corsproxy → Stooq',        url: 'https://corsproxy.io/?url='           + encodeURIComponent(STOOQ), parse: parseStooqCsv, isText: true },
     ];
 
     let lastKnownPrice = null;
@@ -421,6 +466,164 @@
     renderWeeklyBet();
     tickEssendon();
     setInterval(tickEssendon, 1000);
+
+    // ── Plane + Explosion FX ────────────────────────────────────────────────
+    const fxCanvas = document.createElement('canvas');
+    fxCanvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;';
+    document.body.appendChild(fxCanvas);
+    const fxCtx = fxCanvas.getContext('2d');
+
+    function resizeFx() {
+      fxCanvas.width  = window.innerWidth;
+      fxCanvas.height = window.innerHeight;
+    }
+    resizeFx();
+    window.addEventListener('resize', resizeFx);
+
+    const EXPLOSION_COLORS = ['#ff2200','#ff5500','#ff8800','#ffcc00','#ffffff','#ff0044'];
+
+    class Particle {
+      constructor(x, y) {
+        this.x  = x;
+        this.y  = y;
+        this.vx = (Math.random() - 0.5) * 14;
+        this.vy = (Math.random() - 0.5) * 14;
+        this.life  = 1.0;
+        this.decay = 0.018 + Math.random() * 0.025;
+        this.size  = 3 + Math.random() * 7;
+        this.color = EXPLOSION_COLORS[Math.floor(Math.random() * EXPLOSION_COLORS.length)];
+      }
+      update() {
+        this.x  += this.vx;
+        this.y  += this.vy;
+        this.vy += 0.35;
+        this.life -= this.decay;
+      }
+      draw(ctx) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, this.life);
+        ctx.fillStyle   = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+      get alive() { return this.life > 0; }
+    }
+
+    class Flash {
+      constructor(x, y) {
+        this.x = x; this.y = y;
+        this.life = 1.0;
+      }
+      update() { this.life -= 0.12; }
+      draw(ctx) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, this.life);
+        const g = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, 60);
+        g.addColorStop(0, '#ffffff');
+        g.addColorStop(0.3, '#ff8800');
+        g.addColorStop(1, 'transparent');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 60, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+      get alive() { return this.life > 0; }
+    }
+
+    class Plane {
+      constructor(targetX, targetY) {
+        this.x       = Math.random() * fxCanvas.width;
+        this.y       = -40;
+        this.targetX = targetX;
+        this.targetY = targetY;
+        this.speed   = 5 + Math.random() * 4;
+        this.exploded = false;
+        this.children = [];
+        this.trail    = [];
+        this.done     = false;
+      }
+      update() {
+        if (!this.exploded) {
+          const dx   = this.targetX - this.x;
+          const dy   = this.targetY - this.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 12) {
+            this.exploded = true;
+            for (let i = 0; i < 45; i++) this.children.push(new Particle(this.x, this.y));
+            this.children.push(new Flash(this.x, this.y));
+          } else {
+            this.trail.push({ x: this.x, y: this.y, a: 0.6 });
+            if (this.trail.length > 12) this.trail.shift();
+            this.x += (dx / dist) * this.speed;
+            this.y += (dy / dist) * this.speed;
+          }
+        } else {
+          this.children.forEach(c => c.update());
+          this.children = this.children.filter(c => c.alive);
+          if (this.children.length === 0) this.done = true;
+        }
+      }
+      get angle() {
+        const dx = this.targetX - this.x;
+        const dy = this.targetY - this.y;
+        return Math.atan2(dy, dx);
+      }
+      draw(ctx) {
+        if (!this.exploded) {
+          // smoke trail
+          this.trail.forEach((t, i) => {
+            ctx.save();
+            ctx.globalAlpha = (i / this.trail.length) * 0.4;
+            ctx.fillStyle = '#888';
+            ctx.beginPath();
+            ctx.arc(t.x, t.y, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          });
+          // plane emoji rotated toward target
+          ctx.save();
+          ctx.translate(this.x, this.y);
+          ctx.rotate(this.angle);
+          ctx.font = '28px serif';
+          ctx.fillText('✈', -14, 9);
+          ctx.restore();
+        }
+        this.children.forEach(c => c.draw(ctx));
+      }
+    }
+
+    let fxPlanes = [];
+    let fxRunning = false;
+
+    function fxLoop() {
+      fxCtx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
+      fxPlanes.forEach(p => { p.update(); p.draw(fxCtx); });
+      fxPlanes = fxPlanes.filter(p => !p.done);
+      if (fxPlanes.length > 0) {
+        requestAnimationFrame(fxLoop);
+      } else {
+        fxRunning = false;
+      }
+    }
+
+    function spawnPlanes(box) {
+      const rect    = box.getBoundingClientRect();
+      const targetX = rect.left + rect.width / 2;
+      const targetY = rect.top  + rect.height / 2;
+      for (let i = 0; i < 5; i++) {
+        setTimeout(() => { fxPlanes.push(new Plane(targetX, targetY)); }, i * 180);
+      }
+      if (!fxRunning) { fxRunning = true; fxLoop(); }
+    }
+
+    document.querySelectorAll('#essendon-watch .watch-box').forEach(box => {
+      box.addEventListener('mouseenter', () => spawnPlanes(box));
+      box.addEventListener('click',      () => spawnPlanes(box));
+      box.addEventListener('touchstart', () => spawnPlanes(box), { passive: true });
+    });
   </script>
 </body>
 </html>
