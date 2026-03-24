@@ -222,15 +222,34 @@
       return close > 0 ? close : null;
     };
 
+    const Y7   = 'https://query1.finance.yahoo.com/v7/finance/quote?symbols=GCQF.AX';
+    const parseYahooV7 = d => d?.quoteResponse?.result?.[0]?.regularMarketPrice;
+    // allorigins /get wraps response: {contents:"...", status:{http_code:200}}
+    const parseYahooViaGet  = d => { try { return parseYahoo(JSON.parse(d.contents)); }  catch(e) { return null; } };
+    const parseYahooV7ViaGet = d => { try { return parseYahooV7(JSON.parse(d.contents)); } catch(e) { return null; } };
+    const parseStooqViaGet  = d => { try { return parseStooqCsv(d.contents); }           catch(e) { return null; } };
+
     // Multiple source+proxy combos tried in order — first success wins
     const STOOQ = 'https://stooq.com/q/l/?s=gcqf.au&f=sd2t2ohlcv&h&e=csv';
+    const AO_RAW = 'https://api.allorigins.win/raw?url=';
+    const AO_GET = 'https://api.allorigins.win/get?url=';
+    const CP_IO  = 'https://corsproxy.io/?url=';
+    const CP_ORG = 'https://corsproxy.org/?';
+    const TPROXY = 'https://thingproxy.freeboard.io/fetch/';
+
     const FETCH_TARGETS = [
-      { label: 'allorigins → Yahoo (q1)',  url: 'https://api.allorigins.win/raw?url='  + encodeURIComponent(Y1),    parse: parseYahoo },
-      { label: 'corsproxy → Yahoo (q2)',   url: 'https://corsproxy.io/?url='           + encodeURIComponent(Y2),    parse: parseYahoo },
-      { label: 'corsproxy → Yahoo (q1)',   url: 'https://corsproxy.io/?url='           + encodeURIComponent(Y1),    parse: parseYahoo },
-      { label: 'allorigins → Yahoo (q2)',  url: 'https://api.allorigins.win/raw?url='  + encodeURIComponent(Y2),    parse: parseYahoo },
-      { label: 'allorigins → Stooq',       url: 'https://api.allorigins.win/raw?url='  + encodeURIComponent(STOOQ), parse: parseStooqCsv, isText: true },
-      { label: 'corsproxy → Stooq',        url: 'https://corsproxy.io/?url='           + encodeURIComponent(STOOQ), parse: parseStooqCsv, isText: true },
+      { label: 'corsproxy.org → Yahoo (q1)',  url: CP_ORG  + encodeURIComponent(Y1),    parse: parseYahoo },
+      { label: 'corsproxy.org → Yahoo (q2)',  url: CP_ORG  + encodeURIComponent(Y2),    parse: parseYahoo },
+      { label: 'corsproxy.org → Yahoo (v7)',  url: CP_ORG  + encodeURIComponent(Y7),    parse: parseYahooV7 },
+      { label: 'thingproxy → Yahoo (q1)',     url: TPROXY  + encodeURIComponent(Y1),    parse: parseYahoo },
+      { label: 'thingproxy → Yahoo (v7)',     url: TPROXY  + encodeURIComponent(Y7),    parse: parseYahooV7 },
+      { label: 'corsproxy.io → Yahoo (q2)',   url: CP_IO   + encodeURIComponent(Y2),    parse: parseYahoo },
+      { label: 'allorigins/get → Yahoo (q1)', url: AO_GET  + encodeURIComponent(Y1),    parse: parseYahooViaGet },
+      { label: 'allorigins/get → Yahoo (v7)', url: AO_GET  + encodeURIComponent(Y7),    parse: parseYahooV7ViaGet },
+      { label: 'corsproxy.org → Stooq',       url: CP_ORG  + encodeURIComponent(STOOQ), parse: parseStooqCsv, isText: true },
+      { label: 'thingproxy → Stooq',          url: TPROXY  + encodeURIComponent(STOOQ), parse: parseStooqCsv, isText: true },
+      { label: 'allorigins/get → Stooq',      url: AO_GET  + encodeURIComponent(STOOQ), parse: parseStooqViaGet },
+      { label: 'allorigins/raw → Stooq',      url: AO_RAW  + encodeURIComponent(STOOQ), parse: parseStooqCsv, isText: true },
     ];
 
     let lastKnownPrice = null;
@@ -240,7 +259,7 @@
       document.getElementById('header').innerHTML = html;
     }
 
-    async function fetchWithTimeout(url, ms = 8000) {
+    async function fetchWithTimeout(url, ms = 12000) {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), ms);
       try {
