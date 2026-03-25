@@ -2,8 +2,11 @@ name: Fetch GCQF Price
 
 on:
   schedule:
-    # Every 15 min, Mon-Fri, 00:00-06:00 UTC = ASX market hours (10am-4pm AEST)
-    - cron: '*/15 0-5 * * 1-5'
+    # Every 15 min during ASX market hours (10am-4pm Melbourne)
+    # AEDT (UTC+11, Oct-Apr): 10am = 23:00 UTC prev day, 4pm = 05:00 UTC
+    # AEST (UTC+10, Apr-Oct): 10am = 00:00 UTC, 4pm = 06:00 UTC
+    - cron: '*/15 23 * * 0-4'  # covers 10am AEDT (Sun-Thu UTC = Mon-Fri Melbourne)
+    - cron: '*/15 0-5 * * 1-5' # covers rest of trading day year-round
   workflow_dispatch: # allow manual trigger from Actions tab
 
 permissions:
@@ -41,7 +44,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add tippingpayouts/price.json
-          git diff --cached --quiet && echo "No change in price, skipping commit" || git commit -m "chore: update GCQF price [skip ci]"
+          git commit -m "chore: update GCQF price [skip ci]"
           git push
 
       - uses: actions/configure-pages@v4
