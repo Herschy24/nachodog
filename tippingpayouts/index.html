@@ -315,7 +315,7 @@
     // ── Weekly Rolling Bet ──────────────────────────────────────────────────
     const WEEKLY_BETS = [
       { person: 'Sedy',    result: 'Won', potBefore: 50.00,  potAfter: 68.50 },
-      { person: 'Mosh',    result: 'Won', potBefore: 68.50,  potAfter: 95.90 },
+      { person: 'Mosh',    result: 'Won', potBefore: 68.50,  potAfter: 96.17 },
       { person: 'Riz',     result: 'Current', potBefore: 96.17, potAfter: 144.25 },
       { person: 'Wilks',   result: null },
       { person: 'TommyC',  result: null },
@@ -332,7 +332,7 @@
 
     function renderWeeklyBet() {
       const section = document.getElementById('weekly-bet');
-      const lastCompleted = [...WEEKLY_BETS].reverse().find(b => b.result !== null);
+      const lastCompleted = [...WEEKLY_BETS].reverse().find(b => b.result === 'Won');
       const currentPot = lastCompleted ? lastCompleted.potAfter : 50.00;
 
       let rows = '';
