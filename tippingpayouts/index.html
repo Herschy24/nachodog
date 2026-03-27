@@ -62,6 +62,11 @@
     #weekly-bet tr.pending td {
       color: #666;
     }
+    #weekly-bet tr.current td {
+      background: #fff3cd;
+      color: #856404;
+      font-weight: 600;
+    }
 
     /* Essendon Watch */
     @keyframes essendon-pulse {
@@ -209,7 +214,7 @@
     const STARTING_AUD = 1400;   // total tipping pot collected
     const UNITS_GCQF   = 341;    // units of GCQF held
     const BUY_PRICE    = 3.96;   // purchase price per unit (AUD)
-    const ROLLING_POT  = 95.90;  // current rolling weekly bet total
+    const ROLLING_POT  = 96.17;  // current rolling weekly bet total
 
     async function loadPrice() {
       const resp = await fetch('price.json?v=' + Date.now());
@@ -311,7 +316,7 @@
     const WEEKLY_BETS = [
       { person: 'Sedy',    result: 'Won', potBefore: 50.00,  potAfter: 68.50 },
       { person: 'Mosh',    result: 'Won', potBefore: 68.50,  potAfter: 95.90 },
-      { person: 'Riz',     result: null },
+      { person: 'Riz',     result: 'Current', potBefore: 96.17, potAfter: 144.25 },
       { person: 'Wilks',   result: null },
       { person: 'TommyC',  result: null },
       { person: 'Danny',   result: null },
@@ -332,7 +337,15 @@
 
       let rows = '';
       WEEKLY_BETS.forEach((b, i) => {
-        if (b.result !== null) {
+        if (b.result === 'Current') {
+          rows += `<tr class="current">
+            <td>${i + 1}</td>
+            <td>${b.person}</td>
+            <td>Pending</td>
+            <td>$${b.potBefore.toFixed(2)}</td>
+            <td>$${b.potAfter.toFixed(2)}</td>
+          </tr>`;
+        } else if (b.result !== null) {
           rows += `<tr class="won">
             <td>${i + 1}</td>
             <td>${b.person}</td>
