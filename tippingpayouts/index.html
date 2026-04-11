@@ -198,14 +198,14 @@
       </div>
       <div class="watch-box">
         <span class="watch-title">✅ Last Win</span>
-        <span class="watch-subtitle">Most recent AFL match victory</span>
+        <span class="watch-subtitle">11 Apr 2026</span>
         <div class="timer-row">
           <span class="timer-unit"><span class="val" id="lw-d">0</span><small>days</small></span>
           <span class="timer-unit"><span class="val" id="lw-h">00</span><small>hrs</small></span>
           <span class="timer-unit"><span class="val" id="lw-m">00</span><small>min</small></span>
           <span class="timer-unit secs"><span class="val" id="lw-s">00</span><small>sec</small></span>
         </div>
-        <span class="label">since 23 May 2025</span>
+        <span class="label">since 11 Apr 2026</span>
       </div>
     </div>
   </section>
@@ -385,7 +385,7 @@
     // ── Essendon Watch ──────────────────────────────────────────────────────
     function tickEssendon() {
       function elapsed(dateStr) {
-        const diff = Date.now() - new Date(dateStr).getTime();
+        const diff = Math.max(0, Date.now() - new Date(dateStr).getTime());
         const s = Math.floor(diff / 1000) % 60;
         const m = Math.floor(diff / 60000) % 60;
         const h = Math.floor(diff / 3600000) % 24;
@@ -393,7 +393,8 @@
         return { d, h, m, s };
       }
       const fw = elapsed('2004-09-04T00:00:00+10:00');
-      const lw = elapsed('2025-05-23T00:00:00+10:00');
+      const LW_WIN_TIME = new Date(Date.now() + 15 * 60 * 1000);
+      const lw = elapsed(LW_WIN_TIME.toISOString());
       document.getElementById('fw-d').textContent = fw.d;
       document.getElementById('fw-h').textContent = String(fw.h).padStart(2, '0');
       document.getElementById('fw-m').textContent = String(fw.m).padStart(2, '0');
