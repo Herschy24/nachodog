@@ -393,8 +393,7 @@
         return { d, h, m, s };
       }
       const fw = elapsed('2004-09-04T00:00:00+10:00');
-      const LW_WIN_TIME = new Date(Date.now() + 15 * 60 * 1000);
-      const lw = elapsed(LW_WIN_TIME.toISOString());
+      const lw = elapsed('2026-04-11T16:00:00+10:00');
       document.getElementById('fw-d').textContent = fw.d;
       document.getElementById('fw-h').textContent = String(fw.h).padStart(2, '0');
       document.getElementById('fw-m').textContent = String(fw.m).padStart(2, '0');
