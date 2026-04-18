@@ -214,7 +214,7 @@
     const STARTING_AUD = 1400;   // total tipping pot collected
     const UNITS_GCQF   = 341;    // units of GCQF held
     const BUY_PRICE    = 3.96;   // purchase price per unit (AUD)
-    const ROLLING_POT  = 292.31;  // current rolling weekly bet total
+    const ROLLING_POT  = 438.46;  // current rolling weekly bet total
 
     async function loadPrice() {
       const resp = await fetch('price.json?v=' + Date.now());
@@ -319,7 +319,7 @@
       { person: 'Riz',     result: 'Won', potBefore: 96.17, potAfter: 144.25 },
       { person: 'Wilky',   result: 'Won', potBefore: 144.25, potAfter: 191.86 },
       { person: 'TommyC',  result: 'Won', potBefore: 191.86, potAfter: 292.31 },
-      { person: 'Danny',   result: 'Current', potBefore: 292.31, potAfter: 438.46 },
+      { person: 'Danny',   result: 'Won', potBefore: 292.31, potAfter: 438.46 },
       { person: 'Jonsey',  result: null },
       { person: 'Willy K', result: null },
       { person: 'Jacob',   result: null },
