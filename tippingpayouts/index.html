@@ -59,6 +59,10 @@
     #weekly-bet tr.won td {
       background: #d4edda;
     }
+    #weekly-bet tr.lost td {
+      background: #f8d7da;
+      color: #842029;
+    }
     #weekly-bet tr.pending td {
       color: #666;
     }
@@ -346,7 +350,8 @@
             <td>$${b.potAfter.toFixed(2)}</td>
           </tr>`;
         } else if (b.result !== null) {
-          rows += `<tr class="won">
+          const rowClass = b.result === 'Lost' ? 'lost' : 'won';
+          rows += `<tr class="${rowClass}">
             <td>${i + 1}</td>
             <td>${b.person}</td>
             <td>${b.result}</td>
