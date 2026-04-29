@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Is My Red Your Red?</title>
-  <meta property="og:title" content="Is my red your red?"/>
+  <title>Is My Orange Your Orange?</title>
+  <meta property="og:title" content="Is my orange your orange?"/>
   <meta property="og:description" content="Test your color perception with this interactive test."/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -74,7 +74,7 @@
     }
     .color-chip {
       display: inline-block; width: 0.9em; height: 0.9em;
-      background: hsl(30,100%,50%); border: 2px solid black;
+      background: hsl(15,100%,50%); border: 2px solid black;
       border-radius: 0.2em; margin-bottom: -0.15em;
     }
 
@@ -119,21 +119,20 @@
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 <script>
 // ─── Constants ───────────────────────────────────────────────────────────────
-var CENTER  = 30;   // orange: the midpoint between red (0) and yellow (60)
+var CENTER  = 15;   // red-orange: midpoint between red (0) and orange (30)
 var HUE_MIN = 0;    // clearly red
-var HUE_MAX = 60;   // clearly yellow
+var HUE_MAX = 30;   // clearly orange
 var ROUNDS  = 8;
 
-// Population CDF for the red-yellow boundary.
+// Population CDF for the red-orange boundary.
 // Each entry: [hue, cumulative fraction of people whose boundary is ≤ that hue].
-// Clustered around ~24 (slightly red-ward, analogous to how blue-green leans blue).
+// Clustered around ~13 (slightly red-ward).
 var POP_CDF = [
-  [0,  0.00], [8,  0.01], [11, 0.03], [13, 0.06], [15, 0.10],
-  [17, 0.15], [18, 0.20], [19, 0.25], [20, 0.31], [21, 0.37],
-  [22, 0.44], [23, 0.51], [24, 0.57], [25, 0.63], [26, 0.69],
-  [27, 0.74], [28, 0.79], [29, 0.83], [30, 0.87], [31, 0.90],
-  [32, 0.92], [33, 0.94], [35, 0.96], [38, 0.97], [42, 0.98],
-  [50, 0.99], [60, 1.00]
+  [0,  0.00], [3,  0.01], [5,  0.03], [6,  0.06], [7,  0.10],
+  [8,  0.15], [9,  0.21], [10, 0.28], [11, 0.36], [12, 0.44],
+  [13, 0.52], [14, 0.59], [15, 0.65], [16, 0.71], [17, 0.76],
+  [18, 0.81], [19, 0.85], [20, 0.88], [21, 0.91], [22, 0.93],
+  [24, 0.95], [26, 0.97], [28, 0.98], [30, 1.00]
 ];
 
 // ─── Algorithm ───────────────────────────────────────────────────────────────
@@ -154,7 +153,7 @@ function fitAndProbe(hues, resps, polarity, alpha) {
 
   // Priors
   var b0 = 0.2, bStd = 0.5;
-  var o0 = 0,   oStd = 30;
+  var o0 = 0,   oStd = 15;
 
   function ll(b2, o2) {
     var acc = 0;
@@ -239,7 +238,7 @@ function resetState() {
     polarity:        0,
     finalHue:        0,
     responses:       [],
-    yellowRight:     Math.random() > 0.5,
+    orangeRight:     Math.random() > 0.5,
     showResults:     false,
     showAbout:       false,
     firstMislabeled: false,
@@ -275,12 +274,12 @@ function showNoiseMask() {
 
 // ─── Actions ─────────────────────────────────────────────────────────────────
 function selectColor(choice) {
-  var isYellow = choice === 'yellow';
-  state.responses.push({ hue: state.currentHue, isYellow: isYellow });
+  var isOrange = choice === 'orange';
+  state.responses.push({ hue: state.currentHue, isOrange: isOrange });
 
   // First-color mislabel check
   if (state.rounds === 0) {
-    var mislabeled = (isYellow && state.currentHue <= CENTER) || (!isYellow && state.currentHue > CENTER);
+    var mislabeled = (isOrange && state.currentHue <= CENTER) || (!isOrange && state.currentHue > CENTER);
     if (mislabeled) {
       state.firstMislabeled = true;
       render();
@@ -289,7 +288,7 @@ function selectColor(choice) {
   }
 
   var hues  = state.responses.map(function(r) { return r.hue; });
-  var resps = state.responses.map(function(r) { return r.isYellow; });
+  var resps = state.responses.map(function(r) { return r.isOrange; });
   var fit   = fitAndProbe(hues, resps, state.polarity, 0.4);
 
   state.polarity    = fit.polarity === 1 ? -1 : 1;
@@ -297,10 +296,10 @@ function selectColor(choice) {
   state.rounds++;
 
   if (state.rounds === ROUNDS) {
-    var allYellow = resps.every(function(r) { return r; });
+    var allOrange = resps.every(function(r) { return r; });
     var allRed    = resps.every(function(r) { return !r; });
-    if (allYellow || allRed) {
-      state.allSame = allYellow ? 'yellow' : 'red';
+    if (allOrange || allRed) {
+      state.allSame = allOrange ? 'orange' : 'red';
       render();
       return;
     }
@@ -329,9 +328,9 @@ function drawResultChart(finalHue) {
   canvas.height = H;
   var ctx = canvas.getContext('2d');
 
-  // Gradient background (red → yellow)
+  // Gradient background (red → orange)
   var grad = ctx.createLinearGradient(0, 0, W, 0);
-  for (var h = HUE_MIN; h <= HUE_MAX; h += 3) {
+  for (var h = HUE_MIN; h <= HUE_MAX; h += 1) {
     grad.addColorStop((h - HUE_MIN) / (HUE_MAX - HUE_MIN), 'hsl(' + h + ',100%,50%)');
   }
   ctx.fillStyle = grad;
@@ -401,10 +400,10 @@ function render() {
     var descHTML;
     if (cdf > 0.6) {
       descHTML = '<i>Your</i> boundary is at hue ' + Math.round(fh) + ', redder than ' + redderPct +
-        '% of the population. For you, orange <span class="color-chip"></span> is yellow.';
+        '% of the population. For you, red-orange <span class="color-chip"></span> is orange.';
     } else if (cdf < 0.4) {
-      descHTML = '<i>Your</i> boundary is at hue ' + Math.round(fh) + ', yellower than ' + yellowerPct +
-        '% of the population. For you, orange <span class="color-chip"></span> is red.';
+      descHTML = '<i>Your</i> boundary is at hue ' + Math.round(fh) + ', oranger than ' + yellowerPct +
+        '% of the population. For you, red-orange <span class="color-chip"></span> is red.';
     } else {
       descHTML = '<i>Your</i> boundary is at hue ' + Math.round(fh) + ', right at the population median. You\'re a true neutral.';
     }
@@ -412,11 +411,11 @@ function render() {
     app.innerHTML =
       '<div class="results-screen">' +
         '<div class="result-halves">' +
-          '<div class="result-half" style="background:hsl(' + (fh - 5) + ',100%,50%)">' +
+          '<div class="result-half" style="background:hsl(' + (fh - 4) + ',100%,50%)">' +
             '<span class="result-label"><i>Your</i> red</span>' +
           '</div>' +
-          '<div class="result-half" style="background:hsl(' + (fh + 5) + ',100%,50%)">' +
-            '<span class="result-label"><i>Your</i> yellow</span>' +
+          '<div class="result-half" style="background:hsl(' + (fh + 4) + ',100%,50%)">' +
+            '<span class="result-label"><i>Your</i> orange</span>' +
           '</div>' +
         '</div>' +
         '<div class="result-bottom">' +
@@ -436,11 +435,11 @@ function render() {
 
   // ── Test screen ──
   var bg        = 'hsl(' + state.currentHue + ',100%,50%)';
-  var leftLabel = state.yellowRight ? 'red'    : 'yellow';
-  var rightLabel= state.yellowRight ? 'yellow' : 'red';
+  var leftLabel = state.orangeRight ? 'red'    : 'orange';
+  var rightLabel= state.orangeRight ? 'orange' : 'red';
   var titleHTML = state.showInitial
     ? 'Test <i>your</i> color categorization'
-    : 'Is <i>my</i> red <i>your</i> red?';
+    : 'Is <i>my</i> orange <i>your</i> orange?';
 
   app.innerHTML =
     '<div class="test-container" style="background:' + bg + '">' +
@@ -462,7 +461,7 @@ function renderMislabeledHTML() {
   if (!state.firstMislabeled) return '';
   return '<div class="overlay"><div class="popup">' +
     '<h2>Whoops!</h2>' +
-    '<p>The first color is always very red or very yellow. If you mislabel it you won\'t get accurate results — this might mean your screen has a night filter, unusual colour calibration, or you made a mistake. Try again?</p>' +
+    '<p>The first color is always very red or very orange. If you mislabel it you won\'t get accurate results — this might mean your screen has a night filter, unusual colour calibration, or you made a mistake. Try again?</p>' +
     '<button class="popup-action-btn" onclick="doReset()">Reset</button>' +
     '</div></div>';
 }
@@ -481,13 +480,13 @@ function renderAboutHTML() {
   return '<div class="overlay"><div class="popup">' +
     '<button class="close-btn" onclick="closeAbout()">×</button>' +
     '<h2>About This Website</h2>' +
-    '<p>People draw the line between red and yellow in different places. Language and culture can influence how we categorise colours. This test measures your personal red-yellow boundary.</p>' +
+    '<p>People draw the line between red and orange in different places. Language and culture can influence how we categorise colours. This test measures your personal red-orange boundary.</p>' +
     '<h2>How It Works</h2>' +
-    '<p>The test shows colours with HSL hues ranging from 0 (red) to 60 (yellow), centred around orange (hue 30). It fits a logistic regression model to your responses using maximum-a-posteriori (MAP) estimation — a second-order Newton method — to find the hue at which you switch from saying "red" to "yellow".</p>' +
+    '<p>The test shows colours with HSL hues ranging from 0 (red) to 30 (orange), centred around hue 15. It fits a logistic regression model to your responses using maximum-a-posteriori (MAP) estimation — a second-order Newton method — to find the hue at which you switch from saying "red" to "orange".</p>' +
     '<h2>Validity</h2>' +
     '<p><b><i>This is for entertainment purposes only.</i></b> Results depend on your monitor\'s calibration, ambient lighting, and filters like night mode. The test should have good test-retest reliability on the same device in the same lighting.</p>' +
     '<h2>Technical Details</h2>' +
-    '<p>Colors are represented in HSL space. Hue 0 is red, hue 60 is yellow, and hue 30 is orange. The test fits a sigmoid curve to your responses and uses MAP estimation to infer your threshold, sampling new points near the estimated boundary.</p>' +
+    '<p>Colors are represented in HSL space. Hue 0 is red and hue 30 is orange. The test fits a sigmoid curve to your responses and uses MAP estimation to infer your threshold, sampling new points near the estimated boundary.</p>' +
     '<h2>Credits</h2>' +
     '<p>Inspired by <a href="https://ismy.blue" target="_blank">ismy.blue</a> by Patrick Mineault. Made for nachodog.</p>' +
     '</div></div>';
