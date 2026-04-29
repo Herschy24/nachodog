@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Is My Red Your Red?</title>
+  <meta property="og:title" content="Is my red your red?"/>
+  <meta property="og:description" content="Test your color perception with this interactive test."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Cabin:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; }
+    html, body { height: 100%; width: 100%; overflow: hidden; }
+    body { font-family: 'Cabin', sans-serif; font-weight: 600; font-size: 15px; }
+
+    #app {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      display: flex; flex-direction: column;
+    }
+
+    /* ── Test screen ── */
+    .test-container {
+      flex: 1; display: flex; flex-direction: column; justify-content: space-between;
+    }
+    .test-content {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+    }
+    .test-title {
+      font-size: 2.5rem; font-weight: 700;
+      text-align: center; color: #000;
+    }
+    .bg-white { background: #fff; padding: 2px 6px; }
+
+    /* ── Buttons ── */
+    .btn-row {
+      width: 100%; height: 60px; display: flex; flex-shrink: 0;
+    }
+    .btn {
+      flex: 1; cursor: pointer; font-size: 1rem; font-weight: 700;
+      background: #000; color: #fff; border: none;
+      border-top: 1px solid white;
+      box-shadow: inset 0 0 #fff;
+      transition: box-shadow 0.3s ease;
+      font-family: 'Cabin', sans-serif;
+    }
+    .btn.mid { border-left: 1px solid white; border-right: 1px solid white; }
+    .btn.side-r { border-left: 1px solid white; }
+    .btn:hover { box-shadow: inset 0 0 0 4px white; }
+    .btn:active { box-shadow: inset 0 0 0 4px white; transition: box-shadow 0.1s; }
+
+    /* ── Results screen ── */
+    .results-screen {
+      flex: 1; display: flex; flex-direction: column; overflow: hidden;
+    }
+    .result-halves { flex: 1; display: flex; min-height: 0; }
+    .result-half {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+    }
+    .result-label {
+      background: rgba(255,255,255,0.75); color: #000;
+      font-weight: 700; font-size: 1.3rem;
+      padding: 4px 10px; border-radius: 2px;
+    }
+    .result-bottom {
+      background: white; color: black;
+      padding: 0.75rem 1rem; flex-shrink: 0;
+    }
+    .chart-wrap { position: relative; height: 120px; margin-bottom: 0.6rem; }
+    #result-chart { width: 100%; height: 100%; display: block; }
+    .result-desc {
+      font-size: 1.2rem; font-weight: 700; text-align: center; line-height: 1.4;
+    }
+    .color-chip {
+      display: inline-block; width: 0.9em; height: 0.9em;
+      background: hsl(30,100%,50%); border: 2px solid black;
+      border-radius: 0.2em; margin-bottom: -0.15em;
+    }
+
+    /* ── Overlay / popup ── */
+    .overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: flex; justify-content: center; align-items: center;
+      z-index: 1000;
+    }
+    .popup {
+      background: #fff; color: #000; padding: 2rem; border-radius: 8px;
+      max-width: min(80%, 640px); max-height: 80vh; overflow-y: auto;
+      position: relative; font-size: 0.9rem; line-height: 1.6;
+    }
+    .popup h2 { font-size: 1.2rem; margin: 1rem 0 0.4rem; }
+    .popup h2:first-child { margin-top: 0; }
+    .popup p { margin-bottom: 0.75rem; }
+    .popup a { color: #c04000; }
+    .close-btn {
+      position: absolute; top: 8px; right: 12px;
+      font-size: 1.5rem; background: none; border: none; cursor: pointer; color: #000;
+    }
+    .popup-action-btn {
+      background: #c04000; color: white;
+      padding: 0.4rem 1.2rem; border: none; border-radius: 4px;
+      cursor: pointer; font-size: 1rem; margin-top: 0.5rem;
+      font-family: 'Cabin', sans-serif; font-weight: 600;
+    }
+
+    /* ── Noise mask ── */
+    #noise-mask {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 500; pointer-events: none; opacity: 0;
+      transition: opacity 0.05s;
+    }
+  </style>
+</head>
+<body>
+<div id="app"></div>
+<canvas id="noise-mask"></canvas>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+<script>
+// ─── Constants ───────────────────────────────────────────────────────────────
+var CENTER  = 30;   // orange: the midpoint between red (0) and yellow (60)
+var HUE_MIN = 0;    // clearly red
+var HUE_MAX = 60;   // clearly yellow
+var ROUNDS  = 8;
+
+// Population CDF for the red-yellow boundary.
+// Each entry: [hue, cumulative fraction of people whose boundary is ≤ that hue].
+// Clustered around ~24 (slightly red-ward, analogous to how blue-green leans blue).
+var POP_CDF = [
+  [0,  0.00], [8,  0.01], [11, 0.03], [13, 0.06], [15, 0.10],
+  [17, 0.15], [18, 0.20], [19, 0.25], [20, 0.31], [21, 0.37],
+  [22, 0.44], [23, 0.51], [24, 0.57], [25, 0.63], [26, 0.69],
+  [27, 0.74], [28, 0.79], [29, 0.83], [30, 0.87], [31, 0.90],
+  [32, 0.92], [33, 0.94], [35, 0.96], [38, 0.97], [42, 0.98],
+  [50, 0.99], [60, 1.00]
+];
+
+// ─── Algorithm ───────────────────────────────────────────────────────────────
+function sigmoid(x) {
+  return x >= 0 ? 1 / (1 + Math.exp(-x)) : Math.exp(x) / (1 + Math.exp(x));
+}
+function logSigmoid(x) {
+  return x >= 0 ? -Math.log1p(Math.exp(-x)) : x - Math.log1p(Math.exp(x));
+}
+
+// MAP logistic regression via Newton's method.
+// hues: array of hue values shown; resps: array of booleans (true = yellow).
+// Returns { slope, offset, polarity, newProbe }.
+function fitAndProbe(hues, resps, polarity, alpha) {
+  alpha = alpha !== undefined ? alpha : 0.2;
+  var b   = 0.2;   // slope
+  var off = 0;     // offset from CENTER
+
+  // Priors
+  var b0 = 0.2, bStd = 0.5;
+  var o0 = 0,   oStd = 30;
+
+  function ll(b2, o2) {
+    var acc = 0;
+    for (var i = 0; i < hues.length; i++) {
+      var v = b2 * (hues[i] - CENTER + o2);
+      acc += resps[i] ? logSigmoid(v) : logSigmoid(-v);
+    }
+    return acc;
+  }
+
+  for (var iter = 0; iter < 20; iter++) {
+    var curLL = ll(b, off);
+    var gb = -(b - b0) / (bStd * bStd);
+    var go = -(off - o0) / (oStd * oStd);
+    var hbb = -1 / (bStd * bStd);
+    var hbo = 0;
+    var hoo = -1 / (oStd * oStd);
+
+    for (var i = 0; i < hues.length; i++) {
+      var s = sigmoid(b * (hues[i] - CENTER + off));
+      var d = hues[i] - CENTER + off;
+      gb  += (resps[i] - s) * d;
+      go  += (resps[i] - s) * b;
+      hbb -= s * (1 - s) * d * d;
+      hbo -= s * (1 - s) * b * d;
+      hoo -= s * (1 - s) * b * b;
+    }
+
+    var det   = hbb * hoo - hbo * hbo;
+    var stepB = (hoo * gb - hbo * go) / det;
+    var stepO = (hbb * go - hbo * gb) / det;
+
+    // Backtracking line search
+    var lr = 1;
+    for (var ls = 0; ls < 10 && ll(Math.max(0.01, b - lr * stepB), off - lr * stepO) <= curLL; ls++) {
+      lr *= 0.5;
+    }
+
+    b   -= lr * stepB;
+    off -= lr * stepO;
+    b    = Math.max(0.01, b);
+
+    if (Math.abs(stepB) < 1e-6 && Math.abs(stepO) < 1e-6) break;
+  }
+
+  // Pick next probe near the estimated quantile
+  if (polarity === 0) polarity = Math.random() < 0.5 ? 1 : -1;
+  var p    = polarity > 0 ? alpha : 1 - alpha;
+  var next = CENTER - off + Math.log(p / (1 - p)) / b;
+  next     = Math.max(HUE_MIN, Math.min(next + 2 * Math.random() - 1, HUE_MAX));
+
+  return { slope: b, offset: off, polarity: polarity, newProbe: next };
+}
+
+// ─── Population lookup ───────────────────────────────────────────────────────
+function getPopCDF(hue) {
+  if (hue <= POP_CDF[0][0])                     return POP_CDF[0][1];
+  if (hue >= POP_CDF[POP_CDF.length - 1][0])    return POP_CDF[POP_CDF.length - 1][1];
+  for (var i = 1; i < POP_CDF.length; i++) {
+    if (hue <= POP_CDF[i][0]) {
+      var h0 = POP_CDF[i-1][0], c0 = POP_CDF[i-1][1];
+      var h1 = POP_CDF[i][0],   c1 = POP_CDF[i][1];
+      var t  = (hue - h0) / (h1 - h0);
+      return c0 + t * (c1 - c0);
+    }
+  }
+  return 1;
+}
+
+// ─── State ───────────────────────────────────────────────────────────────────
+var state = {};
+
+function resetState() {
+  var startHue = state.firstMislabeled
+    ? (state.currentHue <= CENTER ? HUE_MAX : HUE_MIN)
+    : (Math.random() > 0.5 ? HUE_MIN : HUE_MAX);
+
+  state = {
+    currentHue:      startHue,
+    showInitial:     true,
+    rounds:          0,
+    polarity:        0,
+    finalHue:        0,
+    responses:       [],
+    yellowRight:     Math.random() > 0.5,
+    showResults:     false,
+    showAbout:       false,
+    firstMislabeled: false,
+    allSame:         null,
+  };
+
+  setTimeout(function() { state.showInitial = false; render(); }, 2000);
+}
+
+// ─── Noise mask ───────────────────────────────────────────────────────────────
+var noiseMask = document.getElementById('noise-mask');
+var noiseCtx  = noiseMask.getContext('2d');
+
+function resizeNoise() {
+  noiseMask.width  = window.innerWidth;
+  noiseMask.height = window.innerHeight;
+}
+resizeNoise();
+window.addEventListener('resize', resizeNoise);
+
+function showNoiseMask() {
+  var w = noiseMask.width, h = noiseMask.height;
+  var img = noiseCtx.createImageData(w, h);
+  for (var i = 0; i < img.data.length; i += 4) {
+    var v = Math.random() < 0.5 ? 0 : 255;
+    img.data[i] = img.data[i+1] = img.data[i+2] = v;
+    img.data[i+3] = 110;
+  }
+  noiseCtx.putImageData(img, 0, 0);
+  noiseMask.style.opacity = '1';
+  setTimeout(function() { noiseMask.style.opacity = '0'; }, 150);
+}
+
+// ─── Actions ─────────────────────────────────────────────────────────────────
+function selectColor(choice) {
+  var isYellow = choice === 'yellow';
+  state.responses.push({ hue: state.currentHue, isYellow: isYellow });
+
+  // First-color mislabel check
+  if (state.rounds === 0) {
+    var mislabeled = (isYellow && state.currentHue <= CENTER) || (!isYellow && state.currentHue > CENTER);
+    if (mislabeled) {
+      state.firstMislabeled = true;
+      render();
+      return;
+    }
+  }
+
+  var hues  = state.responses.map(function(r) { return r.hue; });
+  var resps = state.responses.map(function(r) { return r.isYellow; });
+  var fit   = fitAndProbe(hues, resps, state.polarity, 0.4);
+
+  state.polarity    = fit.polarity === 1 ? -1 : 1;
+  state.currentHue  = fit.newProbe;
+  state.rounds++;
+
+  if (state.rounds === ROUNDS) {
+    var allYellow = resps.every(function(r) { return r; });
+    var allRed    = resps.every(function(r) { return !r; });
+    if (allYellow || allRed) {
+      state.allSame = allYellow ? 'yellow' : 'red';
+      render();
+      return;
+    }
+    state.finalHue   = CENTER - fit.offset;
+    state.showResults = true;
+    if (typeof confetti === 'function') confetti();
+    render();
+    return;
+  }
+
+  showNoiseMask();
+  render();
+}
+
+function doReset() { resetState(); render(); }
+function openAbout()  { state.showAbout = true;  render(); }
+function closeAbout() { state.showAbout = false; render(); }
+
+// ─── Results chart ────────────────────────────────────────────────────────────
+function drawResultChart(finalHue) {
+  var canvas = document.getElementById('result-chart');
+  if (!canvas) return;
+  var W = canvas.parentElement.clientWidth;
+  var H = canvas.parentElement.clientHeight;
+  canvas.width  = W;
+  canvas.height = H;
+  var ctx = canvas.getContext('2d');
+
+  // Gradient background (red → yellow)
+  var grad = ctx.createLinearGradient(0, 0, W, 0);
+  for (var h = HUE_MIN; h <= HUE_MAX; h += 3) {
+    grad.addColorStop((h - HUE_MIN) / (HUE_MAX - HUE_MIN), 'hsl(' + h + ',100%,50%)');
+  }
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Animate CDF curve drawing
+  var progress = { v: 0 };
+  var startTime = null;
+  var duration  = 2000;
+
+  function animateCDF(timestamp) {
+    if (!startTime) startTime = timestamp;
+    progress.v = Math.min(1, (timestamp - startTime) / duration);
+
+    // Redraw gradient
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // CDF curve up to progress point
+    var numPts = Math.ceil(progress.v * (POP_CDF.length - 1));
+    ctx.beginPath();
+    ctx.strokeStyle = 'black';
+    ctx.lineWidth   = 2;
+    for (var i = 0; i <= numPts && i < POP_CDF.length; i++) {
+      var x = (POP_CDF[i][0] - HUE_MIN) / (HUE_MAX - HUE_MIN) * W;
+      var y = (1 - POP_CDF[i][1]) * H;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    // Threshold line (appears after curve is done)
+    if (progress.v === 1) {
+      var tx = (finalHue - HUE_MIN) / (HUE_MAX - HUE_MIN) * W;
+      ctx.beginPath();
+      ctx.strokeStyle  = 'black';
+      ctx.lineWidth    = 3;
+      ctx.setLineDash([5, 5]);
+      ctx.moveTo(tx, 0);
+      ctx.lineTo(tx, H);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // Label
+    ctx.fillStyle  = 'black';
+    ctx.font       = '11px Cabin, sans-serif';
+    ctx.textAlign  = 'right';
+    ctx.fillText('threshold distribution', W - 6, H - 6);
+
+    if (progress.v < 1) requestAnimationFrame(animateCDF);
+  }
+
+  requestAnimationFrame(animateCDF);
+}
+
+// ─── Render ───────────────────────────────────────────────────────────────────
+function render() {
+  var app = document.getElementById('app');
+
+  // ── Results screen ──
+  if (state.showResults) {
+    var fh  = state.finalHue;
+    var cdf = getPopCDF(fh);
+    var redderPct    = Math.round(100 * (1 - cdf));
+    var yellowerPct  = Math.round(100 * cdf);
+
+    var descHTML;
+    if (cdf > 0.6) {
+      descHTML = '<i>Your</i> boundary is at hue ' + Math.round(fh) + ', redder than ' + redderPct +
+        '% of the population. For you, orange <span class="color-chip"></span> is yellow.';
+    } else if (cdf < 0.4) {
+      descHTML = '<i>Your</i> boundary is at hue ' + Math.round(fh) + ', yellower than ' + yellowerPct +
+        '% of the population. For you, orange <span class="color-chip"></span> is red.';
+    } else {
+      descHTML = '<i>Your</i> boundary is at hue ' + Math.round(fh) + ', right at the population median. You\'re a true neutral.';
+    }
+
+    app.innerHTML =
+      '<div class="results-screen">' +
+        '<div class="result-halves">' +
+          '<div class="result-half" style="background:hsl(' + (fh - 5) + ',100%,50%)">' +
+            '<span class="result-label"><i>Your</i> red</span>' +
+          '</div>' +
+          '<div class="result-half" style="background:hsl(' + (fh + 5) + ',100%,50%)">' +
+            '<span class="result-label"><i>Your</i> yellow</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="result-bottom">' +
+          '<div class="chart-wrap"><canvas id="result-chart"></canvas></div>' +
+          '<div class="result-desc">' + descHTML + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="btn-row">' +
+        '<button class="btn" onclick="openAbout()">About</button>' +
+        '<button class="btn side-r" onclick="doReset()">Reset</button>' +
+      '</div>' +
+      renderAboutHTML();
+
+    requestAnimationFrame(function() { drawResultChart(fh); });
+    return;
+  }
+
+  // ── Test screen ──
+  var bg        = 'hsl(' + state.currentHue + ',100%,50%)';
+  var leftLabel = state.yellowRight ? 'red'    : 'yellow';
+  var rightLabel= state.yellowRight ? 'yellow' : 'red';
+  var titleHTML = state.showInitial
+    ? 'Test <i>your</i> color categorization'
+    : 'Is <i>my</i> red <i>your</i> red?';
+
+  app.innerHTML =
+    '<div class="test-container" style="background:' + bg + '">' +
+      '<div class="test-content">' +
+        '<h1 class="test-title"><span class="bg-white">' + titleHTML + '</span></h1>' +
+      '</div>' +
+    '</div>' +
+    '<div class="btn-row">' +
+      '<button class="btn" onclick="selectColor(\'' + leftLabel + '\')">This is ' + leftLabel + '</button>' +
+      '<button class="btn mid" onclick="doReset()">Reset</button>' +
+      '<button class="btn side-r" onclick="selectColor(\'' + rightLabel + '\')">This is ' + rightLabel + '</button>' +
+    '</div>' +
+    renderMislabeledHTML() +
+    renderAllSameHTML()    +
+    renderAboutHTML();
+}
+
+function renderMislabeledHTML() {
+  if (!state.firstMislabeled) return '';
+  return '<div class="overlay"><div class="popup">' +
+    '<h2>Whoops!</h2>' +
+    '<p>The first color is always very red or very yellow. If you mislabel it you won\'t get accurate results — this might mean your screen has a night filter, unusual colour calibration, or you made a mistake. Try again?</p>' +
+    '<button class="popup-action-btn" onclick="doReset()">Reset</button>' +
+    '</div></div>';
+}
+
+function renderAllSameHTML() {
+  if (!state.allSame) return '';
+  return '<div class="overlay"><div class="popup">' +
+    '<h2>Whoops!</h2>' +
+    '<p>You labelled all the colors as ' + state.allSame + '. We can\'t infer a boundary from that — this might mean your screen has unusual calibration or a night filter.</p>' +
+    '<button class="popup-action-btn" onclick="doReset()">Reset</button>' +
+    '</div></div>';
+}
+
+function renderAboutHTML() {
+  if (!state.showAbout) return '';
+  return '<div class="overlay"><div class="popup">' +
+    '<button class="close-btn" onclick="closeAbout()">×</button>' +
+    '<h2>About This Website</h2>' +
+    '<p>People draw the line between red and yellow in different places. Language and culture can influence how we categorise colours. This test measures your personal red-yellow boundary.</p>' +
+    '<h2>How It Works</h2>' +
+    '<p>The test shows colours with HSL hues ranging from 0 (red) to 60 (yellow), centred around orange (hue 30). It fits a logistic regression model to your responses using maximum-a-posteriori (MAP) estimation — a second-order Newton method — to find the hue at which you switch from saying "red" to "yellow".</p>' +
+    '<h2>Validity</h2>' +
+    '<p><b><i>This is for entertainment purposes only.</i></b> Results depend on your monitor\'s calibration, ambient lighting, and filters like night mode. The test should have good test-retest reliability on the same device in the same lighting.</p>' +
+    '<h2>Technical Details</h2>' +
+    '<p>Colors are represented in HSL space. Hue 0 is red, hue 60 is yellow, and hue 30 is orange. The test fits a sigmoid curve to your responses and uses MAP estimation to infer your threshold, sampling new points near the estimated boundary.</p>' +
+    '<h2>Credits</h2>' +
+    '<p>Inspired by <a href="https://ismy.blue" target="_blank">ismy.blue</a> by Patrick Mineault. Made for nachodog.</p>' +
+    '</div></div>';
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+resetState();
+render();
+</script>
+</body>
+</html>
