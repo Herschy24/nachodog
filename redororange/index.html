@@ -322,8 +322,8 @@ function closeAbout() { state.showAbout = false; render(); }
 function drawResultChart(finalHue) {
   var canvas = document.getElementById('result-chart');
   if (!canvas) return;
-  var W = canvas.parentElement.clientWidth;
-  var H = canvas.parentElement.clientHeight;
+  var W = canvas.offsetWidth || canvas.parentElement.clientWidth;
+  var H = canvas.offsetHeight || canvas.parentElement.clientHeight;
   canvas.width  = W;
   canvas.height = H;
   var ctx = canvas.getContext('2d');
@@ -410,9 +410,9 @@ function render() {
 
     app.innerHTML =
       '<div class="results-screen">' +
-        '<div class="result-bottom" style="flex:1;display:flex;flex-direction:column;justify-content:center;">' +
-          '<div class="chart-wrap" style="height:200px;margin-bottom:1rem;"><canvas id="result-chart"></canvas></div>' +
-          '<div class="result-desc">' + descHTML + '</div>' +
+        '<div style="flex:1;position:relative;">' +
+          '<canvas id="result-chart" style="position:absolute;top:0;left:0;width:100%;height:100%;display:block;"></canvas>' +
+          '<div class="result-desc" style="position:absolute;bottom:1rem;left:0;right:0;padding:0 1rem;">' + descHTML + '</div>' +
         '</div>' +
       '</div>' +
       '<div class="btn-row">' +
