@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Is My Beige Your Beige?</title>
+  <meta property="og:title" content="Is my beige your beige?"/>
+  <meta property="og:description" content="Test your color perception with this interactive test."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Cabin:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; }
+    html, body { height: 100%; width: 100%; overflow: hidden; }
+    body { font-family: 'Cabin', sans-serif; font-weight: 600; font-size: 15px; }
+
+    #app {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      display: flex; flex-direction: column;
+    }
+
+    /* ── Test screen ── */
+    .test-container {
+      flex: 1; display: flex; flex-direction: column; justify-content: space-between;
+    }
+    .test-content {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+    }
+    .test-title {
+      font-size: 2.5rem; font-weight: 700;
+      text-align: center; color: #000;
+    }
+    .bg-white { background: #fff; padding: 2px 6px; }
+
+    /* ── Buttons ── */
+    .btn-row {
+      width: 100%; height: 60px; display: flex; flex-shrink: 0;
+    }
+    .btn {
+      flex: 1; cursor: pointer; font-size: 1rem; font-weight: 700;
+      background: #3a2e1e; color: #fff; border: none;
+      border-top: 1px solid #3a2e1e;
+      box-shadow: inset 0 0 #fff;
+      transition: box-shadow 0.3s ease;
+      font-family: 'Cabin', sans-serif;
+    }
+    .btn.mid { border-left: 1px solid #7a6a50; border-right: 1px solid #7a6a50; }
+    .btn.side-r { border-left: 1px solid #7a6a50; }
+    .btn:hover { box-shadow: inset 0 0 0 4px rgba(255,255,255,0.4); }
+    .btn:active { box-shadow: inset 0 0 0 4px rgba(255,255,255,0.4); transition: box-shadow 0.1s; }
+
+    /* ── Results screen ── */
+    .results-screen {
+      flex: 1; display: flex; flex-direction: column; overflow: hidden;
+    }
+    .result-desc {
+      font-size: 1.2rem; font-weight: 700; text-align: center; line-height: 1.4;
+      color: #2a1f0e; text-shadow: 0 1px 2px rgba(255,255,255,0.6);
+    }
+    .color-chip {
+      display: inline-block; width: 0.9em; height: 0.9em;
+      background: hsl(40,30%,82%); border: 2px solid #3a2e1e;
+      border-radius: 0.2em; margin-bottom: -0.15em;
+    }
+
+    /* ── Overlay / popup ── */
+    .overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.4);
+      display: flex; justify-content: center; align-items: center;
+      z-index: 1000;
+    }
+    .popup {
+      background: #fdf6ec; color: #2a1f0e; padding: 2rem; border-radius: 8px;
+      max-width: min(80%, 640px); max-height: 80vh; overflow-y: auto;
+      position: relative; font-size: 0.9rem; line-height: 1.6;
+      border: 1px solid #c8b89a;
+    }
+    .popup h2 { font-size: 1.2rem; margin: 1rem 0 0.4rem; }
+    .popup h2:first-child { margin-top: 0; }
+    .popup p { margin-bottom: 0.75rem; }
+    .popup a { color: #7a5c2e; }
+    .close-btn {
+      position: absolute; top: 8px; right: 12px;
+      font-size: 1.5rem; background: none; border: none; cursor: pointer; color: #2a1f0e;
+    }
+    .popup-action-btn {
+      background: #7a5c2e; color: white;
+      padding: 0.4rem 1.2rem; border: none; border-radius: 4px;
+      cursor: pointer; font-size: 1rem; margin-top: 0.5rem;
+      font-family: 'Cabin', sans-serif; font-weight: 600;
+    }
+
+    /* ── Noise mask ── */
+    #noise-mask {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 500; pointer-events: none; opacity: 0;
+      transition: opacity 0.05s;
+    }
+  </style>
+</head>
+<body>
+<div id="app"></div>
+<canvas id="noise-mask"></canvas>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+<script>
+// ─── Constants ───────────────────────────────────────────────────────────────
+// Beige: hue ~40°, saturation ~30%, lightness varies.
+// L=70% = clearly dark beige (tan); L=95% = clearly light beige (near white).
+var HUE_FIXED = 40;
+var SAT_FIXED = 30;
+var CENTER    = 82;   // midpoint lightness
+var L_MIN     = 70;   // clearly dark beige
+var L_MAX     = 95;   // clearly light beige
+var ROUNDS    = 8;
+
+function toColor(l) {
+  return 'hsl(' + HUE_FIXED + ',' + SAT_FIXED + '%,' + l + '%)';
+}
+
+// Population CDF for the dark-beige/light-beige lightness boundary.
+// Each entry: [lightness%, cumulative fraction whose boundary is ≤ that value].
+// Clustered around ~80% (slightly toward darker).
+var POP_CDF = [
+  [70, 0.00], [72, 0.01], [73, 0.03], [74, 0.06], [75, 0.10],
+  [76, 0.15], [77, 0.21], [78, 0.29], [79, 0.38], [80, 0.48],
+  [81, 0.57], [82, 0.65], [83, 0.72], [84, 0.78], [85, 0.83],
+  [86, 0.87], [87, 0.91], [88, 0.94], [90, 0.96], [92, 0.98],
+  [95, 1.00]
+];
+
+// ─── Algorithm ───────────────────────────────────────────────────────────────
+function sigmoid(x) {
+  return x >= 0 ? 1 / (1 + Math.exp(-x)) : Math.exp(x) / (1 + Math.exp(x));
+}
+function logSigmoid(x) {
+  return x >= 0 ? -Math.log1p(Math.exp(-x)) : x - Math.log1p(Math.exp(x));
+}
+
+function fitAndProbe(vals, resps, polarity, alpha) {
+  alpha = alpha !== undefined ? alpha : 0.2;
+  var b   = 0.2;
+  var off = 0;
+
+  var b0 = 0.2, bStd = 0.5;
+  var o0 = 0,   oStd = 12;
+
+  function ll(b2, o2) {
+    var acc = 0;
+    for (var i = 0; i < vals.length; i++) {
+      var v = b2 * (vals[i] - CENTER + o2);
+      acc += resps[i] ? logSigmoid(v) : logSigmoid(-v);
+    }
+    return acc;
+  }
+
+  for (var iter = 0; iter < 20; iter++) {
+    var curLL = ll(b, off);
+    var gb = -(b - b0) / (bStd * bStd);
+    var go = -(off - o0) / (oStd * oStd);
+    var hbb = -1 / (bStd * bStd);
+    var hbo = 0;
+    var hoo = -1 / (oStd * oStd);
+
+    for (var i = 0; i < vals.length; i++) {
+      var s = sigmoid(b * (vals[i] - CENTER + off));
+      var d = vals[i] - CENTER + off;
+      gb  += (resps[i] - s) * d;
+      go  += (resps[i] - s) * b;
+      hbb -= s * (1 - s) * d * d;
+      hbo -= s * (1 - s) * b * d;
+      hoo -= s * (1 - s) * b * b;
+    }
+
+    var det   = hbb * hoo - hbo * hbo;
+    var stepB = (hoo * gb - hbo * go) / det;
+    var stepO = (hbb * go - hbo * gb) / det;
+
+    var lr = 1;
+    for (var ls = 0; ls < 10 && ll(Math.max(0.01, b - lr * stepB), off - lr * stepO) <= curLL; ls++) {
+      lr *= 0.5;
+    }
+
+    b   -= lr * stepB;
+    off -= lr * stepO;
+    b    = Math.max(0.01, b);
+
+    if (Math.abs(stepB) < 1e-6 && Math.abs(stepO) < 1e-6) break;
+  }
+
+  if (polarity === 0) polarity = Math.random() < 0.5 ? 1 : -1;
+  var p    = polarity > 0 ? alpha : 1 - alpha;
+  var next = CENTER - off + Math.log(p / (1 - p)) / b;
+  next     = Math.max(L_MIN, Math.min(next + (Math.random() - 0.5), L_MAX));
+
+  return { slope: b, offset: off, polarity: polarity, newProbe: next };
+}
+
+// ─── Population lookup ───────────────────────────────────────────────────────
+function getPopCDF(val) {
+  if (val <= POP_CDF[0][0])                     return POP_CDF[0][1];
+  if (val >= POP_CDF[POP_CDF.length - 1][0])    return POP_CDF[POP_CDF.length - 1][1];
+  for (var i = 1; i < POP_CDF.length; i++) {
+    if (val <= POP_CDF[i][0]) {
+      var v0 = POP_CDF[i-1][0], c0 = POP_CDF[i-1][1];
+      var v1 = POP_CDF[i][0],   c1 = POP_CDF[i][1];
+      var t  = (val - v0) / (v1 - v0);
+      return c0 + t * (c1 - c0);
+    }
+  }
+  return 1;
+}
+
+// ─── State ───────────────────────────────────────────────────────────────────
+var state = {};
+
+function resetState() {
+  var startL = state.firstMislabeled
+    ? (state.currentL <= CENTER ? L_MAX : L_MIN)
+    : (Math.random() > 0.5 ? L_MIN : L_MAX);
+
+  state = {
+    currentL:        startL,
+    showInitial:     true,
+    rounds:          0,
+    polarity:        0,
+    finalL:          0,
+    responses:       [],
+    lightRight:      Math.random() > 0.5,
+    showResults:     false,
+    showAbout:       false,
+    firstMislabeled: false,
+    allSame:         null,
+  };
+
+  setTimeout(function() { state.showInitial = false; render(); }, 2000);
+}
+
+// ─── Noise mask ───────────────────────────────────────────────────────────────
+var noiseMask = document.getElementById('noise-mask');
+var noiseCtx  = noiseMask.getContext('2d');
+
+function resizeNoise() {
+  noiseMask.width  = window.innerWidth;
+  noiseMask.height = window.innerHeight;
+}
+resizeNoise();
+window.addEventListener('resize', resizeNoise);
+
+function showNoiseMask() {
+  var w = noiseMask.width, h = noiseMask.height;
+  var img = noiseCtx.createImageData(w, h);
+  for (var i = 0; i < img.data.length; i += 4) {
+    var v = Math.random() < 0.5 ? 180 : 230;
+    img.data[i]   = v + 10;
+    img.data[i+1] = v;
+    img.data[i+2] = v - 20;
+    img.data[i+3] = 130;
+  }
+  noiseCtx.putImageData(img, 0, 0);
+  noiseMask.style.opacity = '1';
+  setTimeout(function() { noiseMask.style.opacity = '0'; }, 150);
+}
+
+// ─── Actions ─────────────────────────────────────────────────────────────────
+function selectColor(choice) {
+  var isLight = choice === 'light beige';
+  state.responses.push({ l: state.currentL, isLight: isLight });
+
+  if (state.rounds === 0) {
+    var mislabeled = (isLight && state.currentL <= CENTER) || (!isLight && state.currentL > CENTER);
+    if (mislabeled) {
+      state.firstMislabeled = true;
+      render();
+      return;
+    }
+  }
+
+  var vals  = state.responses.map(function(r) { return r.l; });
+  var resps = state.responses.map(function(r) { return r.isLight; });
+  var fit   = fitAndProbe(vals, resps, state.polarity, 0.4);
+
+  state.polarity   = fit.polarity === 1 ? -1 : 1;
+  state.currentL   = fit.newProbe;
+  state.rounds++;
+
+  if (state.rounds === ROUNDS) {
+    var allLight = resps.every(function(r) { return r; });
+    var allDark  = resps.every(function(r) { return !r; });
+    if (allLight || allDark) {
+      state.allSame = allLight ? 'light beige' : 'dark beige';
+      render();
+      return;
+    }
+    state.finalL     = CENTER - fit.offset;
+    state.showResults = true;
+    if (typeof confetti === 'function') confetti({ colors: ['#d4b896', '#c4a47c', '#e8d5b7', '#f5e6cc'] });
+    render();
+    return;
+  }
+
+  showNoiseMask();
+  render();
+}
+
+function doReset()    { resetState(); render(); }
+function openAbout()  { state.showAbout = true;  render(); }
+function closeAbout() { state.showAbout = false; render(); }
+
+// ─── Results chart ────────────────────────────────────────────────────────────
+function drawResultChart(finalL) {
+  var canvas = document.getElementById('result-chart');
+  if (!canvas) return;
+  var W = canvas.offsetWidth || canvas.parentElement.clientWidth;
+  var H = canvas.offsetHeight || canvas.parentElement.clientHeight;
+  canvas.width  = W;
+  canvas.height = H;
+  var ctx = canvas.getContext('2d');
+
+  // Gradient: dark beige → light beige
+  var grad = ctx.createLinearGradient(0, 0, W, 0);
+  for (var l = L_MIN; l <= L_MAX; l++) {
+    grad.addColorStop((l - L_MIN) / (L_MAX - L_MIN), toColor(l));
+  }
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  var startTime = null;
+  var duration  = 2000;
+
+  function animateCDF(timestamp) {
+    if (!startTime) startTime = timestamp;
+    var progress = Math.min(1, (timestamp - startTime) / duration);
+
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    var numPts = Math.ceil(progress * (POP_CDF.length - 1));
+    ctx.beginPath();
+    ctx.strokeStyle = '#3a2e1e';
+    ctx.lineWidth   = 2;
+    for (var i = 0; i <= numPts && i < POP_CDF.length; i++) {
+      var x = (POP_CDF[i][0] - L_MIN) / (L_MAX - L_MIN) * W;
+      var y = (1 - POP_CDF[i][1]) * H;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    if (progress === 1) {
+      var tx = (finalL - L_MIN) / (L_MAX - L_MIN) * W;
+      ctx.beginPath();
+      ctx.strokeStyle = '#3a2e1e';
+      ctx.lineWidth   = 3;
+      ctx.setLineDash([5, 5]);
+      ctx.moveTo(tx, 0);
+      ctx.lineTo(tx, H);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    ctx.fillStyle = 'rgba(58,46,30,0.7)';
+    ctx.font      = '11px Cabin, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('threshold distribution', W - 6, H - 6);
+
+    if (progress < 1) requestAnimationFrame(animateCDF);
+  }
+
+  requestAnimationFrame(animateCDF);
+}
+
+// ─── Render ───────────────────────────────────────────────────────────────────
+function render() {
+  var app = document.getElementById('app');
+
+  // ── Results screen ──
+  if (state.showResults) {
+    var fl  = state.finalL;
+    var cdf = getPopCDF(fl);
+    var darkerPct = Math.round(100 * (1 - cdf));
+    var lighterPct = Math.round(100 * cdf);
+
+    var descHTML;
+    if (cdf > 0.6) {
+      descHTML = '<i>Your</i> boundary is at lightness ' + Math.round(fl) + '%, darker than ' + darkerPct +
+        '% of the population. For you, this <span class="color-chip"></span> is light beige.';
+    } else if (cdf < 0.4) {
+      descHTML = '<i>Your</i> boundary is at lightness ' + Math.round(fl) + '%, lighter than ' + lighterPct +
+        '% of the population. For you, this <span class="color-chip"></span> is dark beige.';
+    } else {
+      descHTML = '<i>Your</i> boundary is at lightness ' + Math.round(fl) + '%, right at the population median. You\'re a true neutral.';
+    }
+
+    app.innerHTML =
+      '<div class="results-screen">' +
+        '<div style="flex:1;position:relative;">' +
+          '<canvas id="result-chart" style="position:absolute;top:0;left:0;width:100%;height:100%;display:block;"></canvas>' +
+          '<div class="result-desc" style="position:absolute;bottom:1rem;left:0;right:0;padding:0 1rem;">' + descHTML + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="btn-row">' +
+        '<button class="btn" onclick="openAbout()">About</button>' +
+        '<button class="btn side-r" onclick="doReset()">Reset</button>' +
+      '</div>' +
+      renderAboutHTML();
+
+    requestAnimationFrame(function() { drawResultChart(fl); });
+    return;
+  }
+
+  // ── Test screen ──
+  var bg         = toColor(state.currentL);
+  var leftLabel  = state.lightRight ? 'dark beige'  : 'light beige';
+  var rightLabel = state.lightRight ? 'light beige' : 'dark beige';
+  var titleHTML  = state.showInitial
+    ? 'Test <i>your</i> color categorization'
+    : 'Is <i>my</i> beige <i>your</i> beige?';
+
+  app.innerHTML =
+    '<div class="test-container" style="background:' + bg + '">' +
+      '<div class="test-content">' +
+        '<h1 class="test-title"><span class="bg-white">' + titleHTML + '</span></h1>' +
+      '</div>' +
+    '</div>' +
+    '<div class="btn-row">' +
+      '<button class="btn" onclick="selectColor(\'' + leftLabel + '\')">This is ' + leftLabel + '</button>' +
+      '<button class="btn mid" onclick="doReset()">Reset</button>' +
+      '<button class="btn side-r" onclick="selectColor(\'' + rightLabel + '\')">This is ' + rightLabel + '</button>' +
+    '</div>' +
+    renderMislabeledHTML() +
+    renderAllSameHTML()    +
+    renderAboutHTML();
+}
+
+function renderMislabeledHTML() {
+  if (!state.firstMislabeled) return '';
+  return '<div class="overlay"><div class="popup">' +
+    '<h2>Whoops!</h2>' +
+    '<p>The first color is always very clearly dark beige or very clearly light beige. If you mislabel it you won\'t get accurate results — this might mean your screen has unusual brightness or calibration, or you made a mistake. Try again?</p>' +
+    '<button class="popup-action-btn" onclick="doReset()">Reset</button>' +
+    '</div></div>';
+}
+
+function renderAllSameHTML() {
+  if (!state.allSame) return '';
+  return '<div class="overlay"><div class="popup">' +
+    '<h2>Whoops!</h2>' +
+    '<p>You labelled all the colors as ' + state.allSame + '. We can\'t infer a boundary from that — this might mean your screen brightness or calibration is unusual.</p>' +
+    '<button class="popup-action-btn" onclick="doReset()">Reset</button>' +
+    '</div></div>';
+}
+
+function renderAboutHTML() {
+  if (!state.showAbout) return '';
+  return '<div class="overlay"><div class="popup">' +
+    '<button class="close-btn" onclick="closeAbout()">×</button>' +
+    '<h2>About This Website</h2>' +
+    '<p>People draw the line between light and dark beige in different places. This test measures where your boundary is.</p>' +
+    '<h2>How It Works</h2>' +
+    '<p>The test shows colours with a fixed hue of 40° and saturation of 30% — the beige family — varying only lightness from 70% (dark beige / tan) to 95% (very light beige). It fits a logistic regression model to your responses using MAP estimation to find the lightness at which you switch from saying "dark beige" to "light beige".</p>' +
+    '<h2>Validity</h2>' +
+    '<p><b><i>This is for entertainment purposes only.</i></b> Results depend on your monitor\'s brightness, contrast, and calibration. The test should have good test-retest reliability on the same device in the same conditions.</p>' +
+    '<h2>Technical Details</h2>' +
+    '<p>Colors are represented in HSL space with hue 40° and saturation 30%, varying lightness from 70% to 95%. The same MAP logistic regression algorithm from <a href="https://ismy.blue" target="_blank">ismy.blue</a> is adapted here.</p>' +
+    '<h2>Credits</h2>' +
+    '<p>Inspired by <a href="https://ismy.blue" target="_blank">ismy.blue</a> by Patrick Mineault. Made for nachodog.</p>' +
+    '</div></div>';
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+resetState();
+render();
+</script>
+</body>
+</html>
