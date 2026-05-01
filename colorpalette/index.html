@@ -425,9 +425,10 @@ var palette = [];   // array of hex strings
 var locked  = [];   // array of booleans
 
 // Sort palette light → dark (left to right). Lock flags travel with their color.
+// Uses perceptual luminance (WCAG) so the visual order matches the eye.
 function sortByLightness() {
   var combined = palette.map(function(hex, i) { return { hex: hex, locked: locked[i] }; });
-  combined.sort(function(a, b) { return hexToHsl(b.hex).l - hexToHsl(a.hex).l; });
+  combined.sort(function(a, b) { return getLuminance(b.hex) - getLuminance(a.hex); });
   palette = combined.map(function(x) { return x.hex; });
   locked  = combined.map(function(x) { return x.locked; });
 }
@@ -631,6 +632,7 @@ function loadFromUrl() {
   if (colors.length < 2) return false;
   palette = colors;
   locked  = colors.map(function() { return false; });
+  sortByLightness();
   return true;
 }
 
