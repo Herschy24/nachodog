@@ -280,23 +280,95 @@ function getColorName(hex) {
 }
 
 // ─── Palette generation ───────────────────────────────────────────────────────
-// Golden-angle hue stepping produces harmonious palettes.
-var GOLDEN_ANGLE = 137.508;
+function rnd(min, max) { return min + Math.random() * (max - min); }
+function wrap(h) { return ((h % 360) + 360) % 360; }
+
+// Mood presets: each defines a tight S/L band so all colors feel cohesive.
+var MOODS = [
+  { name: 'vivid',   sMin: 68, sMax: 90, lMin: 44, lMax: 62 },   // saturated, medium brightness
+  { name: 'pastel',  sMin: 42, sMax: 70, lMin: 74, lMax: 90 },   // soft, light
+  { name: 'deep',    sMin: 60, sMax: 85, lMin: 16, lMax: 34 },   // rich, dark
+  { name: 'muted',   sMin: 16, sMax: 40, lMin: 44, lMax: 66 },   // earthy, desaturated
+  { name: 'neutral', sMin: 6,  sMax: 22, lMin: 28, lMax: 80 },   // near-grays, varying lightness
+  { name: 'neon',    sMin: 82, sMax: 100,lMin: 52, lMax: 68 },   // electric, high saturation
+];
+
+// Harmony schemes: returns array of n hues (degrees).
+function getHues(scheme, n, base) {
+  var hues = [];
+  switch (scheme) {
+
+    case 'analogous':
+      // Colours close together on the wheel — naturally harmonious.
+      var spread = rnd(20, 55);
+      for (var i = 0; i < n; i++)
+        hues.push(base + (i / (n - 1) - 0.5) * spread);
+      break;
+
+    case 'complementary':
+      // Two anchor hues ~180° apart, distribute n colours across both.
+      var comp = base + 180;
+      var half = Math.ceil(n / 2);
+      for (var i = 0; i < half; i++)
+        hues.push(base + (i - Math.floor(half / 2)) * 14);
+      for (var i = 0; i < n - half; i++)
+        hues.push(comp + (i - Math.floor((n - half) / 2)) * 14);
+      break;
+
+    case 'triadic':
+      // Three anchors 120° apart.
+      var anchors = [base, base + 120, base + 240];
+      for (var i = 0; i < n; i++)
+        hues.push(anchors[i % 3] + rnd(-10, 10));
+      break;
+
+    case 'split-complementary':
+      // One base + two colours ~150° away (±30° from the true complement).
+      var s1 = base + 150, s2 = base + 210;
+      var pool = [base, base, s1, s2, s1 + rnd(-12,12)];
+      for (var i = 0; i < n; i++) hues.push(pool[i % pool.length] + rnd(-8, 8));
+      break;
+
+    case 'monochromatic':
+      // Same hue throughout — vary L instead.
+      for (var i = 0; i < n; i++) hues.push(base + rnd(-6, 6));
+      break;
+
+    case 'neutral-accent':
+      // n-1 near-neutral colours + 1 vivid accent.
+      for (var i = 0; i < n; i++) hues.push(i === 2 ? base : base + rnd(-15, 15));
+      break;
+
+    default: // tetradic / square
+      for (var i = 0; i < n; i++) hues.push(base + i * 90 + rnd(-8, 8));
+  }
+  return hues.map(wrap);
+}
 
 function randomPalette(n) {
-  var startHue = Math.random() * 360;
-  var scheme   = Math.floor(Math.random() * 4); // 0=varied, 1=pastel, 2=deep, 3=muted
-  var colors   = [];
-  for (var i = 0; i < n; i++) {
-    var h = (startHue + i * GOLDEN_ANGLE) % 360;
+  var base    = rnd(0, 360);
+  var schemes = ['analogous','complementary','triadic','split-complementary','monochromatic','tetradic'];
+  var scheme  = schemes[Math.floor(Math.random() * schemes.length)];
+  var mood    = MOODS[Math.floor(Math.random() * MOODS.length)];
+  var hues    = getHues(scheme, n, base);
+
+  return hues.map(function(h, i) {
     var s, l;
-    if (scheme === 1) { s = 60 + Math.random()*25; l = 72 + Math.random()*15; }       // pastel
-    else if (scheme === 2) { s = 65 + Math.random()*25; l = 22 + Math.random()*18; }   // deep
-    else if (scheme === 3) { s = 20 + Math.random()*30; l = 45 + Math.random()*20; }   // muted
-    else               { s = 55 + Math.random()*35; l = 38 + Math.random()*30; }       // varied
-    colors.push(hslToHex(h, s, l));
-  }
-  return colors;
+    if (scheme === 'monochromatic') {
+      // For mono: spread lightness evenly across the palette range
+      s = rnd(mood.sMin, mood.sMax);
+      l = mood.lMin + (i / (n - 1)) * (mood.lMax - mood.lMin);
+    } else if (scheme === 'neutral-accent' && i === 2) {
+      // Accent colour: always vivid regardless of mood
+      s = rnd(72, 92); l = rnd(46, 62);
+    } else {
+      s = rnd(mood.sMin, mood.sMax);
+      l = rnd(mood.lMin, mood.lMax);
+    }
+    // Guard: avoid mud (very dark + very desaturated)
+    if (l < 28 && s < 30) s = 30 + Math.random() * 20;
+    return hslToHex(h, s, l);
+  });
 }
 
 // ─── State ────────────────────────────────────────────────────────────────────
