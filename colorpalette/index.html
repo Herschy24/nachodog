@@ -279,6 +279,53 @@ function getColorName(hex) {
   return name;
 }
 
+// Returns unique names for an array of hex colors — if two would share the
+// same label, the lighter/darker qualifier is used to disambiguate.
+function getUniqueNames(hexArr) {
+  var PREFIXES = ['Pale ', 'Light ', 'Deep ', 'Dark ', 'Muted '];
+  function stripPrefix(name) {
+    for (var pi = 0; pi < PREFIXES.length; pi++) {
+      if (name.indexOf(PREFIXES[pi]) === 0) return name.slice(PREFIXES[pi].length);
+    }
+    return name;
+  }
+
+  var names = hexArr.map(getColorName);
+
+  // Group indices by exact name
+  var groups = {};
+  names.forEach(function(n, i) {
+    if (!groups[n]) groups[n] = [];
+    groups[n].push(i);
+  });
+
+  Object.keys(groups).forEach(function(name) {
+    var indices = groups[name];
+    if (indices.length < 2) return;
+
+    // Sort by lightness ascending so darkest gets "Dark" qualifier
+    var sorted = indices.slice().sort(function(a, b) {
+      return hexToHsl(hexArr[a]).l - hexToHsl(hexArr[b]).l;
+    });
+
+    var base = stripPrefix(name);
+    var count = sorted.length;
+    var QUALS = ['Darkest', 'Dark', 'Medium', 'Light', 'Pale'];
+
+    sorted.forEach(function(idx, rank) {
+      var q;
+      if (count === 2) {
+        q = rank === 0 ? 'Dark' : 'Light';
+      } else {
+        q = QUALS[Math.round(rank / (count - 1) * 4)];
+      }
+      names[idx] = q && q !== 'Medium' ? q + ' ' + base : base;
+    });
+  });
+
+  return names;
+}
+
 // ─── Palette generation ───────────────────────────────────────────────────────
 function rnd(min, max) { return min + Math.random() * (max - min); }
 function wrap(h) { return ((h % 360) + 360) % 360; }
@@ -300,7 +347,7 @@ function getHues(scheme, n, base) {
 
     case 'analogous':
       // Colours close together on the wheel — naturally harmonious.
-      var spread = rnd(20, 55);
+      var spread = rnd(45, 90);
       for (var i = 0; i < n; i++)
         hues.push(base + (i / (n - 1) - 0.5) * spread);
       break;
@@ -330,8 +377,8 @@ function getHues(scheme, n, base) {
       break;
 
     case 'monochromatic':
-      // Same hue throughout — vary L instead.
-      for (var i = 0; i < n; i++) hues.push(base + rnd(-6, 6));
+      // Same hue throughout — vary L instead. Jitter hue very slightly.
+      for (var i = 0; i < n; i++) hues.push(base + rnd(-4, 4));
       break;
 
     case 'neutral-accent':
@@ -355,9 +402,11 @@ function randomPalette(n) {
   return hues.map(function(h, i) {
     var s, l;
     if (scheme === 'monochromatic') {
-      // For mono: spread lightness evenly across the palette range
+      // For mono: spread lightness widely so colors are visually distinct
       s = rnd(mood.sMin, mood.sMax);
-      l = mood.lMin + (i / (n - 1)) * (mood.lMax - mood.lMin);
+      var lMin = Math.max(10, mood.lMin - 20);
+      var lMax = Math.min(92, mood.lMax + 20);
+      l = lMin + (i / (n - 1)) * (lMax - lMin);
     } else if (scheme === 'neutral-accent' && i === 2) {
       // Accent colour: always vivid regardless of mood
       s = rnd(72, 92); l = rnd(46, 62);
@@ -446,10 +495,12 @@ function render() {
   var container = document.getElementById('palette');
   container.innerHTML = '';
 
+  var uniqueNames = getUniqueNames(palette);
+
   palette.forEach(function(hex, i) {
     var fg      = getFgColor(hex);
     var isLocked = locked[i];
-    var name    = getColorName(hex);
+    var name    = uniqueNames[i];
     var displayHex = hex.replace('#','').toUpperCase();
 
     var strip = document.createElement('div');
