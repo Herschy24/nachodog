@@ -392,7 +392,17 @@ function getHues(scheme, n, base) {
   return hues.map(wrap);
 }
 
-function randomPalette(n) {
+// Weighted perceptual distance between two colors in HSL space.
+// Hue and lightness are weighted more heavily than saturation.
+function colorDistance(hex1, hex2) {
+  var c1 = hexToHsl(hex1), c2 = hexToHsl(hex2);
+  var hd = Math.min(Math.abs(c1.h - c2.h), 360 - Math.abs(c1.h - c2.h)) / 180;
+  var sd = Math.abs(c1.s - c2.s) / 100;
+  var ld = Math.abs(c1.l - c2.l) / 100;
+  return Math.sqrt(hd * hd * 2 + sd * sd + ld * ld * 2);
+}
+
+function _tryPalette(n) {
   var base    = rnd(0, 360);
   var schemes = ['analogous','complementary','triadic','split-complementary','monochromatic','tetradic'];
   var scheme  = schemes[Math.floor(Math.random() * schemes.length)];
@@ -402,22 +412,36 @@ function randomPalette(n) {
   return hues.map(function(h, i) {
     var s, l;
     if (scheme === 'monochromatic') {
-      // For mono: spread lightness widely so colors are visually distinct
       s = rnd(mood.sMin, mood.sMax);
       var lMin = Math.max(10, mood.lMin - 20);
       var lMax = Math.min(92, mood.lMax + 20);
       l = lMin + (i / (n - 1)) * (lMax - lMin);
     } else if (scheme === 'neutral-accent' && i === 2) {
-      // Accent colour: always vivid regardless of mood
       s = rnd(72, 92); l = rnd(46, 62);
     } else {
       s = rnd(mood.sMin, mood.sMax);
       l = rnd(mood.lMin, mood.lMax);
     }
-    // Guard: avoid mud (very dark + very desaturated)
     if (l < 28 && s < 30) s = 30 + Math.random() * 20;
     return hslToHex(h, s, l);
   });
+}
+
+function randomPalette(n) {
+  var best = null, bestMinDist = -1;
+  for (var attempt = 0; attempt < 10; attempt++) {
+    var colors = _tryPalette(n);
+    // Find the minimum pairwise distance in this candidate palette
+    var minDist = Infinity;
+    for (var i = 0; i < colors.length; i++)
+      for (var j = i + 1; j < colors.length; j++)
+        minDist = Math.min(minDist, colorDistance(colors[i], colors[j]));
+    // Keep the attempt with the highest minimum distance (most distinct palette)
+    if (minDist > bestMinDist) { bestMinDist = minDist; best = colors; }
+    // Good enough — stop early
+    if (minDist >= 0.22) break;
+  }
+  return best;
 }
 
 // ─── State ────────────────────────────────────────────────────────────────────
