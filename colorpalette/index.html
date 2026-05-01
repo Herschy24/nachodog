@@ -424,9 +424,18 @@ function randomPalette(n) {
 var palette = [];   // array of hex strings
 var locked  = [];   // array of booleans
 
+// Sort palette light → dark (left to right). Lock flags travel with their color.
+function sortByLightness() {
+  var combined = palette.map(function(hex, i) { return { hex: hex, locked: locked[i] }; });
+  combined.sort(function(a, b) { return hexToHsl(b.hex).l - hexToHsl(a.hex).l; });
+  palette = combined.map(function(x) { return x.hex; });
+  locked  = combined.map(function(x) { return x.locked; });
+}
+
 function initPalette(n) {
   palette = randomPalette(n);
   locked  = palette.map(function() { return false; });
+  sortByLightness();
 }
 
 function generate() {
@@ -434,6 +443,7 @@ function generate() {
   for (var i = 0; i < palette.length; i++) {
     if (!locked[i]) palette[i] = fresh[i];
   }
+  sortByLightness();
   render();
 }
 
@@ -454,6 +464,7 @@ function addStripAfter(i) {
   var newColor = randomPalette(1)[0];
   palette.splice(i + 1, 0, newColor);
   locked.splice(i + 1, 0, false);
+  sortByLightness();
   render();
 }
 
