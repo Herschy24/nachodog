@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Color Palette Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; width: 100%; overflow: hidden; }
+    body { font-family: 'Inter', sans-serif; background: #1a1a2e; }
+
+    /* ── Layout ── */
+    #app { display: flex; flex-direction: column; height: 100vh; }
+
+    /* ── Header ── */
+    #header {
+      height: 52px; flex-shrink: 0;
+      background: #1a1a2e; color: #fff;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 1.25rem;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      z-index: 10;
+    }
+    #header .logo {
+      font-family: 'Space Mono', monospace;
+      font-size: 1.1rem; font-weight: 700;
+      letter-spacing: -0.5px; color: #fff;
+      text-decoration: none;
+    }
+    #header .logo span { color: #7c83fd; }
+    #header-actions { display: flex; gap: 0.5rem; align-items: center; }
+    .hbtn {
+      background: rgba(255,255,255,0.08); color: #fff;
+      border: none; border-radius: 6px;
+      padding: 0.35rem 0.75rem; font-size: 0.8rem; font-weight: 500;
+      cursor: pointer; font-family: 'Inter', sans-serif;
+      transition: background 0.15s;
+    }
+    .hbtn:hover { background: rgba(255,255,255,0.15); }
+    .hbtn.primary { background: #7c83fd; }
+    .hbtn.primary:hover { background: #6970f0; }
+
+    /* ── Palette ── */
+    #palette {
+      flex: 1; display: flex; overflow: hidden;
+      min-height: 0;
+    }
+
+    /* ── Strip ── */
+    .strip {
+      flex: 1; position: relative;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: flex-end;
+      padding-bottom: 2rem;
+      cursor: pointer;
+      transition: flex 0.3s ease;
+      overflow: hidden;
+    }
+    .strip:hover { flex: 1.08; }
+
+    /* controls shown on hover */
+    .strip-controls {
+      position: absolute; top: 0; left: 0; right: 0;
+      display: flex; flex-direction: column; align-items: center;
+      padding-top: 1.25rem;
+      opacity: 0; transition: opacity 0.2s;
+      gap: 0.5rem;
+    }
+    .strip:hover .strip-controls,
+    .strip.locked .strip-controls { opacity: 1; }
+
+    .ctrl-btn {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: transform 0.15s, background 0.15s;
+      font-size: 14px;
+    }
+    .ctrl-btn:hover { transform: scale(1.1); }
+
+    .lock-btn { background: rgba(0,0,0,0.18); color: inherit; }
+    .lock-btn.locked { background: rgba(0,0,0,0.32); }
+    .del-btn  { background: rgba(0,0,0,0.18); color: inherit; font-size: 16px; }
+    .copy-btn-icon { background: rgba(0,0,0,0.18); color: inherit; }
+
+    /* Add strip button (between strips) */
+    .add-strip-btn {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      right: -14px;
+      width: 28px; height: 28px; border-radius: 50%;
+      background: #fff; color: #333; border: none;
+      font-size: 18px; line-height: 1; cursor: pointer;
+      z-index: 5; opacity: 0; transition: opacity 0.2s;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    }
+    .strip:hover .add-strip-btn { opacity: 1; }
+
+    /* Color info at bottom */
+    .strip-info {
+      display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
+      position: relative; z-index: 2;
+    }
+    .color-name {
+      font-size: 0.72rem; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      opacity: 0.75;
+    }
+    .hex-code {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.95rem; font-weight: 700;
+      letter-spacing: 0.04em; text-transform: uppercase;
+    }
+
+    /* Copied toast */
+    .copied-toast {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%) scale(0.85);
+      background: rgba(0,0,0,0.7); color: #fff;
+      padding: 0.4rem 0.9rem; border-radius: 20px;
+      font-size: 0.8rem; font-weight: 600;
+      pointer-events: none; opacity: 0;
+      transition: opacity 0.15s, transform 0.15s;
+      z-index: 20; white-space: nowrap;
+    }
+    .copied-toast.show {
+      opacity: 1; transform: translate(-50%, -50%) scale(1);
+    }
+
+    /* ── Footer ── */
+    #footer {
+      height: 52px; flex-shrink: 0;
+      background: #1a1a2e;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      display: flex; align-items: center; justify-content: center;
+      gap: 2rem;
+    }
+    #generate-btn {
+      background: #7c83fd; color: #fff;
+      border: none; border-radius: 8px;
+      padding: 0.45rem 1.5rem;
+      font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; font-family: 'Inter', sans-serif;
+      transition: background 0.15s, transform 0.1s;
+      letter-spacing: 0.02em;
+    }
+    #generate-btn:hover { background: #6970f0; }
+    #generate-btn:active { transform: scale(0.97); }
+    #spacebar-hint {
+      color: rgba(255,255,255,0.35);
+      font-size: 0.78rem;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .kbd {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 4px; padding: 0.1rem 0.4rem;
+      font-family: 'Space Mono', monospace; font-size: 0.7rem;
+      color: rgba(255,255,255,0.5);
+    }
+
+    /* Drag handle */
+    .drag-handle {
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 40px; cursor: grab;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.2s;
+    }
+    .strip:hover .drag-handle { opacity: 0.4; }
+    .drag-handle svg { pointer-events: none; }
+
+    /* Mobile: always show info */
+    @media (max-width: 600px) {
+      .strip-controls { opacity: 1; }
+      .color-name { font-size: 0.6rem; }
+      .hex-code { font-size: 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <header id="header">
+    <a class="logo" href="#">nacho<span>colors</span></a>
+    <div id="header-actions">
+      <button class="hbtn" id="export-btn">Export</button>
+      <button class="hbtn primary" id="save-btn">Save</button>
+    </div>
+  </header>
+
+  <div id="palette"></div>
+
+  <footer id="footer">
+    <div id="spacebar-hint"><span class="kbd">Space</span> to generate</div>
+    <button id="generate-btn">Generate</button>
+  </footer>
+</div>
+
+<script>
+// ─── Color utilities ──────────────────────────────────────────────────────────
+function hslToHex(h, s, l) {
+  h = ((h % 360) + 360) % 360;
+  s /= 100; l /= 100;
+  var a = s * Math.min(l, 1 - l);
+  function f(n) {
+    var k = (n + h / 30) % 12;
+    var c = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return Math.round(255 * c).toString(16).padStart(2, '0');
+  }
+  return '#' + f(0) + f(8) + f(4);
+}
+
+function hexToHsl(hex) {
+  var r = parseInt(hex.substr(1,2),16)/255;
+  var g = parseInt(hex.substr(3,2),16)/255;
+  var b = parseInt(hex.substr(5,2),16)/255;
+  var max = Math.max(r,g,b), min = Math.min(r,g,b);
+  var h, s, l = (max+min)/2;
+  if (max === min) { h = s = 0; }
+  else {
+    var d = max - min;
+    s = l > 0.5 ? d/(2-max-min) : d/(max+min);
+    switch(max) {
+      case r: h = ((g-b)/d + (g<b?6:0))/6; break;
+      case g: h = ((b-r)/d + 2)/6; break;
+      case b: h = ((r-g)/d + 4)/6; break;
+    }
+  }
+  return { h: h*360, s: s*100, l: l*100 };
+}
+
+function getLuminance(hex) {
+  var r = parseInt(hex.substr(1,2),16)/255;
+  var g = parseInt(hex.substr(3,2),16)/255;
+  var b = parseInt(hex.substr(5,2),16)/255;
+  function lin(c) { return c<=0.03928 ? c/12.92 : Math.pow((c+0.055)/1.055,2.4); }
+  return 0.2126*lin(r) + 0.7152*lin(g) + 0.0722*lin(b);
+}
+
+function getFgColor(hex) {
+  return getLuminance(hex) > 0.35 ? 'rgba(0,0,0,0.75)' : 'rgba(255,255,255,0.9)';
+}
+
+// ─── Color naming ─────────────────────────────────────────────────────────────
+var HUE_NAMES = [
+  [0,   'Red'],        [15,  'Red Orange'],  [30,  'Orange'],
+  [45,  'Amber'],      [60,  'Yellow'],      [75,  'Yellow Green'],
+  [90,  'Chartreuse'], [120, 'Green'],       [150, 'Mint'],
+  [165, 'Teal'],       [180, 'Cyan'],        [195, 'Sky Blue'],
+  [210, 'Light Blue'], [240, 'Blue'],        [255, 'Indigo'],
+  [270, 'Violet'],     [285, 'Purple'],      [300, 'Magenta'],
+  [315, 'Pink'],       [330, 'Rose'],        [345, 'Crimson'],
+  [360, 'Red']
+];
+
+function getColorName(hex) {
+  var hsl = hexToHsl(hex);
+  var h = hsl.h, s = hsl.s, l = hsl.l;
+
+  if (s < 8)  return l > 80 ? 'White' : l > 55 ? 'Light Gray' : l > 30 ? 'Gray' : 'Dark Gray';
+  if (s < 20) return l > 80 ? 'Cream' : l > 55 ? 'Silver' : 'Slate';
+
+  var name = HUE_NAMES[0][1];
+  for (var i = 1; i < HUE_NAMES.length; i++) {
+    if (h < HUE_NAMES[i][0]) {
+      var t = (h - HUE_NAMES[i-1][0]) / (HUE_NAMES[i][0] - HUE_NAMES[i-1][0]);
+      name = t < 0.5 ? HUE_NAMES[i-1][1] : HUE_NAMES[i][1];
+      break;
+    }
+  }
+
+  if (l > 82) return 'Pale ' + name;
+  if (l > 68) return 'Light ' + name;
+  if (l < 25) return 'Deep ' + name;
+  if (l < 38) return 'Dark ' + name;
+  if (s < 45) return 'Muted ' + name;
+  return name;
+}
+
+// ─── Palette generation ───────────────────────────────────────────────────────
+// Golden-angle hue stepping produces harmonious palettes.
+var GOLDEN_ANGLE = 137.508;
+
+function randomPalette(n) {
+  var startHue = Math.random() * 360;
+  var scheme   = Math.floor(Math.random() * 4); // 0=varied, 1=pastel, 2=deep, 3=muted
+  var colors   = [];
+  for (var i = 0; i < n; i++) {
+    var h = (startHue + i * GOLDEN_ANGLE) % 360;
+    var s, l;
+    if (scheme === 1) { s = 60 + Math.random()*25; l = 72 + Math.random()*15; }       // pastel
+    else if (scheme === 2) { s = 65 + Math.random()*25; l = 22 + Math.random()*18; }   // deep
+    else if (scheme === 3) { s = 20 + Math.random()*30; l = 45 + Math.random()*20; }   // muted
+    else               { s = 55 + Math.random()*35; l = 38 + Math.random()*30; }       // varied
+    colors.push(hslToHex(h, s, l));
+  }
+  return colors;
+}
+
+// ─── State ────────────────────────────────────────────────────────────────────
+var palette = [];   // array of hex strings
+var locked  = [];   // array of booleans
+
+function initPalette(n) {
+  palette = randomPalette(n);
+  locked  = palette.map(function() { return false; });
+}
+
+function generate() {
+  var fresh = randomPalette(palette.length);
+  for (var i = 0; i < palette.length; i++) {
+    if (!locked[i]) palette[i] = fresh[i];
+  }
+  render();
+}
+
+function toggleLock(i) {
+  locked[i] = !locked[i];
+  render();
+}
+
+function removeStrip(i) {
+  if (palette.length <= 2) return;
+  palette.splice(i, 1);
+  locked.splice(i, 1);
+  render();
+}
+
+function addStripAfter(i) {
+  if (palette.length >= 8) return;
+  var newColor = randomPalette(1)[0];
+  palette.splice(i + 1, 0, newColor);
+  locked.splice(i + 1, 0, false);
+  render();
+}
+
+function copyHex(hex, toastEl) {
+  navigator.clipboard.writeText(hex.replace('#','').toUpperCase()).catch(function() {
+    var ta = document.createElement('textarea');
+    ta.value = hex; document.body.appendChild(ta);
+    ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta);
+  });
+  toastEl.classList.add('show');
+  setTimeout(function() { toastEl.classList.remove('show'); }, 1200);
+}
+
+// ─── Drag to reorder ─────────────────────────────────────────────────────────
+var dragSrc = null;
+
+function onDragStart(e, i) {
+  dragSrc = i;
+  e.dataTransfer.effectAllowed = 'move';
+}
+function onDragOver(e, i) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+}
+function onDrop(e, i) {
+  e.preventDefault();
+  if (dragSrc === null || dragSrc === i) return;
+  var c = palette.splice(dragSrc, 1)[0];
+  var lk = locked.splice(dragSrc, 1)[0];
+  palette.splice(i, 0, c);
+  locked.splice(i, 0, lk);
+  dragSrc = null;
+  render();
+}
+
+// ─── Render ───────────────────────────────────────────────────────────────────
+function render() {
+  var container = document.getElementById('palette');
+  container.innerHTML = '';
+
+  palette.forEach(function(hex, i) {
+    var fg      = getFgColor(hex);
+    var isLocked = locked[i];
+    var name    = getColorName(hex);
+    var displayHex = hex.replace('#','').toUpperCase();
+
+    var strip = document.createElement('div');
+    strip.className = 'strip' + (isLocked ? ' locked' : '');
+    strip.style.background = hex;
+    strip.style.color = fg;
+    strip.setAttribute('draggable', 'true');
+
+    // Drag events
+    strip.addEventListener('dragstart', function(e) { onDragStart(e, i); });
+    strip.addEventListener('dragover',  function(e) { onDragOver(e, i); });
+    strip.addEventListener('drop',      function(e) { onDrop(e, i); });
+
+    // Click strip = copy
+    strip.addEventListener('click', function(e) {
+      if (e.target.closest('.ctrl-btn') || e.target.closest('.add-strip-btn')) return;
+      copyHex(hex, strip.querySelector('.copied-toast'));
+    });
+
+    strip.innerHTML =
+      // Drag handle
+      '<div class="drag-handle">' +
+        '<svg width="16" height="16" viewBox="0 0 16 16" fill="none">' +
+          '<circle cx="5" cy="5" r="1.5" fill="currentColor"/>' +
+          '<circle cx="11" cy="5" r="1.5" fill="currentColor"/>' +
+          '<circle cx="5" cy="11" r="1.5" fill="currentColor"/>' +
+          '<circle cx="11" cy="11" r="1.5" fill="currentColor"/>' +
+        '</svg>' +
+      '</div>' +
+
+      // Controls
+      '<div class="strip-controls">' +
+        '<button class="ctrl-btn lock-btn' + (isLocked ? ' locked' : '') + '" title="' + (isLocked ? 'Unlock' : 'Lock') + '">' +
+          (isLocked
+            ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>'
+            : '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1C9.24 1 7 3.24 7 6v1H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2h-1V6c0-2.76-2.24-5-5-5zm0 15c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3-8H9V6c0-1.66 1.34-3 3-3s3 1.34 3 3v2z"/></svg>'
+          ) +
+        '</button>' +
+        (palette.length > 2
+          ? '<button class="ctrl-btn del-btn" title="Remove">×</button>'
+          : '') +
+      '</div>' +
+
+      // Color info
+      '<div class="strip-info">' +
+        '<div class="color-name">' + name + '</div>' +
+        '<div class="hex-code">' + displayHex + '</div>' +
+      '</div>' +
+
+      // "Add after" button
+      (palette.length < 8 && i < palette.length - 1
+        ? '<button class="add-strip-btn" title="Add color">+</button>'
+        : '') +
+
+      // Copied toast
+      '<div class="copied-toast">Copied!</div>';
+
+    // Wire up controls
+    var lockBtn = strip.querySelector('.lock-btn');
+    if (lockBtn) lockBtn.addEventListener('click', function(e) { e.stopPropagation(); toggleLock(i); });
+
+    var delBtn = strip.querySelector('.del-btn');
+    if (delBtn) delBtn.addEventListener('click', function(e) { e.stopPropagation(); removeStrip(i); });
+
+    var addBtn = strip.querySelector('.add-strip-btn');
+    if (addBtn) addBtn.addEventListener('click', function(e) { e.stopPropagation(); addStripAfter(i); });
+
+    container.appendChild(strip);
+  });
+
+  // "Add" button at end if fewer than 8
+  if (palette.length < 8) {
+    var lastStrip = container.lastElementChild;
+    if (lastStrip) {
+      var endAdd = document.createElement('button');
+      endAdd.className = 'add-strip-btn';
+      endAdd.style.cssText = 'right:-14px;opacity:0;';
+      endAdd.title = 'Add color';
+      endAdd.textContent = '+';
+      endAdd.addEventListener('click', function(e) { e.stopPropagation(); addStripAfter(palette.length - 1); });
+      lastStrip.appendChild(endAdd);
+      lastStrip.addEventListener('mouseenter', function() { endAdd.style.opacity = '1'; });
+      lastStrip.addEventListener('mouseleave', function() { endAdd.style.opacity = '0'; });
+    }
+  }
+}
+
+// ─── Export ───────────────────────────────────────────────────────────────────
+document.getElementById('export-btn').addEventListener('click', function() {
+  var text = palette.map(function(h) { return h.replace('#','').toUpperCase(); }).join('-');
+  var url  = window.location.href.split('?')[0] + '?' + text;
+  navigator.clipboard.writeText(url).catch(function(){});
+  var btn = document.getElementById('export-btn');
+  btn.textContent = 'Copied!';
+  setTimeout(function() { btn.textContent = 'Export'; }, 1500);
+});
+
+// ─── Save (download as CSS) ───────────────────────────────────────────────────
+document.getElementById('save-btn').addEventListener('click', function() {
+  var css = ':root {\n' + palette.map(function(h, i) {
+    return '  --color-' + (i+1) + ': ' + h.toUpperCase() + '; /* ' + getColorName(h) + ' */';
+  }).join('\n') + '\n}';
+  var blob = new Blob([css], { type: 'text/css' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'palette.css';
+  a.click();
+});
+
+// ─── URL palette loading ──────────────────────────────────────────────────────
+function loadFromUrl() {
+  var query = window.location.search.replace('?','');
+  if (!query) return false;
+  var parts = query.split('-');
+  if (parts.length < 2) return false;
+  var colors = parts.map(function(p) { return p.length === 6 ? '#' + p : null; }).filter(Boolean);
+  if (colors.length < 2) return false;
+  palette = colors;
+  locked  = colors.map(function() { return false; });
+  return true;
+}
+
+// ─── Keyboard ─────────────────────────────────────────────────────────────────
+document.addEventListener('keydown', function(e) {
+  if (e.code === 'Space' && document.activeElement === document.body) {
+    e.preventDefault();
+    generate();
+  }
+});
+
+document.getElementById('generate-btn').addEventListener('click', generate);
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+if (!loadFromUrl()) initPalette(5);
+render();
+</script>
+</body>
+</html>
