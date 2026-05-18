@@ -202,6 +202,32 @@
     }
     .venue-detail strong { color: rgba(255,255,255,0.85); }
 
+    /* ── Seats ── */
+    #seats-section {
+      position: relative; z-index: 1;
+      padding: 5rem 2rem;
+      background: #111;
+      text-align: center;
+    }
+    .seats-title {
+      font-family: 'Black Ops One', sans-serif;
+      font-size: clamp(1.4rem, 4vw, 2.2rem);
+      margin-bottom: 0.3rem;
+    }
+    .seats-sub {
+      font-size: 0.85rem; color: rgba(255,255,255,0.35);
+      margin-bottom: 2rem;
+    }
+    .seats-img-wrap {
+      max-width: 760px; margin: 0 auto;
+      border-radius: 20px; overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .seats-img {
+      width: 100%; display: block;
+    }
+
     /* ── Players ── */
     #players-section {
       position: relative; z-index: 1;
@@ -360,6 +386,16 @@
       Get there by 5pm — game kicks off later.<br>
       Dress: your team colours.
     </div>
+  </div>
+</section>
+
+<!-- Seats -->
+<section id="seats-section">
+  <div class="section-label">Our seats</div>
+  <h2 class="seats-title">Level 2 · Bay N40</h2>
+  <p class="seats-sub">Melbourne Cricket Ground</p>
+  <div class="seats-img-wrap">
+    <img src="seats.jpg" alt="MCG Bay N40 seating view" class="seats-img"/>
   </div>
 </section>
 
