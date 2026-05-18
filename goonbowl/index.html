@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Goon Bowl — Dreamtime at the G 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0a0a;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    /* ── Embers ── */
+    #embers {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
+    }
+    .ember {
+      position: absolute; bottom: -20px;
+      width: 4px; height: 4px; border-radius: 50%;
+      animation: rise linear infinite;
+      opacity: 0;
+    }
+    @keyframes rise {
+      0%   { transform: translateY(0) translateX(0) scale(1); opacity: 0; }
+      10%  { opacity: 1; }
+      90%  { opacity: 0.6; }
+      100% { transform: translateY(-110vh) translateX(var(--drift)) scale(0.2); opacity: 0; }
+    }
+
+    /* ── Hero ── */
+    #hero {
+      position: relative; min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 2rem;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 50%, rgba(204,34,41,0.18) 0%, transparent 70%),
+        radial-gradient(ellipse 80% 60% at 80% 50%, rgba(255,210,0,0.15) 0%, transparent 70%),
+        #0a0a0a;
+      z-index: 1;
+    }
+
+    .vs-strip {
+      display: flex; align-items: center; gap: 0; width: 100%; max-width: 700px;
+      height: 6px; border-radius: 3px; overflow: hidden; margin-bottom: 2.5rem;
+    }
+    .vs-strip .ess { flex: 1; background: #CC2229; }
+    .vs-strip .ric { flex: 1; background: #FFD200; }
+
+    .round-tag {
+      font-size: 0.75rem; font-weight: 700; letter-spacing: 0.2em;
+      text-transform: uppercase; color: rgba(255,255,255,0.45);
+      margin-bottom: 0.75rem;
+    }
+
+    .dreamtime-title {
+      font-family: 'Black Ops One', sans-serif;
+      font-size: clamp(3.5rem, 12vw, 8rem);
+      line-height: 0.9;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #CC2229 0%, #ff6b35 40%, #FFD200 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      font-family: 'Black Ops One', sans-serif;
+      font-size: clamp(1.1rem, 3vw, 1.8rem);
+      letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.55);
+      margin-bottom: 2.5rem;
+    }
+
+    .matchup {
+      display: flex; align-items: center; gap: 1.5rem;
+      margin-bottom: 2.5rem; flex-wrap: wrap; justify-content: center;
+    }
+    .team-pill {
+      display: flex; align-items: center; gap: 0.6rem;
+      padding: 0.5rem 1.2rem; border-radius: 100px;
+      font-weight: 900; font-size: 1rem; letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .team-pill.essendon { background: #CC2229; color: #fff; }
+    .team-pill.richmond { background: #FFD200; color: #000; }
+    .team-pill .swatch {
+      width: 10px; height: 10px; border-radius: 50%;
+    }
+    .essendon .swatch { background: #fff; }
+    .richmond .swatch { background: #000; }
+
+    .vs-badge {
+      font-family: 'Black Ops One', sans-serif;
+      font-size: 1.4rem; color: rgba(255,255,255,0.35);
+    }
+
+    .date-badge {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      padding: 1rem 2rem;
+      font-size: 1.1rem; font-weight: 700;
+      letter-spacing: 0.06em;
+      color: rgba(255,255,255,0.85);
+      text-transform: uppercase;
+    }
+
+    .scroll-hint {
+      position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+      color: rgba(255,255,255,0.25); font-size: 0.7rem; letter-spacing: 0.15em;
+      text-transform: uppercase;
+      animation: bob 2s ease-in-out infinite;
+    }
+    @keyframes bob { 0%,100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(6px); } }
+    .scroll-hint svg { width: 20px; height: 20px; }
+
+    /* ── Countdown ── */
+    #countdown-section {
+      position: relative; z-index: 1;
+      padding: 4rem 2rem;
+      background: linear-gradient(180deg, #0a0a0a 0%, #111 100%);
+      text-align: center;
+    }
+    .section-label {
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.25em;
+      text-transform: uppercase; color: rgba(255,255,255,0.35);
+      margin-bottom: 1.5rem;
+    }
+    #countdown {
+      display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;
+    }
+    .cd-block {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 1.5rem 2rem;
+      min-width: 100px;
+    }
+    .cd-num {
+      font-family: 'Black Ops One', sans-serif;
+      font-size: 3rem; line-height: 1;
+      background: linear-gradient(135deg, #ff6b35, #FFD200);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .cd-label {
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 0.15em;
+      text-transform: uppercase; color: rgba(255,255,255,0.3);
+      margin-top: 0.4rem;
+    }
+
+    /* ── Venue ── */
+    #venue-section {
+      position: relative; z-index: 1;
+      padding: 5rem 2rem;
+      background: #111;
+      display: flex; flex-direction: column; align-items: center;
+      text-align: center;
+    }
+    .venue-card {
+      max-width: 560px; width: 100%;
+      background: linear-gradient(135deg, rgba(255,107,53,0.15), rgba(255,210,0,0.08));
+      border: 1px solid rgba(255,107,53,0.3);
+      border-radius: 24px;
+      padding: 2.5rem;
+      position: relative; overflow: hidden;
+    }
+    .venue-card::before {
+      content: '';
+      position: absolute; top: -60px; right: -60px;
+      width: 180px; height: 180px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,210,0,0.12), transparent 70%);
+    }
+    .venue-icon {
+      font-size: 2.5rem; margin-bottom: 1rem;
+    }
+    .venue-name {
+      font-family: 'Black Ops One', sans-serif;
+      font-size: 2rem; line-height: 1.1;
+      color: #FFD200; margin-bottom: 0.4rem;
+    }
+    .venue-sub {
+      font-size: 0.9rem; color: rgba(255,255,255,0.45); margin-bottom: 1.5rem;
+    }
+    .venue-time {
+      display: inline-flex; align-items: center; gap: 0.6rem;
+      background: #CC2229;
+      color: #fff; font-weight: 900; font-size: 1.3rem;
+      padding: 0.6rem 1.8rem; border-radius: 100px;
+      letter-spacing: 0.04em;
+      margin-bottom: 1.5rem;
+    }
+    .venue-detail {
+      font-size: 0.85rem; color: rgba(255,255,255,0.5); line-height: 1.6;
+    }
+    .venue-detail strong { color: rgba(255,255,255,0.85); }
+
+    /* ── Players ── */
+    #players-section {
+      position: relative; z-index: 1;
+      padding: 5rem 2rem;
+      background: linear-gradient(180deg, #111 0%, #0a0a0a 100%);
+      text-align: center;
+    }
+    #players-section h2 {
+      font-family: 'Black Ops One', sans-serif;
+      font-size: clamp(1.8rem, 5vw, 3rem);
+      margin-bottom: 0.5rem;
+    }
+    #players-section .section-sub {
+      font-size: 0.9rem; color: rgba(255,255,255,0.35);
+      margin-bottom: 3rem;
+    }
+
+    .players-grid {
+      display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap;
+      max-width: 900px; margin: 0 auto;
+    }
+
+    .player-card {
+      flex: 1; min-width: 260px; max-width: 380px;
+      border-radius: 24px; overflow: hidden;
+      position: relative;
+    }
+
+    .player-card.essendon-card {
+      background: linear-gradient(160deg, #1a0305, #CC2229 120%);
+      border: 1px solid rgba(204,34,41,0.5);
+      box-shadow: 0 20px 60px rgba(204,34,41,0.2);
+    }
+    .player-card.richmond-card {
+      background: linear-gradient(160deg, #1a1500, #FFD200 160%);
+      border: 1px solid rgba(255,210,0,0.4);
+      box-shadow: 0 20px 60px rgba(255,210,0,0.15);
+    }
+
+    .player-photo {
+      width: 100%; aspect-ratio: 3/4; object-fit: cover; object-position: top;
+      display: block;
+    }
+    /* Placeholder shown when no real photo is present */
+    .player-photo-placeholder {
+      width: 100%; aspect-ratio: 3/4;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      font-size: 6rem; opacity: 0.15;
+    }
+    .essendon-card .player-photo-placeholder { background: rgba(204,34,41,0.3); }
+    .richmond-card .player-photo-placeholder { background: rgba(255,210,0,0.2); }
+
+    .player-info {
+      padding: 1.5rem;
+      position: relative;
+    }
+    .player-number {
+      font-family: 'Black Ops One', sans-serif;
+      font-size: 4rem; line-height: 1; opacity: 0.12;
+      position: absolute; top: 0.5rem; right: 1rem;
+    }
+    .essendon-card .player-number { color: #CC2229; }
+    .richmond-card .player-number { color: #FFD200; }
+
+    .player-team-tag {
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 0.2em;
+      text-transform: uppercase; margin-bottom: 0.4rem;
+    }
+    .essendon-card .player-team-tag { color: #ff6b6b; }
+    .richmond-card .player-team-tag { color: #FFD200; }
+
+    .player-name {
+      font-family: 'Black Ops One', sans-serif;
+      font-size: 1.6rem; line-height: 1.1; margin-bottom: 0.4rem;
+    }
+    .essendon-card .player-name { color: #fff; }
+    .richmond-card .player-name { color: #000; }
+
+    .player-role {
+      font-size: 0.8rem; color: rgba(255,255,255,0.45);
+    }
+    .richmond-card .player-role { color: rgba(0,0,0,0.45); }
+
+    /* ── Footer ── */
+    footer {
+      position: relative; z-index: 1;
+      padding: 2rem; text-align: center;
+      background: #0a0a0a;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      font-size: 0.75rem; color: rgba(255,255,255,0.2);
+      letter-spacing: 0.05em;
+    }
+
+    .divider {
+      width: 100%; max-width: 600px; margin: 0 auto;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,107,53,0.4), rgba(255,210,0,0.4), transparent);
+    }
+  </style>
+</head>
+<body>
+
+<!-- Embers -->
+<div id="embers"></div>
+
+<!-- Hero -->
+<section id="hero">
+  <div class="vs-strip"><div class="ess"></div><div class="ric"></div></div>
+  <div class="round-tag">AFL 2026 &nbsp;·&nbsp; Dreamtime at the G &nbsp;·&nbsp; Round 11</div>
+  <h1 class="dreamtime-title">GOON<br>BOWL</h1>
+  <p class="subtitle">Dreamtime at the G &rsquo;26</p>
+
+  <div class="matchup">
+    <div class="team-pill essendon"><div class="swatch"></div> Essendon</div>
+    <div class="vs-badge">VS</div>
+    <div class="team-pill richmond"><div class="swatch"></div> Richmond</div>
+  </div>
+
+  <div class="date-badge">Friday 22 May 2026</div>
+
+  <div class="scroll-hint">
+    <span>scroll</span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 5v14M5 12l7 7 7-7"/>
+    </svg>
+  </div>
+</section>
+
+<!-- Countdown -->
+<section id="countdown-section">
+  <div class="section-label">Drinks start in</div>
+  <div id="countdown">
+    <div class="cd-block"><div class="cd-num" id="cd-d">--</div><div class="cd-label">Days</div></div>
+    <div class="cd-block"><div class="cd-num" id="cd-h">--</div><div class="cd-label">Hours</div></div>
+    <div class="cd-block"><div class="cd-num" id="cd-m">--</div><div class="cd-label">Mins</div></div>
+    <div class="cd-block"><div class="cd-num" id="cd-s">--</div><div class="cd-label">Secs</div></div>
+  </div>
+</section>
+
+<!-- Venue -->
+<section id="venue-section">
+  <div class="section-label" style="margin-bottom:1rem;">Where we're at</div>
+  <div class="venue-card">
+    <div class="venue-icon">🍷</div>
+    <div class="venue-name">Good Heavens<br>Rooftop Bar</div>
+    <div class="venue-sub">Melbourne CBD</div>
+    <div class="venue-time">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+      </svg>
+      5:00 PM
+    </div>
+    <div class="venue-detail">
+      <strong>Booking confirmed.</strong><br>
+      Get there by 5pm — game kicks off later.<br>
+      Dress: your team colours.
+    </div>
+  </div>
+</section>
+
+<div style="padding: 0 2rem; background: linear-gradient(180deg,#111,#0a0a0a); position:relative;z-index:1;">
+  <div class="divider"></div>
+</div>
+
+<!-- Players -->
+<section id="players-section">
+  <div class="section-label">The ones to watch</div>
+  <h2>Key Matchup</h2>
+  <p class="section-sub">Two of the best forwards in the comp. One winner.</p>
+
+  <div class="players-grid">
+
+    <!-- Jake Stringer -->
+    <div class="player-card essendon-card">
+      <!--
+        To add a real photo of Jake Stringer, replace the placeholder div below with:
+        <img class="player-photo" src="stringer.jpg" alt="Jake Stringer"/>
+      -->
+      <div class="player-photo-placeholder">⚡</div>
+      <div class="player-info">
+        <div class="player-number">4</div>
+        <div class="player-team-tag">Essendon Bombers</div>
+        <div class="player-name">Jake<br>Stringer</div>
+        <div class="player-role">Forward · #4</div>
+      </div>
+    </div>
+
+    <!-- Tom Lynch -->
+    <div class="player-card richmond-card">
+      <!--
+        To add a real photo of Tom Lynch, replace the placeholder div below with:
+        <img class="player-photo" src="lynch.jpg" alt="Tom Lynch"/>
+      -->
+      <div class="player-photo-placeholder">🐯</div>
+      <div class="player-info">
+        <div class="player-number">5</div>
+        <div class="player-team-tag">Richmond Tigers</div>
+        <div class="player-name">Tom<br>Lynch</div>
+        <div class="player-role">Forward · #5</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<footer>
+  nacho.dog &nbsp;·&nbsp; goon bowl 2026 &nbsp;·&nbsp; go whoever you go for
+</footer>
+
+<script>
+// ── Embers ────────────────────────────────────────────────────────────────────
+(function() {
+  var container = document.getElementById('embers');
+  var COLORS = ['#CC2229','#ff6b35','#FFD200','#ff9500','#ff4500'];
+  for (var i = 0; i < 40; i++) {
+    (function() {
+      var el = document.createElement('div');
+      el.className = 'ember';
+      var size = 2 + Math.random() * 4;
+      el.style.cssText = [
+        'left:' + Math.random() * 100 + '%',
+        'width:' + size + 'px',
+        'height:' + size + 'px',
+        'background:' + COLORS[Math.floor(Math.random() * COLORS.length)],
+        'animation-duration:' + (4 + Math.random() * 8) + 's',
+        'animation-delay:' + (Math.random() * 8) + 's',
+        '--drift:' + (Math.random() * 120 - 60) + 'px',
+        'box-shadow: 0 0 6px currentColor',
+      ].join(';');
+      container.appendChild(el);
+    })();
+  }
+})();
+
+// ── Countdown to 5pm Friday 22 May 2026 AEST ─────────────────────────────────
+var target = new Date('2026-05-22T07:00:00Z'); // 5pm AEST = UTC+10
+
+function pad(n) { return String(n).padStart(2, '0'); }
+
+function tick() {
+  var now  = new Date();
+  var diff = target - now;
+  if (diff <= 0) {
+    document.getElementById('cd-d').textContent = '00';
+    document.getElementById('cd-h').textContent = '00';
+    document.getElementById('cd-m').textContent = '00';
+    document.getElementById('cd-s').textContent = '00';
+    document.querySelector('.section-label').textContent = "IT'S ON! 🔥";
+    return;
+  }
+  var days  = Math.floor(diff / 86400000);
+  var hours = Math.floor((diff % 86400000) / 3600000);
+  var mins  = Math.floor((diff % 3600000) / 60000);
+  var secs  = Math.floor((diff % 60000) / 1000);
+  document.getElementById('cd-d').textContent = pad(days);
+  document.getElementById('cd-h').textContent = pad(hours);
+  document.getElementById('cd-m').textContent = pad(mins);
+  document.getElementById('cd-s').textContent = pad(secs);
+}
+
+tick();
+setInterval(tick, 1000);
+</script>
+</body>
+</html>
