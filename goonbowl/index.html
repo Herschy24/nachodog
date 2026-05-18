@@ -457,6 +457,45 @@ function tick() {
 
 tick();
 setInterval(tick, 1000);
+
+// ── Custom cursor: tiger (right) / red plane (left) ───────────────────────────
+(function() {
+  document.body.style.cursor = 'none';
+
+  var cursor = document.createElement('div');
+  cursor.style.cssText = [
+    'position:fixed',
+    'top:0', 'left:0',
+    'pointer-events:none',
+    'z-index:9999',
+    'font-size:2rem',
+    'line-height:1',
+    'transform:translate(-50%,-50%)',
+    'transition:none',
+    'user-select:none',
+    // Red tint on the plane side via CSS filter
+    'will-change:transform',
+  ].join(';');
+  document.body.appendChild(cursor);
+
+  document.addEventListener('mousemove', function(e) {
+    cursor.style.left = e.clientX + 'px';
+    cursor.style.top  = e.clientY + 'px';
+    if (e.clientX > window.innerWidth / 2) {
+      // Right side — Richmond Tigers
+      cursor.textContent = '🐯';
+      cursor.style.filter = 'none';
+    } else {
+      // Left side — Essendon Bombers (red plane)
+      cursor.textContent = '✈️';
+      cursor.style.filter = 'sepia(1) saturate(5) hue-rotate(320deg)';
+    }
+  });
+
+  document.addEventListener('mouseleave', function() {
+    cursor.textContent = '';
+  });
+})();
 </script>
 </body>
 </html>
