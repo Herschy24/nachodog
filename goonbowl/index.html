@@ -350,6 +350,31 @@
     }
     .richmond-card .player-role { color: rgba(0,0,0,0.45); }
 
+    /* ── Seating ── */
+    #seating-section {
+      position: relative; z-index: 2;
+      padding: 4rem 2rem;
+      text-align: center;
+    }
+    .seats-row {
+      display: flex; align-items: center; justify-content: center;
+      flex-wrap: wrap; gap: 0.5rem;
+      max-width: 900px; margin: 0 auto;
+    }
+    .seat-chip {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 100px;
+      padding: 0.5rem 1.2rem;
+      font-weight: 700; font-size: 0.95rem;
+      letter-spacing: 0.04em;
+      color: #fff;
+    }
+    .seat-arrow {
+      color: rgba(255,210,0,0.6);
+      font-size: 1rem; font-weight: 700;
+    }
+
     /* ── Footer ── */
     footer {
       position: relative; z-index: 1;
@@ -484,6 +509,28 @@
     <div class="sedy-icon">👑</div>
     <div class="sedy-text">Massive shoutout to <strong>Sedy</strong> for locking in the tickets.</div>
     <div class="sedy-sub">GOAT behaviour. We are not worthy.</div>
+  </div>
+</section>
+
+<!-- Seating arrangements -->
+<section id="seating-section">
+  <div class="section-label">Official Seating Arrangements</div>
+  <div class="seats-row">
+    <div class="seat-chip">Sedy</div>
+    <div class="seat-arrow">→</div>
+    <div class="seat-chip">Sam</div>
+    <div class="seat-arrow">→</div>
+    <div class="seat-chip">Hirsch</div>
+    <div class="seat-arrow">→</div>
+    <div class="seat-chip">Melly</div>
+    <div class="seat-arrow">→</div>
+    <div class="seat-chip">Pent</div>
+    <div class="seat-arrow">→</div>
+    <div class="seat-chip">Willyk</div>
+    <div class="seat-arrow">→</div>
+    <div class="seat-chip">Riz</div>
+    <div class="seat-arrow">→</div>
+    <div class="seat-chip">Tommy</div>
   </div>
 </section>
 
