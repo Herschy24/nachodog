@@ -19,9 +19,9 @@
     /* ── Aboriginal art canvas ── */
     #abt-bg {
       position: fixed; inset: 0; width: 100%; height: 100%;
-      pointer-events: none; z-index: 0;
-      mix-blend-mode: screen;
-      opacity: 0.55;
+      pointer-events: none; z-index: 1;
+      mix-blend-mode: overlay;
+      opacity: 0.7;
     }
 
     /* ── Embers ── */
@@ -48,9 +48,8 @@
       text-align: center; padding: 2rem;
       background:
         radial-gradient(ellipse 80% 60% at 20% 50%, rgba(204,34,41,0.18) 0%, transparent 70%),
-        radial-gradient(ellipse 80% 60% at 80% 50%, rgba(255,210,0,0.15) 0%, transparent 70%),
-        #0a0a0a;
-      z-index: 1;
+        radial-gradient(ellipse 80% 60% at 80% 50%, rgba(255,210,0,0.15) 0%, transparent 70%);
+      z-index: 2;
     }
 
     .vs-strip {
@@ -132,9 +131,8 @@
 
     /* ── Countdown ── */
     #countdown-section {
-      position: relative; z-index: 1;
+      position: relative; z-index: 2;
       padding: 4rem 2rem;
-      background: linear-gradient(180deg, #0a0a0a 0%, #111 100%);
       text-align: center;
     }
     .section-label {
@@ -166,9 +164,8 @@
 
     /* ── Venue ── */
     #venue-section {
-      position: relative; z-index: 1;
+      position: relative; z-index: 2;
       padding: 5rem 2rem;
-      background: #111;
       display: flex; flex-direction: column; align-items: center;
       text-align: center;
     }
@@ -229,9 +226,8 @@
 
     /* ── Seats ── */
     #seats-section {
-      position: relative; z-index: 1;
+      position: relative; z-index: 2;
       padding: 5rem 2rem;
-      background: #111;
       text-align: center;
     }
     .seats-title {
@@ -273,9 +269,8 @@
 
     /* ── Players ── */
     #players-section {
-      position: relative; z-index: 1;
+      position: relative; z-index: 2;
       padding: 5rem 2rem;
-      background: linear-gradient(180deg, #111 0%, #0a0a0a 100%);
       text-align: center;
     }
     #players-section h2 {
@@ -468,7 +463,7 @@
   </div>
 </section>
 
-<div style="padding: 0 2rem; background: linear-gradient(180deg,#111,#0a0a0a); position:relative;z-index:1;">
+<div style="padding: 0 2rem; position:relative;z-index:2;">
   <div class="divider"></div>
 </div>
 
@@ -585,26 +580,25 @@
 
     // ── Paint ──
     // Main concentric circle groups
-    ctx.globalAlpha = 0.75;
-    var numGroups = Math.max(10, Math.round(W * H / 55000));
+    ctx.globalAlpha = 0.95;
+    var numGroups = Math.max(14, Math.round(W * H / 40000));
     var pts = [];
     for (var i = 0; i < numGroups; i++) {
       var x = rnd(0, W), y = rnd(0, H);
-      var r = rnd(35, 115);
+      var r = rnd(40, 130);
       var col = pick(PALETTE);
       pts.push({ x: x, y: y, col: col });
-      concentricCircles(x, y, r, Math.round(rnd(3, 7)), col);
+      concentricCircles(x, y, r, Math.round(rnd(4, 8)), col);
     }
 
     // Dotted tracks connecting nearby groups
-    ctx.globalAlpha = 0.5;
+    ctx.globalAlpha = 0.8;
     for (var i = 0; i < pts.length; i++) {
-      // Connect to 1–2 nearest neighbours
       var connects = 0;
       for (var j = i + 1; j < pts.length && connects < 2; j++) {
         var dx = pts[j].x - pts[i].x, dy = pts[j].y - pts[i].y;
         var d = Math.sqrt(dx*dx + dy*dy);
-        if (d < W * 0.38 && Math.random() > 0.35) {
+        if (d < W * 0.45 && Math.random() > 0.3) {
           dottedTrack(pts[i].x, pts[i].y, pts[j].x, pts[j].y, pick(PALETTE));
           connects++;
         }
@@ -612,7 +606,7 @@
     }
 
     // U-shapes (people / animals around the circle groups)
-    ctx.globalAlpha = 0.5;
+    ctx.globalAlpha = 0.75;
     for (var i = 0; i < Math.round(numGroups * 1.5); i++) {
       var pt = pts[Math.floor(Math.random() * pts.length)];
       var ang = rnd(0, Math.PI * 2);
@@ -626,7 +620,7 @@
 
     // Fine dot scatter over everything
     ctx.globalAlpha = 1;
-    scatterDots(Math.round(W * H / 900));
+    scatterDots(Math.round(W * H / 600));
   }
 
   draw();
