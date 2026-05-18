@@ -350,6 +350,37 @@
     }
     .richmond-card .player-role { color: rgba(0,0,0,0.45); }
 
+    /* ── Nuff Rankings ── */
+    #nuff-section {
+      position: relative; z-index: 2;
+      padding: 4rem 2rem 2rem;
+      text-align: center;
+    }
+    .nuff-list {
+      display: flex; flex-direction: column; gap: 0.6rem;
+      max-width: 420px; margin: 0 auto;
+    }
+    .nuff-item {
+      display: flex; align-items: center; gap: 1rem;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 0.75rem 1.25rem;
+      transition: background 0.15s;
+    }
+    .nuff-item:hover { background: rgba(255,255,255,0.09); }
+    .nuff-rank {
+      font-family: 'Black Ops One', sans-serif;
+      font-size: 1rem; min-width: 2.5rem;
+      color: rgba(255,255,255,0.4);
+    }
+    .nuff-rank.gold   { color: #FFD200; }
+    .nuff-rank.silver { color: #C0C0C0; }
+    .nuff-rank.bronze { color: #CD7F32; }
+    .nuff-name {
+      font-weight: 700; font-size: 1rem; color: #fff;
+    }
+
     /* ── Seating ── */
     #seating-section {
       position: relative; z-index: 2;
@@ -509,6 +540,21 @@
     <div class="sedy-icon">👑</div>
     <div class="sedy-text">Massive shoutout to <strong>Sedy</strong> for locking in the tickets.</div>
     <div class="sedy-sub">GOAT behaviour. We are not worthy.</div>
+  </div>
+</section>
+
+<!-- Nuff Rankings -->
+<section id="nuff-section">
+  <div class="section-label">Official Nuff Rankings</div>
+  <div class="nuff-list">
+    <div class="nuff-item"><span class="nuff-rank gold">🥇 1</span><span class="nuff-name">Pent</span></div>
+    <div class="nuff-item"><span class="nuff-rank silver">🥈 2</span><span class="nuff-name">Sedy</span></div>
+    <div class="nuff-item"><span class="nuff-rank bronze">🥉 3</span><span class="nuff-name">Willyk</span></div>
+    <div class="nuff-item"><span class="nuff-rank">4</span><span class="nuff-name">Melly</span></div>
+    <div class="nuff-item"><span class="nuff-rank">5</span><span class="nuff-name">Hirsch</span></div>
+    <div class="nuff-item"><span class="nuff-rank">6</span><span class="nuff-name">Sam</span></div>
+    <div class="nuff-item"><span class="nuff-rank">7</span><span class="nuff-name">Riz</span></div>
+    <div class="nuff-item"><span class="nuff-rank">8</span><span class="nuff-name">Tom</span></div>
   </div>
 </section>
 
