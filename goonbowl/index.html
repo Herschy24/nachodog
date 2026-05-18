@@ -119,30 +119,6 @@
       text-transform: uppercase;
     }
 
-    #hero-countdown {
-      display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;
-      margin-top: 1.75rem;
-    }
-    .hcd-block {
-      background: rgba(0,0,0,0.35);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 12px;
-      padding: 0.9rem 1.2rem;
-      min-width: 72px; text-align: center;
-      backdrop-filter: blur(6px);
-    }
-    .hcd-num {
-      font-family: 'Black Ops One', sans-serif;
-      font-size: 2rem; line-height: 1;
-      background: linear-gradient(135deg, #ff6b35, #FFD200);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-    }
-    .hcd-label {
-      font-size: 0.6rem; font-weight: 700; letter-spacing: 0.15em;
-      text-transform: uppercase; color: rgba(255,255,255,0.3);
-      margin-top: 0.3rem;
-    }
-
     .scroll-hint {
       position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%);
       display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
@@ -414,13 +390,6 @@
 
   <div class="date-badge">Friday 22 May 2026</div>
 
-  <div id="hero-countdown">
-    <div class="hcd-block"><div class="hcd-num" id="hcd-d">--</div><div class="hcd-label">Days</div></div>
-    <div class="hcd-block"><div class="hcd-num" id="hcd-h">--</div><div class="hcd-label">Hours</div></div>
-    <div class="hcd-block"><div class="hcd-num" id="hcd-m">--</div><div class="hcd-label">Mins</div></div>
-    <div class="hcd-block"><div class="hcd-num" id="hcd-s">--</div><div class="hcd-label">Secs</div></div>
-  </div>
-
   <div class="scroll-hint">
     <span>scroll</span>
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -691,9 +660,10 @@ function tick() {
   var now  = new Date();
   var diff = target - now;
   if (diff <= 0) {
-    ['cd-d','cd-h','cd-m','cd-s','hcd-d','hcd-h','hcd-m','hcd-s'].forEach(function(id) {
-      document.getElementById(id).textContent = '00';
-    });
+    document.getElementById('cd-d').textContent = '00';
+    document.getElementById('cd-h').textContent = '00';
+    document.getElementById('cd-m').textContent = '00';
+    document.getElementById('cd-s').textContent = '00';
     document.querySelector('.section-label').textContent = "IT'S ON! 🔥";
     return;
   }
@@ -705,10 +675,6 @@ function tick() {
   document.getElementById('cd-h').textContent = pad(hours);
   document.getElementById('cd-m').textContent = pad(mins);
   document.getElementById('cd-s').textContent = pad(secs);
-  document.getElementById('hcd-d').textContent = pad(days);
-  document.getElementById('hcd-h').textContent = pad(hours);
-  document.getElementById('hcd-m').textContent = pad(mins);
-  document.getElementById('hcd-s').textContent = pad(secs);
 }
 
 tick();
