@@ -224,6 +224,25 @@
     }
     .venue-detail strong { color: rgba(255,255,255,0.85); }
 
+    /* ── Willyk matchup ── */
+    #willyk-section {
+      position: relative; z-index: 2;
+      padding: 5rem 2rem;
+      text-align: center;
+    }
+    #willyk-section h2 { font-family: 'Black Ops One', sans-serif; font-size: clamp(1.8rem,5vw,3rem); margin-bottom: 0.5rem; }
+    #willyk-section .section-sub { font-size: 0.9rem; color: rgba(255,255,255,0.35); margin-bottom: 3rem; }
+    .willyk-card {
+      background: linear-gradient(160deg, #1a0a2e, #6d28d9 160%);
+      border: 1px solid rgba(139,92,246,0.5);
+      box-shadow: 0 20px 60px rgba(109,40,217,0.25);
+    }
+    .jimbeam-card {
+      background: linear-gradient(160deg, #1a1000, #d97706 160%);
+      border: 1px solid rgba(245,158,11,0.5);
+      box-shadow: 0 20px 60px rgba(217,119,6,0.2);
+    }
+
     /* ── Seats ── */
     #seats-section {
       position: relative; z-index: 2;
@@ -513,6 +532,37 @@
         <div class="player-team-tag">Richmond Tigers</div>
         <div class="player-name">Tom<br>Lynch</div>
         <div class="player-role">Forward · #5</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Willyk vs Jim Beams -->
+<section id="willyk-section">
+  <div class="section-label">The real matchup</div>
+  <h2>Key Matchup</h2>
+  <p class="section-sub">Man vs can. This one matters more.</p>
+
+  <div class="players-grid">
+
+    <div class="player-card willyk-card">
+      <img class="player-photo" src="willyk.jpg" alt="Willyk" style="object-position:center;"/>
+      <div class="player-info">
+        <div class="player-number">1</div>
+        <div class="player-team-tag" style="color:#a78bfa;">The Goon Bowl</div>
+        <div class="player-name" style="color:#fff;">Willyk</div>
+        <div class="player-role" style="color:rgba(255,255,255,0.45);">Challenger</div>
+      </div>
+    </div>
+
+    <div class="player-card jimbeam-card">
+      <img class="player-photo" src="jimbeam.jpg" alt="10 Jim Beams" style="object-fit:contain; object-position:center; background:#1a1a2e; padding:1rem;"/>
+      <div class="player-info">
+        <div class="player-number">10</div>
+        <div class="player-team-tag" style="color:#f59e0b;">Jim Beam & Cola</div>
+        <div class="player-name" style="color:#fff;">10 Cans</div>
+        <div class="player-role" style="color:rgba(255,255,255,0.45);">The Opposition</div>
       </div>
     </div>
 
