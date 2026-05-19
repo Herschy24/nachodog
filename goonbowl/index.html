@@ -469,23 +469,10 @@
       from { transform: scale(1); box-shadow: 0 0 20px rgba(255,210,0,0.8); }
       to   { transform: scale(1.15); box-shadow: 0 0 40px rgba(255,107,53,1); }
     }
-    .melly-controls {
-      display: flex; flex-direction: column; align-items: center; gap: 0.75rem;
-    }
-    .melly-btn {
-      width: 64px; height: 64px; border-radius: 50%;
-      border: 2px solid rgba(255,255,255,0.2);
-      background: rgba(255,255,255,0.07);
-      color: #fff; font-size: 2rem; line-height: 1;
-      cursor: pointer; transition: all 0.15s;
-      font-family: 'Inter', sans-serif;
-    }
-    .melly-btn:hover { background: rgba(255,255,255,0.15); transform: scale(1.1); }
-    .melly-btn.plus  { border-color: rgba(255,107,53,0.5); color: #ff6b35; }
-    .melly-btn.minus { border-color: rgba(255,255,255,0.15); }
-    .melly-label {
+    .melly-label-static {
       font-size: 0.65rem; font-weight: 700; letter-spacing: 0.15em;
       text-transform: uppercase; color: rgba(255,255,255,0.3);
+      margin-top: 0.5rem;
     }
 
     /* ── Nuff Rankings ── */
@@ -756,12 +743,7 @@
       </div>
     </div>
 
-    <!-- +/- controls -->
-    <div class="melly-controls">
-      <button class="melly-btn minus" id="melly-minus">−</button>
-      <div class="melly-label">drinks</div>
-      <button class="melly-btn plus" id="melly-plus">+</button>
-    </div>
+    <div class="melly-label-static">drinks</div>
   </div>
 
   <!-- Fireworks canvas -->
@@ -946,9 +928,12 @@
 })();
 
 // ── Melly Binge Counter ───────────────────────────────────────────────────────
+// To update the count, change MELLY_COUNT below and push a PR.
 (function() {
-  var count = 0;
+  var MELLY_COUNT = 0; // ← update this number via PR
   var MAX = 10;
+  var count = Math.min(MELLY_COUNT, MAX);
+
   var fill   = document.getElementById('thermo-fill');
   var num    = document.getElementById('thermo-num');
   var bulb   = document.getElementById('thermo-bulb');
@@ -961,20 +946,12 @@
     var pct = (count / MAX) * 100;
     fill.style.height = pct + '%';
     num.textContent = count;
-    // Bulb colour tracks fill
     bulb.style.background = count >= MAX
       ? '#FFD200'
-      : 'hsl(' + (0 + (count / MAX) * 50) + ',90%,' + (38 + (count / MAX) * 18) + '%)';
+      : 'hsl(' + (count / MAX) * 50 + ',90%,' + (38 + (count / MAX) * 18) + '%)';
     bulb.classList.toggle('hot', count >= MAX);
-    if (count >= MAX && !fwRunning) launchFireworks();
+    if (count >= MAX) launchFireworks();
   }
-
-  document.getElementById('melly-plus').addEventListener('click', function() {
-    if (count < MAX) { count++; update(); }
-  });
-  document.getElementById('melly-minus').addEventListener('click', function() {
-    if (count > 0) { count--; update(); if (count < MAX) stopFireworks(); }
-  });
 
   // ── Fireworks ──
   function randomColor() {
@@ -990,11 +967,7 @@
     animateFireworks();
   }
 
-  function stopFireworks() {
-    fwRunning = false;
-    particles = [];
-    fwCtx.clearRect(0, 0, fwCanvas.width, fwCanvas.height);
-  }
+  update();
 
   function spawnBurst() {
     if (!fwRunning) return;
