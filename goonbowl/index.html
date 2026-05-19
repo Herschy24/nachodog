@@ -224,14 +224,6 @@
     }
     .venue-detail strong { color: rgba(255,255,255,0.85); }
 
-    /* ── Willyk matchup ── */
-    #willyk-section {
-      position: relative; z-index: 2;
-      padding: 5rem 2rem;
-      text-align: center;
-    }
-    #willyk-section h2 { font-family: 'Black Ops One', sans-serif; font-size: clamp(1.8rem,5vw,3rem); margin-bottom: 0.5rem; }
-    #willyk-section .section-sub { font-size: 0.9rem; color: rgba(255,255,255,0.35); margin-bottom: 3rem; }
     .willyk-card {
       background: linear-gradient(160deg, #1a0a2e, #6d28d9 160%);
       border: 1px solid rgba(139,92,246,0.5);
@@ -291,6 +283,15 @@
       position: relative; z-index: 2;
       padding: 5rem 2rem;
       text-align: center;
+    }
+    .matchup-group {
+      margin-bottom: 4rem;
+    }
+    .matchup-group:last-child { margin-bottom: 0; }
+    .matchup-label {
+      font-family: 'Black Ops One', sans-serif;
+      font-size: clamp(1.4rem, 4vw, 2.2rem);
+      margin-bottom: 0.4rem;
     }
     #players-section h2 {
       font-family: 'Black Ops One', sans-serif;
@@ -505,68 +506,60 @@
   </div>
 </section>
 
-<!-- Players -->
+<!-- Key Matchups -->
 <section id="players-section">
-  <div class="section-label">The ones to watch</div>
-  <h2>Key Matchup</h2>
-  <p class="section-sub">Two of the best forwards in the comp. One winner.</p>
+  <div class="section-label">Key Matchups</div>
 
-  <div class="players-grid">
-
-    <!-- Ben McKay -->
-    <div class="player-card essendon-card">
-      <img class="player-photo" src="mckay.jpg" alt="Ben McKay"/>
-      <div class="player-info">
-        <div class="player-number">3</div>
-        <div class="player-team-tag">Essendon Bombers</div>
-        <div class="player-name">Ben<br>McKay</div>
-        <div class="player-role">Defender · #3</div>
+  <div class="matchup-group">
+    <h3 class="matchup-label">On the field</h3>
+    <p class="section-sub">Two of the best forwards in the comp. One winner.</p>
+    <div class="players-grid">
+      <div class="player-card essendon-card">
+        <img class="player-photo" src="mckay.jpg" alt="Ben McKay"/>
+        <div class="player-info">
+          <div class="player-number">3</div>
+          <div class="player-team-tag">Essendon Bombers</div>
+          <div class="player-name">Ben<br>McKay</div>
+          <div class="player-role">Defender · #3</div>
+        </div>
+      </div>
+      <div class="player-card richmond-card">
+        <img class="player-photo" src="lynch.jpg" alt="Tom Lynch"/>
+        <div class="player-info">
+          <div class="player-number">5</div>
+          <div class="player-team-tag">Richmond Tigers</div>
+          <div class="player-name">Tom<br>Lynch</div>
+          <div class="player-role">Forward · #5</div>
+        </div>
       </div>
     </div>
-
-    <!-- Tom Lynch -->
-    <div class="player-card richmond-card">
-      <img class="player-photo" src="lynch.jpg" alt="Tom Lynch"/>
-      <div class="player-info">
-        <div class="player-number">5</div>
-        <div class="player-team-tag">Richmond Tigers</div>
-        <div class="player-name">Tom<br>Lynch</div>
-        <div class="player-role">Forward · #5</div>
-      </div>
-    </div>
-
   </div>
-</section>
 
-<!-- Willyk vs Jim Beams -->
-<section id="willyk-section">
-  <div class="section-label">The real matchup</div>
-  <h2>Key Matchup</h2>
-  <p class="section-sub">Man vs can. This one matters more.</p>
-
-  <div class="players-grid">
-
-    <div class="player-card willyk-card">
-      <img class="player-photo" src="willyk.jpg" alt="Willyk" style="object-position:center;"/>
-      <div class="player-info">
-        <div class="player-number">1</div>
-        <div class="player-team-tag" style="color:#a78bfa;">The Goon Bowl</div>
-        <div class="player-name" style="color:#fff;">Willyk</div>
-        <div class="player-role" style="color:rgba(255,255,255,0.45);">Challenger</div>
+  <div class="matchup-group">
+    <h3 class="matchup-label">Off the field</h3>
+    <p class="section-sub">Man vs can. This one matters more.</p>
+    <div class="players-grid">
+      <div class="player-card willyk-card">
+        <img class="player-photo" src="willyk.jpg" alt="Willyk" style="object-position:center;"/>
+        <div class="player-info">
+          <div class="player-number">1</div>
+          <div class="player-team-tag" style="color:#a78bfa;">The Goon Bowl</div>
+          <div class="player-name" style="color:#fff;">Willyk</div>
+          <div class="player-role" style="color:rgba(255,255,255,0.45);">Challenger</div>
+        </div>
+      </div>
+      <div class="player-card jimbeam-card">
+        <img class="player-photo" src="jimbeam.jpg" alt="10 Jim Beams" style="object-fit:contain; object-position:center; background:#1a1a2e; padding:1rem;"/>
+        <div class="player-info">
+          <div class="player-number">10</div>
+          <div class="player-team-tag" style="color:#f59e0b;">Jim Beam & Cola</div>
+          <div class="player-name" style="color:#fff;">10 Cans</div>
+          <div class="player-role" style="color:rgba(255,255,255,0.45);">The Opposition</div>
+        </div>
       </div>
     </div>
-
-    <div class="player-card jimbeam-card">
-      <img class="player-photo" src="jimbeam.jpg" alt="10 Jim Beams" style="object-fit:contain; object-position:center; background:#1a1a2e; padding:1rem;"/>
-      <div class="player-info">
-        <div class="player-number">10</div>
-        <div class="player-team-tag" style="color:#f59e0b;">Jim Beam & Cola</div>
-        <div class="player-name" style="color:#fff;">10 Cans</div>
-        <div class="player-role" style="color:rgba(255,255,255,0.45);">The Opposition</div>
-      </div>
-    </div>
-
   </div>
+
 </section>
 
 <div style="padding: 0 2rem; position:relative;z-index:2;">
