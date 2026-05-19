@@ -390,6 +390,104 @@
     }
     .richmond-card .player-role { color: rgba(0,0,0,0.45); }
 
+    /* ── Melly Binge Counter ── */
+    #melly-section {
+      position: relative; z-index: 2;
+      padding: 4rem 2rem;
+      text-align: center;
+      overflow: hidden;
+    }
+    #fw-canvas {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      pointer-events: none; z-index: 10;
+    }
+    .melly-wrap {
+      display: flex; align-items: center; justify-content: center;
+      gap: 3rem; flex-wrap: wrap; margin-top: 1.5rem;
+    }
+    .melly-photo {
+      width: 200px; height: 200px;
+      border-radius: 50%; object-fit: cover; object-position: top;
+      border: 4px solid rgba(255,107,53,0.5);
+      box-shadow: 0 0 30px rgba(255,107,53,0.3);
+    }
+    .gauge-outer {
+      display: flex; align-items: flex-end; gap: 0.5rem;
+    }
+    .gauge-scale {
+      display: flex; flex-direction: column; justify-content: space-between;
+      height: 300px; text-align: right;
+      font-size: 0.7rem; font-weight: 700; color: rgba(255,255,255,0.35);
+      padding-bottom: 4px;
+    }
+    .thermo-wrap {
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .thermo-tube {
+      width: 48px; height: 300px;
+      background: rgba(255,255,255,0.07);
+      border: 2px solid rgba(255,255,255,0.15);
+      border-radius: 24px 24px 0 0;
+      position: relative; overflow: hidden;
+      display: flex; align-items: flex-end;
+    }
+    .thermo-fill {
+      width: 100%; height: 0%;
+      background: linear-gradient(to top, #CC2229, #ff6b35, #FFD200);
+      border-radius: 22px 22px 0 0;
+      transition: height 0.5s cubic-bezier(0.34,1.56,0.64,1);
+      position: relative;
+    }
+    .thermo-num {
+      position: absolute; width: 100%; text-align: center;
+      bottom: 8px; left: 0;
+      font-family: 'Black Ops One', sans-serif;
+      font-size: 1.1rem; color: #fff;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+      z-index: 2;
+    }
+    .thermo-bulb {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: rgba(255,255,255,0.07);
+      border: 2px solid rgba(255,255,255,0.15);
+      display: flex; align-items: center; justify-content: center;
+      margin-top: -2px;
+    }
+    .thermo-bulb-inner {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: #CC2229;
+      transition: background 0.5s;
+      box-shadow: 0 0 16px rgba(204,34,41,0.6);
+    }
+    .thermo-bulb-inner.hot {
+      background: #FFD200;
+      box-shadow: 0 0 30px rgba(255,210,0,0.8);
+      animation: pulse-bulb 0.5s ease-in-out infinite alternate;
+    }
+    @keyframes pulse-bulb {
+      from { transform: scale(1); box-shadow: 0 0 20px rgba(255,210,0,0.8); }
+      to   { transform: scale(1.15); box-shadow: 0 0 40px rgba(255,107,53,1); }
+    }
+    .melly-controls {
+      display: flex; flex-direction: column; align-items: center; gap: 0.75rem;
+    }
+    .melly-btn {
+      width: 64px; height: 64px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.07);
+      color: #fff; font-size: 2rem; line-height: 1;
+      cursor: pointer; transition: all 0.15s;
+      font-family: 'Inter', sans-serif;
+    }
+    .melly-btn:hover { background: rgba(255,255,255,0.15); transform: scale(1.1); }
+    .melly-btn.plus  { border-color: rgba(255,107,53,0.5); color: #ff6b35; }
+    .melly-btn.minus { border-color: rgba(255,255,255,0.15); }
+    .melly-label {
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 0.15em;
+      text-transform: uppercase; color: rgba(255,255,255,0.3);
+    }
+
     /* ── Nuff Rankings ── */
     #nuff-section {
       position: relative; z-index: 2;
@@ -631,6 +729,45 @@
   </div>
 </section>
 
+<!-- Melly Binge Counter -->
+<section id="melly-section">
+  <div class="section-label">Official Melly Binge Counter</div>
+
+  <div class="melly-wrap">
+    <img src="melly.jpg" alt="Melly" class="melly-photo"/>
+
+    <div class="gauge-outer">
+      <!-- Scale labels -->
+      <div class="gauge-scale">
+        <span>10</span><span>9</span><span>8</span><span>7</span><span>6</span>
+        <span>5</span><span>4</span><span>3</span><span>2</span><span>1</span>
+        <span>0</span>
+      </div>
+
+      <!-- Thermometer -->
+      <div class="thermo-wrap">
+        <div class="thermo-tube">
+          <div class="thermo-fill" id="thermo-fill" style="height:0%"></div>
+          <div class="thermo-num" id="thermo-num">0</div>
+        </div>
+        <div class="thermo-bulb">
+          <div class="thermo-bulb-inner" id="thermo-bulb"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- +/- controls -->
+    <div class="melly-controls">
+      <button class="melly-btn minus" id="melly-minus">−</button>
+      <div class="melly-label">drinks</div>
+      <button class="melly-btn plus" id="melly-plus">+</button>
+    </div>
+  </div>
+
+  <!-- Fireworks canvas -->
+  <canvas id="fw-canvas"></canvas>
+</section>
+
 <!-- Nuff Rankings -->
 <section id="nuff-section">
   <div class="section-label">Official Nuff Rankings</div>
@@ -806,6 +943,99 @@
 
   draw();
   window.addEventListener('resize', function() { draw(); });
+})();
+
+// ── Melly Binge Counter ───────────────────────────────────────────────────────
+(function() {
+  var count = 0;
+  var MAX = 10;
+  var fill   = document.getElementById('thermo-fill');
+  var num    = document.getElementById('thermo-num');
+  var bulb   = document.getElementById('thermo-bulb');
+  var fwCanvas = document.getElementById('fw-canvas');
+  var fwCtx  = fwCanvas.getContext('2d');
+  var particles = [];
+  var fwRunning = false;
+
+  function update() {
+    var pct = (count / MAX) * 100;
+    fill.style.height = pct + '%';
+    num.textContent = count;
+    // Bulb colour tracks fill
+    bulb.style.background = count >= MAX
+      ? '#FFD200'
+      : 'hsl(' + (0 + (count / MAX) * 50) + ',90%,' + (38 + (count / MAX) * 18) + '%)';
+    bulb.classList.toggle('hot', count >= MAX);
+    if (count >= MAX && !fwRunning) launchFireworks();
+  }
+
+  document.getElementById('melly-plus').addEventListener('click', function() {
+    if (count < MAX) { count++; update(); }
+  });
+  document.getElementById('melly-minus').addEventListener('click', function() {
+    if (count > 0) { count--; update(); if (count < MAX) stopFireworks(); }
+  });
+
+  // ── Fireworks ──
+  function randomColor() {
+    var cols = ['#FFD200','#CC2229','#ff6b35','#fff','#ff9500','#a78bfa'];
+    return cols[Math.floor(Math.random() * cols.length)];
+  }
+
+  function launchFireworks() {
+    fwRunning = true;
+    fwCanvas.width  = fwCanvas.offsetWidth;
+    fwCanvas.height = fwCanvas.offsetHeight;
+    spawnBurst();
+    animateFireworks();
+  }
+
+  function stopFireworks() {
+    fwRunning = false;
+    particles = [];
+    fwCtx.clearRect(0, 0, fwCanvas.width, fwCanvas.height);
+  }
+
+  function spawnBurst() {
+    if (!fwRunning) return;
+    var x = fwCanvas.width  * (0.2 + Math.random() * 0.6);
+    var y = fwCanvas.height * (0.05 + Math.random() * 0.35);
+    for (var i = 0; i < 60; i++) {
+      var angle = (Math.PI * 2 / 60) * i;
+      var speed = 2 + Math.random() * 5;
+      particles.push({
+        x: x, y: y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        alpha: 1, color: randomColor(),
+        size: 2 + Math.random() * 3,
+        gravity: 0.12
+      });
+    }
+    setTimeout(spawnBurst, 600 + Math.random() * 400);
+  }
+
+  function animateFireworks() {
+    if (!fwRunning) return;
+    fwCanvas.width  = fwCanvas.offsetWidth;
+    fwCanvas.height = fwCanvas.offsetHeight;
+    fwCtx.clearRect(0, 0, fwCanvas.width, fwCanvas.height);
+    particles = particles.filter(function(p) {
+      p.x  += p.vx; p.y  += p.vy;
+      p.vy += p.gravity;
+      p.vx *= 0.98; p.vy *= 0.98;
+      p.alpha -= 0.018;
+      if (p.alpha <= 0) return false;
+      fwCtx.globalAlpha = p.alpha;
+      fwCtx.fillStyle = p.color;
+      fwCtx.beginPath();
+      fwCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      fwCtx.fill();
+      return true;
+    });
+    fwCtx.globalAlpha = 1;
+    requestAnimationFrame(animateFireworks);
+  }
 })();
 
 // ── Embers ────────────────────────────────────────────────────────────────────
