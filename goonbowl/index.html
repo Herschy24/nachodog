@@ -499,6 +499,59 @@
     }
 
     /* ── Nuff Rankings ── */
+    #freekick-section {
+      position: relative; z-index: 2;
+      padding: 3rem 2rem;
+      text-align: center;
+    }
+    .fk-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      margin: 1.5rem auto;
+      max-width: 600px;
+    }
+    .fk-team {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .fk-club {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(1.2rem, 5vw, 2rem);
+      letter-spacing: 0.15em;
+    }
+    .fk-richmond .fk-club { color: #FFD200; }
+    .fk-essendon .fk-club { color: #CC2229; }
+    .fk-count {
+      font-family: 'Black Ops One', sans-serif;
+      font-size: clamp(5rem, 20vw, 10rem);
+      line-height: 1;
+    }
+    .fk-richmond .fk-count {
+      color: #FFD200;
+      text-shadow: 0 0 40px rgba(255,210,0,0.5);
+    }
+    .fk-essendon .fk-count {
+      color: #CC2229;
+      text-shadow: 0 0 40px rgba(204,34,41,0.5);
+    }
+    .fk-divider {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2rem;
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 0.1em;
+    }
+    .fk-note {
+      font-size: 0.9rem;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 0.05em;
+      margin-top: 0.5rem;
+    }
+
     #nuff-section {
       position: relative; z-index: 2;
       padding: 4rem 2rem 2rem;
@@ -781,6 +834,23 @@
 
   <!-- Fireworks canvas -->
   <canvas id="fw-canvas"></canvas>
+</section>
+
+<!-- Free Kick Count -->
+<section id="freekick-section">
+  <div class="section-label">Free Kick Count</div>
+  <div class="fk-wrap">
+    <div class="fk-team fk-richmond">
+      <div class="fk-club">Richmond</div>
+      <div class="fk-count" id="fk-ric">26</div>
+    </div>
+    <div class="fk-divider">vs</div>
+    <div class="fk-team fk-essendon">
+      <div class="fk-club">Essendon</div>
+      <div class="fk-count" id="fk-ess">17</div>
+    </div>
+  </div>
+  <div class="fk-note">Richmond getting all the love 🤡</div>
 </section>
 
 <!-- Nuff Rankings -->
