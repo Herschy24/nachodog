@@ -175,6 +175,18 @@
     color: rgba(255, 255, 255, 0.5);
   }
 
+  /* CURSOR */
+  body { cursor: none; }
+  #cursor {
+    position: fixed;
+    font-size: 2rem;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    user-select: none;
+    line-height: 1;
+  }
+
   /* DONE STATE */
   .done-msg {
     display: none;
@@ -193,10 +205,11 @@
 <body>
 
 <canvas id="bg"></canvas>
+<div id="cursor">🐯</div>
 
 <div class="content">
   <div class="title">JESSE DRINKS</div>
-  <div class="subtitle">The Reckoning</div>
+  <div class="subtitle">Jesse's Last Dance</div>
 
   <div class="countdown-wrap" id="countdown">
     <div class="cd-block">
@@ -229,6 +242,13 @@
 </div>
 
 <script>
+// Tiger cursor
+const cursor = document.getElementById('cursor');
+document.addEventListener('mousemove', function(e) {
+  cursor.style.left = e.clientX + 'px';
+  cursor.style.top  = e.clientY + 'px';
+});
+
 // Target: 4pm Melbourne time today (AEST = UTC+10, AEDT = UTC+11)
 // 2026-05-22 is autumn in Melbourne = AEST (UTC+10)
 // So 4pm AEST = 06:00 UTC
