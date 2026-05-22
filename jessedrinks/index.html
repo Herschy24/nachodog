@@ -14,6 +14,7 @@
     color: #fff;
     font-family: 'Inter', sans-serif;
     min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -34,13 +35,14 @@
     position: relative;
     z-index: 2;
     text-align: center;
-    padding: 2rem;
+    padding: 1rem 0.75rem;
     width: 100%;
+    max-width: 100vw;
   }
 
   .title {
     font-family: 'Black Ops One', cursive;
-    font-size: clamp(3rem, 12vw, 9rem);
+    font-size: clamp(2.6rem, 13vw, 9rem);
     letter-spacing: 0.02em;
     line-height: 1;
     background: linear-gradient(135deg, #ff6b35, #f7c59f, #ff6b35);
@@ -50,16 +52,16 @@
     background-clip: text;
     animation: shine 3s linear infinite;
     text-shadow: none;
-    margin-bottom: 0.2em;
+    margin-bottom: 0.15em;
   }
 
   .subtitle {
     font-family: 'Bebas Neue', cursive;
-    font-size: clamp(1.2rem, 4vw, 2.5rem);
-    letter-spacing: 0.3em;
+    font-size: clamp(1rem, 4.5vw, 2.5rem);
+    letter-spacing: 0.2em;
     color: #ff6b35;
     opacity: 0.85;
-    margin-bottom: 3rem;
+    margin-bottom: clamp(1.2rem, 4vw, 3rem);
     text-transform: uppercase;
   }
 
@@ -72,28 +74,31 @@
   .countdown-wrap {
     display: flex;
     justify-content: center;
-    align-items: flex-end;
-    gap: clamp(0.5rem, 3vw, 2.5rem);
-    margin-bottom: 3rem;
+    align-items: center;
+    gap: clamp(0.2rem, 2vw, 2rem);
+    margin-bottom: clamp(1.2rem, 4vw, 3rem);
   }
 
   .cd-block {
     display: flex;
     flex-direction: column;
     align-items: center;
+    flex: 1;
+    max-width: 28vw;
   }
 
   .cd-num {
     font-family: 'Black Ops One', cursive;
-    font-size: clamp(5rem, 22vw, 18rem);
-    line-height: 0.9;
+    font-size: clamp(4rem, 20vw, 18rem);
+    line-height: 1;
     color: #fff;
     text-shadow:
-      0 0 40px rgba(255, 107, 53, 0.8),
-      0 0 80px rgba(255, 107, 53, 0.4),
+      0 0 30px rgba(255, 107, 53, 0.9),
+      0 0 60px rgba(255, 107, 53, 0.4),
       0 0 2px #fff;
-    min-width: 2ch;
-    display: inline-block;
+    width: 100%;
+    text-align: center;
+    display: block;
     transition: transform 0.1s;
   }
 
@@ -102,46 +107,47 @@
   }
 
   @keyframes numPulse {
-    0% { transform: scale(1.08); color: #ff6b35; }
+    0% { transform: scale(1.06); color: #ff6b35; }
     100% { transform: scale(1); color: #fff; }
   }
 
   .cd-label {
     font-family: 'Bebas Neue', cursive;
-    font-size: clamp(0.8rem, 2.5vw, 1.6rem);
-    letter-spacing: 0.25em;
+    font-size: clamp(0.7rem, 3vw, 1.6rem);
+    letter-spacing: 0.15em;
     color: #ff6b35;
     opacity: 0.7;
-    margin-top: 0.3rem;
+    margin-top: 0.2rem;
     text-transform: uppercase;
   }
 
   .cd-sep {
     font-family: 'Black Ops One', cursive;
-    font-size: clamp(4rem, 18vw, 14rem);
-    line-height: 0.9;
+    font-size: clamp(3rem, 16vw, 14rem);
+    line-height: 1;
     color: #ff6b35;
     opacity: 0.5;
-    padding-bottom: 0.5rem;
-    align-self: flex-start;
-    margin-top: 0.1em;
+    flex-shrink: 0;
+    padding-bottom: 1.4rem;
   }
 
   /* LOCATION */
   .location-card {
     display: inline-flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.75rem;
     background: rgba(255, 107, 53, 0.1);
     border: 1px solid rgba(255, 107, 53, 0.3);
     border-radius: 1rem;
-    padding: 1.2rem 2.4rem;
+    padding: clamp(0.8rem, 3vw, 1.2rem) clamp(1rem, 5vw, 2.4rem);
     backdrop-filter: blur(10px);
-    margin-bottom: 1.5rem;
+    margin-bottom: clamp(0.8rem, 3vw, 1.5rem);
+    max-width: calc(100vw - 2rem);
   }
 
   .location-icon {
-    font-size: 2rem;
+    font-size: clamp(1.4rem, 5vw, 2rem);
+    flex-shrink: 0;
   }
 
   .location-text {
@@ -150,21 +156,22 @@
 
   .location-name {
     font-family: 'Bebas Neue', cursive;
-    font-size: clamp(1.4rem, 4vw, 2.2rem);
-    letter-spacing: 0.15em;
+    font-size: clamp(1.3rem, 5.5vw, 2.2rem);
+    letter-spacing: 0.12em;
     color: #fff;
+    line-height: 1.1;
   }
 
   .location-address {
-    font-size: clamp(0.75rem, 2vw, 1rem);
+    font-size: clamp(0.7rem, 2.8vw, 1rem);
     color: rgba(255, 107, 53, 0.8);
-    letter-spacing: 0.05em;
+    letter-spacing: 0.03em;
   }
 
   .event-time {
     font-family: 'Bebas Neue', cursive;
-    font-size: clamp(1.5rem, 5vw, 3rem);
-    letter-spacing: 0.2em;
+    font-size: clamp(1.2rem, 5vw, 3rem);
+    letter-spacing: 0.18em;
     color: rgba(255, 255, 255, 0.5);
   }
 
@@ -172,13 +179,14 @@
   .done-msg {
     display: none;
     font-family: 'Black Ops One', cursive;
-    font-size: clamp(3rem, 15vw, 10rem);
+    font-size: clamp(2.5rem, 14vw, 10rem);
     background: linear-gradient(135deg, #ff6b35, #fff, #ff6b35);
     background-size: 200% auto;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     animation: shine 2s linear infinite;
+    padding: 0 1rem;
   }
 </style>
 </head>
