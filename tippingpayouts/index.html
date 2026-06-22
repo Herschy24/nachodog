@@ -218,7 +218,7 @@
     const STARTING_AUD = 1400;   // total tipping pot collected
     const UNITS_GCQF   = 341;    // units of GCQF held
     const BUY_PRICE    = 3.96;   // purchase price per unit (AUD)
-    const ROLLING_POT  = 438.46;  // current rolling weekly bet total
+    const ROLLING_POT  = 0;  // current rolling weekly bet total (reset after Jonsey lost)
 
     async function loadPrice() {
       const resp = await fetch('price.json?v=' + Date.now());
@@ -336,7 +336,7 @@
 
     function renderWeeklyBet() {
       const section = document.getElementById('weekly-bet');
-      const lastCompleted = [...WEEKLY_BETS].reverse().find(b => b.result === 'Won');
+      const lastCompleted = [...WEEKLY_BETS].reverse().find(b => b.result !== null && b.result !== 'Current');
       const currentPot = lastCompleted ? lastCompleted.potAfter : 50.00;
 
       let rows = '';
