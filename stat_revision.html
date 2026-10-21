@@ -1,0 +1,592 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Stats Revision Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: an exam-paper column. Topic tabs on top, one question sheet, a score strip pinned to the side on wide screens */
+:root{
+  --paper:#EEF2F1; --sheet:#FFFFFF; --ink:#14302F; --muted:#5A6E6B; --line:#D3DDDA;
+  --accent:#1D6B66; --accent-ink:#FFFFFF; --mark:#F3D65E; --mark-ink:#2B2506;
+  --good:#23704A; --good-bg:#E3F3EA; --bad:#B03F35; --bad-bg:#FBE9E6; --warn:#8A6410; --warn-bg:#FBF1D6;
+  --code-bg:#F4F7F6;
+  --f-display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Source Serif 4", Georgia, "Times New Roman", serif;
+  --f-mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --f-ui:system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#0E1716; --sheet:#152120; --ink:#E1EBE9; --muted:#93A7A3; --line:#2A3B38;
+  --accent:#5EC4B9; --accent-ink:#06201E; --mark:#6E5F1C; --mark-ink:#FFF4C2;
+  --good:#71D19B; --good-bg:#16302292; --bad:#F2897E; --bad-bg:#3A1C1880; --warn:#E8C063; --warn-bg:#3A2F1280;
+  --code-bg:#101B1A; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0E1716; --sheet:#152120; --ink:#E1EBE9; --muted:#93A7A3; --line:#2A3B38;
+  --accent:#5EC4B9; --accent-ink:#06201E; --mark:#6E5F1C; --mark-ink:#FFF4C2;
+  --good:#71D19B; --good-bg:#16302292; --bad:#F2897E; --bad-bg:#3A1C1880; --warn:#E8C063; --warn-bg:#3A2F1280;
+  --code-bg:#101B1A; color-scheme:dark}
+
+body{background:var(--paper);color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:28px 56px}
+header.top{display:grid;gap:6px;margin-bottom:22px}
+.eyebrow{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(28px,4.4vw,42px);line-height:1.05;margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1 .hl{background:linear-gradient(transparent 58%, var(--mark) 58%, var(--mark) 92%, transparent 92%);color:inherit;padding:0 .08em}
+.lede{max-width:62ch;color:var(--muted);margin:4px 0 0;font-size:15.5px}
+
+nav.topics{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:18px;scrollbar-width:thin}
+.chip{flex:0 0 auto;font:inherit;font-size:14px;border:1px solid var(--line);background:var(--sheet);color:var(--ink);border-radius:999px;padding:7px 14px;cursor:pointer;display:flex;gap:8px;align-items:center}
+.chip:hover{border-color:var(--accent)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.chip .tally{font-family:var(--f-mono);font-size:12px;opacity:.8}
+.chip:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:22px;align-items:start}
+@media (max-width:860px){.layout{grid-template-columns:minmax(0,1fr)}}
+
+.sheet{background:var(--sheet);border:1px solid var(--line);border-radius:10px;padding:clamp(18px,3vw,32px);min-width:0}
+.qhead{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:18px}
+.qtitle{font-family:var(--f-display);font-weight:700;font-size:21px;margin:0}
+.qmeta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.ver{font-family:var(--f-mono);font-size:12.5px}
+.like{font-size:12px;border:1px dashed var(--line);border-radius:4px;padding:2px 7px}
+.btn{font:inherit;font-size:14px;font-weight:600;border-radius:7px;padding:8px 14px;cursor:pointer;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn.small{font-size:13px;padding:5px 10px}
+.btn:disabled{opacity:.55;cursor:default}
+.linkbtn{font:inherit;font-size:13px;background:none;border:0;color:var(--accent);cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:2px}
+
+.scenario{font-family:var(--f-body);font-size:17px;line-height:1.6;max-width:68ch;margin:0 0 14px}
+.data{font-family:var(--f-mono);font-size:14px;background:var(--code-bg);border:1px solid var(--line);border-radius:6px;padding:12px 14px;margin:0 0 20px;line-height:1.9;word-spacing:.35em;overflow-x:auto}
+.data table{border-collapse:collapse;word-spacing:normal;font-variant-numeric:tabular-nums}
+.data th,.data td{padding:4px 18px;text-align:center;border-bottom:1px solid var(--line)}
+.data th{font-weight:500;color:var(--muted)}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px 18px;word-spacing:normal}
+.facts span{color:var(--muted)}
+
+ol.parts{list-style:none;margin:0;padding:0;display:grid;gap:20px}
+.part{display:grid;grid-template-columns:34px minmax(0,1fr);gap:4px 10px;padding-top:16px;border-top:1px dashed var(--line)}
+.part:first-child{border-top:0;padding-top:0}
+.plabel{font-family:var(--f-body);font-weight:600;font-size:17px}
+.pbody{min-width:0;display:grid;gap:10px}
+.prompt{font-family:var(--f-body);font-size:16.5px;line-height:1.55;margin:0}
+.inputs{display:flex;flex-wrap:wrap;gap:10px 16px}
+.field{display:grid;gap:3px;font-size:12.5px;color:var(--muted)}
+.field input{font-family:var(--f-mono);font-size:15px;width:9.5em;max-width:100%;padding:7px 9px;border-radius:6px;border:1px solid var(--line);background:var(--sheet);color:var(--ink);font-variant-numeric:tabular-nums}
+.field input.ok{border-color:var(--good);background:var(--good-bg)}
+.field input.no{border-color:var(--bad);background:var(--bad-bg)}
+.choices{display:flex;flex-wrap:wrap;gap:8px}
+.opt{font:inherit;font-size:14px;padding:6px 12px;border-radius:6px;border:1px solid var(--line);background:var(--sheet);color:var(--ink);cursor:pointer}
+.opt[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);font-weight:600}
+.opt.ok{background:var(--good-bg);border-color:var(--good)}
+.opt.no{background:var(--bad-bg);border-color:var(--bad)}
+textarea{font-family:var(--f-body);font-size:15.5px;line-height:1.5;width:100%;min-height:92px;padding:9px 11px;border-radius:6px;border:1px solid var(--line);background:var(--sheet);color:var(--ink);resize:vertical;box-sizing:border-box}
+.prow{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+.verdict{font-size:13.5px;font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.verdict.ok{color:var(--good)} .verdict.no{color:var(--bad)}
+.pill{font-size:12px;font-weight:700;letter-spacing:.03em;border-radius:999px;padding:2px 10px}
+.pill.full{background:var(--good-bg);color:var(--good)} .pill.partial{background:var(--warn-bg);color:var(--warn)} .pill.none{background:var(--bad-bg);color:var(--bad)}
+.fb{border-left:3px solid var(--accent);background:var(--code-bg);padding:10px 14px;border-radius:0 6px 6px 0;font-size:14.5px;display:grid;gap:6px}
+.fb p{margin:0}
+.fb .src{font-size:12px;color:var(--muted)}
+.model{font-family:var(--f-body);font-size:15px;background:var(--code-bg);border:1px solid var(--line);border-radius:6px;padding:10px 14px}
+.model b{font-family:var(--f-ui);font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);display:block;margin-bottom:2px}
+details.hint summary{cursor:pointer;color:var(--muted);font-size:13px;width:fit-content}
+details.hint p{margin:6px 0 0;font-size:14px;color:var(--muted)}
+
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px;padding-top:18px;border-top:1px solid var(--line)}
+.solution{margin-top:22px;border:1px solid var(--line);border-radius:8px;padding:18px 20px;font-family:var(--f-body);font-size:15.5px;line-height:1.65;overflow-x:auto}
+.solution h3{font-family:var(--f-ui);font-size:13px;text-transform:uppercase;letter-spacing:.08em;margin:0 0 8px;color:var(--muted)}
+.solution p{margin:0 0 8px}
+.solution .m{font-family:var(--f-mono);font-size:13.5px}
+.solution u{text-underline-offset:3px}
+
+aside.side{display:grid;gap:14px;position:sticky;top:max(16px, env(safe-area-inset-top, 0px))}
+@media (max-width:860px){aside.side{position:static}}
+.panel{background:var(--sheet);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.panel h2{font-family:var(--f-display);font-size:16px;margin:0 0 10px}
+.big{font-family:var(--f-display);font-size:34px;font-weight:700;line-height:1}
+.big small{font-size:15px;color:var(--muted);font-weight:600}
+.bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin:10px 0 4px}
+.bar i{display:block;height:100%;background:var(--good);transition:width .3s}
+.tlist{list-style:none;margin:0;padding:0;display:grid;gap:6px;font-size:13.5px}
+.tlist li{display:flex;justify-content:space-between;gap:10px}
+.tlist span:last-child{font-family:var(--f-mono);color:var(--muted)}
+.note{font-size:13px;color:var(--muted);margin:0}
+.ai-status{font-size:12.5px;color:var(--muted);display:flex;gap:8px;align-items:flex-start}
+.dot{flex:0 0 8px;width:8px;height:8px;border-radius:50%;background:var(--muted);margin-top:6px}
+.dot.on{background:var(--good)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">Business Statistics · Revision practice</div>
+    <h1>Further Questions, <span class="hl">without running out</span></h1>
+    <p class="lede">Six question types from the revision set. Each one builds a new version with fresh numbers whenever you want. Enter your answers to have them marked, get feedback on written explanations, and open the worked solution when you're ready.</p>
+  </header>
+
+  <nav class="topics" id="topics" aria-label="Question types"></nav>
+
+  <div class="layout">
+    <main class="sheet" id="sheet" aria-live="polite"></main>
+    <aside class="side">
+      <section class="panel">
+        <h2>This session</h2>
+        <div class="big" id="score">0 <small>of 0 parts correct</small></div>
+        <div class="bar"><i id="scorebar" style="width:0%"></i></div>
+        <ul class="tlist" id="tlist"></ul>
+      </section>
+      <section class="panel">
+        <h2>How marking works</h2>
+        <p class="note">Numbers are checked instantly, with a small allowance for rounding. Written answers are marked by Claude against a model answer in the style of the revision answer key.</p>
+        <p class="ai-status" style="margin-top:10px"><span class="dot" id="aidot"></span><span id="aitext">Connecting to Claude for written feedback…</span></p>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<script id="lib">
+/* ---------- maths ---------- */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function mkR(seed){const r=mulberry32(seed);return{u:r,int:(a,b)=>a+Math.floor(r()*(b-a+1)),pick:a=>a[Math.floor(r()*a.length)],range:(a,b)=>a+r()*(b-a),norm:()=>{let u=0;while(!u)u=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*r())},shuffle:a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}}}
+const sum=a=>a.reduce((s,v)=>s+v,0);
+const f=(x,d)=>{const v=Number(x).toFixed(d);return v==="-0"||/^-0\.0*$/.test(v)?v.slice(1):v};
+const rnd=(x,d)=>Math.round(x*10**d)/10**d;
+function median(s){const n=s.length;return n%2?s[(n-1)/2]:(s[n/2-1]+s[n/2])/2}
+function modes(s){const c={};s.forEach(v=>c[v]=(c[v]||0)+1);const mx=Math.max(...Object.values(c));if(mx===1)return[];return Object.keys(c).filter(k=>c[k]===mx).map(Number).sort((a,b)=>a-b)}
+function lgamma(z){const c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];if(z<0.5)return Math.log(Math.PI/Math.sin(Math.PI*z))-lgamma(1-z);z-=1;let x=c[0];for(let i=1;i<9;i++)x+=c[i]/(z+i);const t=z+7.5;return 0.5*Math.log(2*Math.PI)+(z+0.5)*Math.log(t)-t+Math.log(x)}
+function betacf(a,b,x){const FP=1e-300;let qab=a+b,qap=a+1,qam=a-1,c=1,d=1-qab*x/qap;if(Math.abs(d)<FP)d=FP;d=1/d;let h=d;for(let m=1;m<=300;m++){const m2=2*m;let aa=m*(b-m)*x/((qam+m2)*(a+m2));d=1+aa*d;if(Math.abs(d)<FP)d=FP;c=1+aa/c;if(Math.abs(c)<FP)c=FP;d=1/d;h*=d*c;aa=-(a+m)*(qab+m)*x/((a+m2)*(qap+m2));d=1+aa*d;if(Math.abs(d)<FP)d=FP;c=1+aa/c;if(Math.abs(c)<FP)c=FP;d=1/d;const del=d*c;h*=del;if(Math.abs(del-1)<3e-15)break}return h}
+function ibeta(x,a,b){if(x<=0)return 0;if(x>=1)return 1;const bt=Math.exp(lgamma(a+b)-lgamma(a)-lgamma(b)+a*Math.log(x)+b*Math.log(1-x));return x<(a+1)/(a+b+2)?bt*betacf(a,b,x)/a:1-bt*betacf(b,a,1-x)/b}
+function tcdf(t,df){const p=0.5*ibeta(df/(df+t*t),df/2,0.5);return t>0?1-p:p}
+function tinv(p,df){let lo=-200,hi=200;for(let i=0;i<200;i++){const m=(lo+hi)/2;if(tcdf(m,df)<p)lo=m;else hi=m}return(lo+hi)/2}
+function bpmf(k,n,p){return Math.exp(lgamma(n+1)-lgamma(k+1)-lgamma(n-k+1)+k*Math.log(p)+(n-k)*Math.log(1-p))}
+function bcdf(k,n,p){if(k<0)return 0;let s=0;for(let i=0;i<=Math.min(k,n);i++)s+=bpmf(i,n,p);return Math.min(1,s)}
+const tolFor=(ans,abs,rel)=>Math.max(abs,Math.abs(ans)*(rel||0));
+const pct=p=>`${rnd(p*100,1)}%`;
+
+/* ---------- 1. Descriptive statistics (like revision Q1, Q11) ---------- */
+function genDesc(R){
+  const C=R.pick([
+    {intro:"The HR manager of a large corporation is analysing how long new employees take to complete their onboarding process.",what:"the number of days each new hire took to complete onboarding",unit:"days",mu:[10,13],sd:[2,3],min:4,label:"onboarding times",who:"new hires"},
+    {intro:"A café manager wants to understand how long takeaway orders take to prepare during the morning rush.",what:"the preparation time, in minutes, of each order",unit:"minutes",mu:[22,30],sd:[4,6],min:8,label:"preparation times",who:"takeaway orders"},
+    {intro:"An online retailer is reviewing how long its parcels take to reach customers.",what:"the delivery time, in days, of each parcel",unit:"days",mu:[5,8],sd:[1.5,2.5],min:1,label:"delivery times",who:"parcels"},
+    {intro:"A call-centre supervisor is monitoring how long customers wait on hold before speaking to an agent.",what:"the hold time, in minutes, of each caller",unit:"minutes",mu:[7,11],sd:[2,3.5],min:0,label:"hold times",who:"callers"}
+  ]);
+  const n=R.pick([15,18,20,22,25]);
+  const mu=R.range(...C.mu),sd=R.range(...C.sd);
+  const x=[];for(let i=0;i<n;i++)x.push(Math.max(C.min,Math.round(mu+sd*R.norm())));
+  if(R.u()<0.4)x[0]=Math.round(mu+sd*R.pick([3.8,4.3,5]));
+  x.sort((a,b)=>a-b);
+  const S=sum(x),S2=sum(x.map(v=>v*v)),m=S/n,med=median(x),v=(S2-S*S/n)/(n-1),s=Math.sqrt(v),mo=modes(x),mx=x[n-1],z=(mx-m)/s,skew=(m-med)/s;
+  const shape=Math.abs(skew)<0.1?`The mean (${f(m,2)}) and median (${med}) are similar, which suggests the distribution is roughly symmetric.`
+    :skew>0?`The mean (${f(m,2)}) is above the median (${med}), which suggests the distribution is positively (right) skewed, pulled up by a few long ${C.label}.`
+    :`The mean (${f(m,2)}) is below the median (${med}), which suggests the distribution is negatively (left) skewed.`;
+  const zt=z>3?`The largest value, ${mx} ${C.unit}, has a z-score of ${f(z,2)}, so it is more than 3 standard deviations above the mean and is an outlier.`
+    :z>2?`The largest value, ${mx} ${C.unit}, is ${f(z,2)} standard deviations above the mean. That is unusually high, but no value is more than 3 standard deviations from the mean, so there are no extreme outliers.`
+    :`The largest value, ${mx} ${C.unit}, is only ${f(z,2)} standard deviations above the mean, and no value is more than 3 standard deviations from the mean, so there are no outliers.`;
+  const concl=(Math.abs(skew)<0.1&&z<=3)?"Overall the distribution looks approximately normal.":"Overall the distribution is not perfectly bell-shaped, so the median may describe a typical value better than the mean.";
+  const model=`${shape} ${zt} ${concl}`;
+  const moTxt=mo.length?mo.join(" and ")+` ${C.unit}`:"no mode (every value occurs once)";
+  const medPos=(n+1)/2;
+  return{
+    scenario:`${C.intro} A random sample of n = ${n} ${C.who} is taken, recording ${C.what}. The data, arranged in ascending order, are:`,
+    data:x.join(", "),
+    parts:[
+      {id:"a",prompt:"Calculate the mean, median and unbiased estimate of the standard deviation.",inputs:[
+        {label:"Mean",ans:m,tol:0.01,dp:2},{label:"Median",ans:med,tol:0.01,dp:1},{label:"Standard deviation (s)",ans:s,tol:0.006,dp:3}],
+        hint:"Use n − 1 in the denominator for the unbiased estimate: s = √[(∑x² − (∑x)²/n) / (n − 1)]."},
+      {id:"b",prompt:"Find the largest z-score for the "+n+" values.",inputs:[{label:"Largest z-score",ans:z,tol:0.015,dp:3}],hint:"The largest z-score belongs to the largest value: z = (x − x̄) / s."},
+      {id:"c",prompt:`Using this z-score and your results from part (a), briefly explain what these values indicate about the distribution of the ${C.label}.`,text:true,model,hint:"Compare the mean with the median, then check whether any value is more than 3 standard deviations from the mean."}
+    ],
+    solution:`<p><b>a)</b> Mean: <span class="m">x̄ = ∑x / n = ${S} / ${n} = ${f(m,2)}</span> ${C.unit}</p>
+<p>Median: position (n + 1)/2 = ${medPos}, so the median is <b>${med}</b> ${C.unit}${n%2?"":` (the average of the ${n/2}th and ${n/2+1}th values)`}</p>
+<p>Mode: ${moTxt}</p>
+<p>Standard deviation:<br><span class="m">s = √[(∑x² − (∑x)²/n) / (n − 1)]<br>= √[(${S2} − ${S}²/${n}) / ${n-1}]<br>= √${f(v,4)} = ${f(s,3)}</span></p>
+<p><b>b)</b> Largest value: ${mx} ${C.unit}<br><span class="m">z = (x − x̄) / s = (${mx} − ${f(m,2)}) / ${f(s,3)} = ${f(z,3)}</span></p>
+<p>Interpretation: ${model}</p>`
+  };
+}
+
+/* ---------- 2. Quartiles & outliers (like revision Q4, Q5) ---------- */
+function pctVal(x,p){const n=x.length,L=(n+1)*p/100,Lc=Math.min(Math.max(L,1),n),i=Math.floor(Lc),fr=Lc-i,lo=x[i-1],hi=x[Math.min(i,n-1)];return{L,v:lo+fr*(hi-lo),i,fr,lo,hi}}
+function genQuart(R){
+  const C=R.pick([
+    {intro:n=>`The following data represent the weights (in kilograms) of a sample of ${n} horses:`,mu:160,sd:10,min:110,max:250,unit:"kg",name:"weights"},
+    {intro:n=>`The following data are the daily takings (in dollars) of a small bakery on ${n} randomly chosen days:`,mu:1450,sd:170,min:600,max:4000,unit:"dollars",name:"daily takings"},
+    {intro:n=>`The following data are the commute times (in minutes) of a sample of ${n} university students:`,mu:38,sd:11,min:5,max:200,unit:"minutes",name:"commute times"},
+    {intro:n=>`The following data are the final exam marks (out of 100) of a sample of ${n} students:`,mu:63,sd:11,min:5,max:100,unit:"marks",name:"exam marks"}
+  ]);
+  const n=R.int(20,30);
+  let x=[];for(let i=0;i<n;i++)x.push(Math.min(C.max,Math.max(C.min,Math.round(C.mu+C.sd*R.norm()))));
+  if(R.u()<0.45){const up=R.u()<0.7;x[0]=Math.min(C.max,Math.max(C.min,Math.round(C.mu+(up?1:-1)*C.sd*R.pick([3.6,4.2,4.8]))))}
+  const shown=R.shuffle(x);x=x.slice().sort((a,b)=>a-b);
+  const p=R.pick([10,35,40,60,65,80,90]);
+  const q3=pctVal(x,75),pp=pctVal(x,p),q1=pctVal(x,25),iqr=q3.v-q1.v,lf=q1.v-1.5*iqr,uf=q3.v+1.5*iqr;
+  const outs=x.filter(v=>v<lf||v>uf);
+  const line=(lab,P,r,name)=>`<p><span class="m">L<sub>${P}</sub> = (n + 1) × ${P}/100 = ${n+1} × ${P/100} = ${f(r.L,2)}</span><br><span class="m">${name} = ${r.lo} + ${f(r.fr,2)}(${r.hi} − ${r.lo}) = ${f(r.v,2)}</span></p>`;
+  const vTol=v=>tolFor(v,0.01,0.0005);
+  return{
+    scenario:C.intro(n),
+    data:shown.join("  "),
+    parts:[
+      {id:"a",prompt:"Determine the location and value of the upper quartile.",inputs:[{label:"Location L₇₅",ans:q3.L,tol:0.01,dp:2},{label:"Q₃",ans:q3.v,tol:vTol(q3.v),dp:2}],hint:"Sort the data first. The location of the Pth percentile is L = (n + 1)P/100, then interpolate between the neighbouring values."},
+      {id:"b",prompt:`Determine the location and value of the ${p}th percentile.`,inputs:[{label:`Location L${sub(p)}`,ans:pp.L,tol:0.01,dp:2},{label:`${p}th percentile`,ans:pp.v,tol:vTol(pp.v),dp:2}],hint:`L = (n + 1) × ${p}/100. The whole-number part tells you which ordered value to start from.`},
+      {id:"c",prompt:"Determine the location and value of the lower quartile.",inputs:[{label:"Location L₂₅",ans:q1.L,tol:0.01,dp:2},{label:"Q₁",ans:q1.v,tol:vTol(q1.v),dp:2}]},
+      {id:"d",prompt:"Calculate the outlier fences. Are there any outliers?",inputs:[{label:"Lower fence",ans:lf,tol:tolFor(lf,0.02,0.001),dp:3},{label:"Upper fence",ans:uf,tol:tolFor(uf,0.02,0.001),dp:3}],choice:{options:["Yes, there are outliers","No outliers"],ans:outs.length?0:1},hint:"Fences are Q₁ − 1.5 × IQR and Q₃ + 1.5 × IQR, where IQR = Q₃ − Q₁."}
+    ],
+    solution:`<p>Ordered data: <span class="m">${x.join(" ")}</span></p>
+<p><b>a)</b></p>${line("a",75,q3,"Q₃")}
+<p><b>b)</b></p>${line("b",p,pp,p+"th percentile")}
+<p><b>c)</b></p>${line("c",25,q1,"Q₁")}
+<p><b>d)</b> <span class="m">IQR = ${f(q3.v,2)} − ${f(q1.v,2)} = ${f(iqr,2)}</span><br>
+<span class="m">Q₁ − 1.5 IQR = ${f(lf,3)}</span><br><span class="m">Q₃ + 1.5 IQR = ${f(uf,3)}</span></p>
+<p>${outs.length?`${outs.join(" and ")} ${outs.length>1?"lie":"lies"} outside the fences, so ${outs.length>1?"these are outliers":"this is an outlier"}.`:"No values lie outside the fences, so there are no outliers."}</p>`
+  };
+}
+function sub(p){const d="₀₁₂₃₄₅₆₇₈₉";return String(p).split("").map(c=>d[+c]).join("")}
+
+/* ---------- 3. Confidence interval & one-sample t-test (like revision Q7) ---------- */
+function genT(R){
+  const C=R.pick([
+    {intro:n=>`A random sample of ${n} households is selected for a study on energy-saving habits. The number of kilowatt-hours (kWh) used by each household last quarter is recorded.`,mu:[350,420],s:[55,90],dp:0,unit:"kWh",what:"mean quarterly usage per household",bench:m=>`the ${m} kWh used by an average household in the same city`},
+    {intro:n=>`A gym chain wants to check its members' attendance. A random sample of ${n} members is selected and the number of visits each made last month is recorded.`,mu:[6,9],s:[1.2,2.4],dp:1,unit:"visits",what:"mean number of visits per month",bench:m=>`the ${m} visits per month the gym advertises`},
+    {intro:n=>`A wellbeing researcher samples ${n} university students and records each student's average daily smartphone screen time, in minutes.`,mu:[200,260],s:[40,70],dp:0,unit:"minutes",what:"mean daily screen time",bench:m=>`the national average of ${m} minutes`},
+    {intro:n=>`A hospital emergency department samples ${n} patients and records the time, in minutes, from arrival to first assessment.`,mu:[30,45],s:[8,15],dp:0,unit:"minutes",what:"mean time to first assessment",bench:m=>`the department's target of ${m} minutes`}
+  ]);
+  const n=R.pick([25,30,36,40,45,50,60]);
+  const mu0=rnd(R.range(...C.mu),C.dp);
+  const s=rnd(R.range(...C.s),C.dp===0?0:1);
+  const dir=R.pick(["less","greater"]);
+  const mag=R.pick([0.7,1.2,1.9,2.4,2.9]);
+  const sg=(dir==="less"?-1:1)*(R.u()<0.82?1:-1);
+  const xbar=rnd(mu0+sg*mag*s/Math.sqrt(n),C.dp+1);
+  const se=s/Math.sqrt(n),df=n-1,t2=tinv(0.975,df),lo=xbar-t2*se,hi=xbar+t2*se,t=(xbar-mu0)/se,tc=dir==="less"?tinv(0.05,df):tinv(0.95,df),rej=dir==="less"?t<tc:t>tc;
+  const sym=dir==="less"?"<":">",word=dir==="less"?"less than":"greater than";
+  const ciModel="No. The 95% describes the method, not this particular interval. If we took many random samples of the same size and built an interval the same way each time, about 95% of those intervals would contain the true population mean. Once this interval is calculated, the true mean is either inside it or not.";
+  const concl=rej?`Reject H₀. At the 5% level of significance there is sufficient evidence that the population ${C.what} is ${word} ${mu0} ${C.unit}.`:`Do not reject H₀. At the 5% level of significance there is insufficient evidence that the population ${C.what} is ${word} ${mu0} ${C.unit}.`;
+  return{
+    scenario:`${C.intro(n)} The sample mean is ${xbar} ${C.unit} with a standard deviation of ${s} ${C.unit}.`,
+    data:null,
+    parts:[
+      {id:"a",prompt:`Construct a 95% confidence interval for the population ${C.what}, assuming the population is approximately normal.`,inputs:[{label:`t₀.₀₂₅,${df}`,ans:t2,tol:0.01,dp:3},{label:"Lower limit",ans:lo,tol:tolFor(lo,0.02,0.0015),dp:3},{label:"Upper limit",ans:hi,tol:tolFor(hi,0.02,0.0015),dp:3}],hint:"x̄ ± t(α/2, n − 1) × s/√n"},
+      {id:"b",prompt:"Does this interval mean there is a 0.95 probability that the true mean lies within it? Explain.",text:true,model:ciModel},
+      {id:"c",prompt:`Test whether the population ${C.what} is ${word} ${C.bench(mu0)}. Use α = 0.05.`,inputs:[{label:"Test statistic t",ans:t,tol:0.012,dp:3},{label:"Critical value",ans:tc,tol:0.012,dp:3}],choice:{options:["Reject H₀","Do not reject H₀"],ans:rej?0:1},hint:`H₀: μ = ${mu0} against Hₐ: μ ${sym} ${mu0}. This is a one-tailed test, so the critical value uses α = 0.05 in one tail.`},
+      {id:"d",prompt:"State your conclusion in the context of the question.",text:true,model:concl}
+    ],
+    solution:`<p><b>a)</b> Assuming the population is normal or approximately normal:<br>
+<span class="m">x̄ ± t<sub>α/2,n−1</sub> × s/√n = ${xbar} ± ${f(t2,4)} × ${s}/√${n} = ${xbar} ± ${f(t2*se,4)}</span></p>
+<p>We are 95% confident the population ${C.what} lies between <b>${f(lo,3)}</b> and <b>${f(hi,3)}</b> ${C.unit}.</p>
+<p><b>b)</b> ${ciModel}</p>
+<p><b>c)</b> Step 1: <span class="m">H₀: μ = ${mu0} &nbsp; Hₐ: μ ${sym} ${mu0}</span></p>
+<p>Step 2: <span class="m">t = (x̄ − μ) / (s/√n) ~ t<sub>${df}</sub></span>, assuming the population is approximately normal</p>
+<p>Step 3: α = 0.05</p>
+<p>Step 4: Reject H₀ if <span class="m">t ${sym} t<sub>crit</sub> = ${f(tc,3)}</span></p>
+<p>Step 5: <span class="m">t = (${xbar} − ${mu0}) / (${s}/√${n}) = ${f(xbar-mu0,C.dp+1)} / ${f(se,4)} = ${f(t,3)}</span></p>
+<p>Step 6: ${concl}</p>`
+  };
+}
+
+/* ---------- 4. Binomial (like revision Q16) ---------- */
+function genBinom(R){
+  const C=R.pick([
+    {intro:(p,n)=>`Historical data from a major bank show that ${pct(p)} of customers applying for a loan are accepted. Suppose ${n} new loan applications are selected at random.`,ps:[0.75,0.8,0.85],s:"loans accepted",fl:"loans rejected",al:k=>`at least ${k} loans are accepted`},
+    {intro:(p,n)=>`An online clothing retailer finds that ${pct(p)} of orders are returned. Suppose ${n} orders are selected at random.`,ps:[0.12,0.15,0.18,0.2],s:"orders returned",fl:"orders kept",al:k=>`at least ${k} orders are returned`},
+    {intro:(p,n)=>`An airline knows that ${pct(p)} of passengers who book a seat don't show up for the flight. A particular flight has ${n} bookings.`,ps:[0.06,0.08,0.1,0.12],s:"no-shows",fl:"passengers who show up",al:k=>`there are at least ${k} no-shows`},
+    {intro:(p,n)=>`A factory finds that ${pct(p)} of its circuit boards pass quality inspection first time. A random sample of ${n} boards is taken.`,ps:[0.85,0.9,0.92],s:"boards that pass",fl:"boards that fail",al:k=>`at least ${k} boards pass`}
+  ]);
+  const p=R.pick(C.ps),n=R.pick([20,25,30,40,50,60]),q=1-p;
+  const E=n*p,sd=Math.sqrt(n*p*q);
+  const k=Math.min(n,Math.max(1,Math.round(E+sd*R.range(0.4,1.5))));
+  const Pk=1-bcdf(k-1,n,p);
+  const Ef=n*q,sdf=Math.sqrt(n*p*q);
+  let a=Math.max(0,Math.round(Ef-sdf*R.range(0.2,1))),b=Math.min(n,Math.round(Ef+sdf*R.range(0.4,1.4)));if(b<=a)b=a+2;
+  const Pab=bcdf(b,n,q)-bcdf(a-1,n,q);
+  return{
+    scenario:C.intro(p,n),data:null,
+    parts:[
+      {id:"a",prompt:`Find the expected value and the standard deviation of the number of ${C.s}.`,inputs:[{label:"Expected value",ans:E,tol:0.01,dp:2},{label:"Standard deviation",ans:sd,tol:0.006,dp:4}],hint:"For X ~ Bin(n, p): E(X) = np and SD = √[np(1 − p)]."},
+      {id:"b",prompt:`What is the probability that ${C.al(k)}?`,inputs:[{label:`P(X ≥ ${k})`,ans:Pk,tol:0.0015,dp:4}],hint:`P(X ≥ ${k}) = 1 − P(X ≤ ${k-1}).`},
+      {id:"c",prompt:`What is the probability that the number of ${C.fl} is between ${a} and ${b}, inclusive?`,inputs:[{label:`P(${a} ≤ Y ≤ ${b})`,ans:Pab,tol:0.0015,dp:4}],hint:`Let Y be the number of ${C.fl}. Y = n − X follows Bin(${n}, ${f(q,2)}).`}
+    ],
+    solution:`<p>Let X = number of ${C.s}. <span class="m">X ~ Bin(n = ${n}, p = ${p})</span></p>
+<p><b>a)</b> <span class="m">E(X) = np = ${n} × ${p} = ${f(E,2)}</span><br><span class="m">SD = √[np(1 − p)] = √(${n} × ${p} × ${f(q,2)}) = √${f(n*p*q,4)} = ${f(sd,4)}</span></p>
+<p><b>b)</b> <span class="m">P(X ≥ ${k}) = 1 − P(X ≤ ${k-1}) = 1 − ${f(1-Pk,4)} = ${f(Pk,4)}</span></p>
+<p><b>c)</b> Let Y = number of ${C.fl}, so <span class="m">Y ~ Bin(${n}, ${f(q,2)})</span><br>
+<span class="m">P(${a} ≤ Y ≤ ${b}) = P(Y ≤ ${b}) − P(Y ≤ ${a-1}) = ${f(bcdf(b,n,q),4)} − ${f(bcdf(a-1,n,q),4)} = ${f(Pab,4)}</span></p>`
+  };
+}
+
+/* ---------- 5. Joint probability table (like revision Q15) ---------- */
+function genJoint(R){
+  const u=[1,1,1,1,1,1];for(let i=0;i<14;i++)u[R.int(0,5)]++;
+  const P=[[u[0],u[1],u[2]],[u[3],u[4],u[5]]].map(r=>r.map(v=>v*0.05));
+  const A=P.map(r=>sum(r)),B=[0,1,2].map(j=>P[0][j]+P[1][j]);
+  const i1=R.int(0,1),j1=R.int(0,2),i2=R.int(0,1),j2=R.int(0,2),i3=R.int(0,1),j3=R.int(0,2),i4=R.int(0,1),j4=R.int(0,2);
+  const c1=P[i1][j1]/B[j1],c2=P[i2][j2]/A[i2],un=A[i3]+B[j3]-P[i3][j3],ind=Math.abs(P[i4][j4]-A[i4]*B[j4])<1e-9;
+  const a=i=>`A<sub>${i+1}</sub>`,b=j=>`B<sub>${j+1}</sub>`,ap=i=>`A${"₁₂"[i]}`,bp=j=>`B${"₁₂₃"[j]}`;
+  const tbl=`<table><tr><th></th><th>${b(0)}</th><th>${b(1)}</th><th>${b(2)}</th></tr>${P.map((r,i)=>`<tr><th>${a(i)}</th>${r.map(v=>`<td>${f(v,2)}</td>`).join("")}</tr>`).join("")}</table>`;
+  return{
+    scenario:"A table of joint probabilities is shown below.",data:tbl,
+    parts:[
+      {id:"a",prompt:"Calculate the marginal probabilities of event A.",inputs:[{label:"P(A₁)",ans:A[0],tol:0.001,dp:2},{label:"P(A₂)",ans:A[1],tol:0.001,dp:2}],hint:"Add across each row."},
+      {id:"b",prompt:"Calculate the marginal probabilities of event B.",inputs:[0,1,2].map(j=>({label:`P(${bp(j)})`,ans:B[j],tol:0.001,dp:2})),hint:"Add down each column."},
+      {id:"c",prompt:`Calculate P(${a(i1)} | ${b(j1)}).`,inputs:[{label:`P(${ap(i1)} | ${bp(j1)})`,ans:c1,tol:0.0015,dp:4}],hint:"P(A | B) = P(A and B) / P(B)."},
+      {id:"d",prompt:`Calculate P(${b(j2)} | ${a(i2)}).`,inputs:[{label:`P(${bp(j2)} | ${ap(i2)})`,ans:c2,tol:0.0015,dp:4}],hint:"This time divide by the marginal probability of the A event."},
+      {id:"e",prompt:`Calculate P(${a(i3)} ∪ ${b(j3)}).`,inputs:[{label:`P(${ap(i3)} ∪ ${bp(j3)})`,ans:un,tol:0.001,dp:2}],hint:"P(A ∪ B) = P(A) + P(B) − P(A and B)."},
+      {id:"f",prompt:`Are ${a(i4)} and ${b(j4)} independent?`,choice:{options:["Yes, independent","No, not independent"],ans:ind?0:1},hint:"Independent events satisfy P(A and B) = P(A) × P(B)."}
+    ],
+    solution:`<p><b>a)</b> <span class="m">P(A₁) = ${P[0].map(v=>f(v,2)).join(" + ")} = ${f(A[0],2)}</span><br><span class="m">P(A₂) = ${P[1].map(v=>f(v,2)).join(" + ")} = ${f(A[1],2)}</span></p>
+<p><b>b)</b> ${[0,1,2].map(j=>`<span class="m">P(${bp(j)}) = ${f(P[0][j],2)} + ${f(P[1][j],2)} = ${f(B[j],2)}</span>`).join("<br>")}</p>
+<p><b>c)</b> <span class="m">P(${ap(i1)} | ${bp(j1)}) = P(${ap(i1)} and ${bp(j1)}) / P(${bp(j1)}) = ${f(P[i1][j1],2)} / ${f(B[j1],2)} = ${f(c1,4)}</span></p>
+<p><b>d)</b> <span class="m">P(${bp(j2)} | ${ap(i2)}) = ${f(P[i2][j2],2)} / ${f(A[i2],2)} = ${f(c2,4)}</span></p>
+<p><b>e)</b> <span class="m">P(${ap(i3)} ∪ ${bp(j3)}) = ${f(A[i3],2)} + ${f(B[j3],2)} − ${f(P[i3][j3],2)} = ${f(un,2)}</span></p>
+<p><b>f)</b> <span class="m">P(${ap(i4)}) × P(${bp(j4)}) = ${f(A[i4],2)} × ${f(B[j4],2)} = ${f(A[i4]*B[j4],4)}</span>, while <span class="m">P(${ap(i4)} and ${bp(j4)}) = ${f(P[i4][j4],2)}</span>. ${ind?"These are equal, so the events are independent.":"These are not equal, so the events are not independent."}</p>`
+  };
+}
+
+/* ---------- 6. Simple linear regression (like revision Q13, Q14) ---------- */
+function genReg(R){
+  const C=R.pick([
+    {intro:()=>"You have the results of a simple linear regression based on state-level data for the US and the District of Columbia, a total of 51 observations.",N:()=>51,y:"the state's mean income (in thousands of dollars) of males aged 18 or older",x:"the percentage of males aged 18 or older who are high school graduates",xb:[65,72],b2:[0.15,0.25],yb:[13,17],xu:"percentage point",yu:v=>`$${f(v*1000,0)}`,xs:"high school graduation rate",ys:"mean income",obs:"one state",xd:1,yd:3},
+    {intro:N=>`A property analyst estimates a simple linear regression using a random sample of ${N} houses sold in Melbourne.`,N:R=>R.pick([40,45,52,60,72]),y:"the sale price (in thousands of dollars)",x:"the floor area (in square metres)",xb:[140,190],b2:[2.6,4.2],yb:[620,880],xu:"square metre",yu:v=>`$${f(v*1000,0)}`,xs:"floor area",ys:"sale price",obs:"one house",xd:0,yd:1},
+    {intro:N=>`A retail chain estimates a simple linear regression using weekly data from ${N} of its stores.`,N:R=>R.pick([30,36,42,48]),y:"weekly sales (in thousands of dollars)",x:"weekly advertising spend (in thousands of dollars)",xb:[8,15],b2:[2.5,5.5],yb:[60,95],xu:"thousand-dollar",yu:v=>`$${f(v*1000,0)}`,xs:"advertising spend",ys:"weekly sales",obs:"one store",xd:2,yd:3}
+  ]);
+  const N=C.N(R);
+  const b2=rnd(R.range(...C.b2),C.b2[1]<1?2:2);
+  const xbar=rnd(R.range(...C.xb),3),ybar=rnd(R.range(...C.yb),3);
+  const s2=rnd(R.range(0.6,4)*(C.yb[1]/15)**1.2,5);
+  const seT=b2/R.pick([1.6,2.4,3.5,6]);
+  const vb2=Number((seT*seT).toPrecision(3));
+  const se=Math.sqrt(vb2),b1=ybar-b2*xbar,sse=s2*(N-2),t=b2/se,tc=tinv(0.975,N-2),sig=Math.abs(t)>tc;
+  const xi=rnd(xbar+R.range(-1.4,1.4)*(C.xb[1]-C.xb[0])/2,C.xd),yi=rnd(b1+b2*xi+R.norm()*Math.sqrt(s2),C.yd),res=yi-(b1+b2*xi);
+  const model=`A one-${C.xu} increase in ${C.xs} is associated with an estimated increase of ${b2} in ${C.ys}, which is about ${C.yu(b2)}, on average.`;
+  return{
+    scenario:`${C.intro(N)} The dependent variable y is ${C.y}, and x is ${C.x}. The least squares results are:`,
+    data:`<div class="facts"><div><span>N</span> = ${N}</div><div><span>σ̂²</span> = ${s2}</div><div><span>b₂</span> = ${b2}</div><div><span>var(b₂)</span> = ${vb2}</div><div><span>x̄</span> = ${xbar}</div><div><span>ȳ</span> = ${ybar}</div></div>`,
+    parts:[
+      {id:"a",prompt:"The estimated error variance is σ̂². What is the sum of the squared least squares residuals?",inputs:[{label:"∑ê²",ans:sse,tol:tolFor(sse,0.01,0.0005),dp:3}],hint:"σ̂² = ∑ê² / (N − 2), so rearrange."},
+      {id:"b",prompt:"What is the standard error of b₂?",inputs:[{label:"se(b₂)",ans:se,tol:tolFor(se,0.0006,0.002),dp:4}],hint:"The standard error is the square root of the estimated variance."},
+      {id:"c",prompt:`Interpret the estimate b₂ = ${b2}.`,text:true,model,hint:"Use the units of both variables, and say 'on average' or 'estimated'."},
+      {id:"d",prompt:"What is the estimate of the intercept parameter?",inputs:[{label:"b₁",ans:b1,tol:tolFor(b1,0.01,0.0005),dp:3}],hint:"The least squares line passes through (x̄, ȳ), so b₁ = ȳ − b₂x̄."},
+      {id:"e",prompt:`For ${C.obs}, y = ${yi} and x = ${xi}. Compute the least squares residual.`,inputs:[{label:"Residual ê",ans:res,tol:tolFor(res,0.012,0.002),dp:3}],hint:"ê = y − ŷ, where ŷ = b₁ + b₂x."},
+      {id:"f",prompt:"Test H₀: β₂ = 0 against Hₐ: β₂ ≠ 0 at the 5% level.",inputs:[{label:"t statistic",ans:t,tol:tolFor(t,0.012,0.003),dp:3},{label:"Critical value (+)",ans:tc,tol:0.012,dp:3}],choice:{options:["Reject H₀","Do not reject H₀"],ans:sig?0:1},hint:`t = b₂ / se(b₂), compared with t(0.025, N − 2) = t(0.025, ${N-2}).`}
+    ],
+    solution:`<p><b>a)</b> <span class="m">∑ê² = σ̂²(N − 2) = ${s2} × ${N-2} = ${f(sse,3)}</span></p>
+<p><b>b)</b> <span class="m">se(b₂) = √var(b₂) = √${vb2} = ${f(se,4)}</span></p>
+<p><b>c)</b> ${model}</p>
+<p><b>d)</b> <span class="m">b₁ = ȳ − b₂x̄ = ${ybar} − ${b2} × ${xbar} = ${f(b1,3)}</span></p>
+<p><b>e)</b> <span class="m">ŷ = ${f(b1,3)} + ${b2} × ${xi} = ${f(b1+b2*xi,3)}</span><br><span class="m">ê = y − ŷ = ${yi} − ${f(b1+b2*xi,3)} = ${f(res,3)}</span></p>
+<p><b>f)</b> <span class="m">t = b₂ / se(b₂) = ${b2} / ${f(se,4)} = ${f(t,3)}</span>, compared with <span class="m">t<sub>0.025,${N-2}</sub> = ${f(tc,3)}</span>. ${sig?`Since |t| > ${f(tc,3)}, reject H₀: ${C.xs} is a statistically significant predictor of ${C.ys} at the 5% level.`:`Since |t| < ${f(tc,3)}, do not reject H₀: there is insufficient evidence at the 5% level that ${C.xs} is related to ${C.ys}.`}</p>`
+  };
+}
+
+const TOPICS=[
+  {id:"desc",name:"Descriptive statistics",like:"Revision Q1 & Q11",gen:genDesc},
+  {id:"quart",name:"Quartiles & outliers",like:"Revision Q4 & Q5",gen:genQuart},
+  {id:"ttest",name:"Confidence intervals & t-tests",like:"Revision Q7",gen:genT},
+  {id:"binom",name:"Binomial probability",like:"Revision Q16",gen:genBinom},
+  {id:"joint",name:"Joint probability",like:"Revision Q15",gen:genJoint},
+  {id:"reg",name:"Simple regression",like:"Revision Q13 & Q14",gen:genReg}
+];
+if(typeof module!=="undefined")module.exports={TOPICS,mkR,tinv,bcdf};
+</script>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const plain=h=>{const d=document.createElement("div");d.innerHTML=h;return d.textContent.replace(/\s+/g," ").trim()};
+const state={topic:"desc",seeds:{desc:2025,quart:31,ttest:7,binom:16,joint:15,reg:13},q:null,sel:{},results:{},showSol:false,fb:{}};
+let ai=undefined; // undefined = connecting, null = unavailable, fn = sample
+
+try{const saved=JSON.parse(localStorage.getItem("srl-topic")||"null");if(saved&&TOPICS.some(t=>t.id===saved))state.topic=saved}catch(e){}
+
+function qkey(){return state.topic+":"+state.seeds[state.topic]}
+function topic(){return TOPICS.find(t=>t.id===state.topic)}
+
+function renderTopics(){
+  $("#topics").innerHTML=TOPICS.map(t=>{const r=tallyFor(t.id);return `<button class="chip" data-topic="${t.id}" aria-pressed="${t.id===state.topic}">${esc(t.name)}${r.n?`<span class="tally">${r.c}/${r.n}</span>`:""}</button>`}).join("");
+}
+function tallyFor(id){let c=0,n=0;for(const k in state.results){if(k.split(":")[0]!==id)continue;for(const p in state.results[k]){n++;if(state.results[k][p])c++}}return{c,n}}
+function renderScore(){
+  let c=0,n=0;TOPICS.forEach(t=>{const r=tallyFor(t.id);c+=r.c;n+=r.n});
+  $("#score").innerHTML=`${c} <small>of ${n} part${n===1?"":"s"} correct</small>`;
+  $("#scorebar").style.width=n?(100*c/n)+"%":"0%";
+  $("#tlist").innerHTML=TOPICS.map(t=>{const r=tallyFor(t.id);return `<li><span>${esc(t.name)}</span><span>${r.n?r.c+"/"+r.n:"–"}</span></li>`}).join("");
+}
+
+function render(){
+  const T=topic();state.q=T.gen(mkR(state.seeds[state.topic]));const q=state.q;
+  const res=state.results[qkey()]||{};
+  $("#sheet").innerHTML=`
+  <div class="qhead">
+    <div><h2 class="qtitle">${esc(T.name)}</h2>
+      <div class="qmeta"><span class="ver">Version ${state.seeds[state.topic]}</span><span class="like">Same style as ${T.like}</span></div></div>
+    <button class="btn" id="newq">New version</button>
+  </div>
+  <p class="scenario">${q.scenario}</p>
+  ${q.data?`<div class="data">${q.data}</div>`:""}
+  <ol class="parts">${q.parts.map(p=>partHTML(p,res)).join("")}</ol>
+  <div class="actions">
+    <button class="btn" id="checkall">Check my answers</button>
+    <button class="btn ghost" id="togglesol">${state.showSol?"Hide":"Show"} worked solution</button>
+  </div>
+  ${state.showSol?`<section class="solution"><h3>Answer</h3>${q.solution}</section>`:""}`;
+  renderTopics();renderScore();
+}
+
+function partHTML(p){
+  const fbk=qkey()+":"+p.id,fb=state.fb[fbk];
+  let body="";
+  if(p.inputs)body+=`<div class="inputs">${p.inputs.map((inp,i)=>`<label class="field">${esc(inp.label)}<input id="in-${p.id}-${i}" inputmode="decimal" autocomplete="off" spellcheck="false"></label>`).join("")}</div>`;
+  if(p.choice)body+=`<div class="choices" role="group">${p.choice.options.map((o,i)=>`<button class="opt" data-part="${p.id}" data-opt="${i}" aria-pressed="${state.sel[fbk]===i}">${esc(o)}</button>`).join("")}</div>`;
+  if(p.text){
+    body+=`<textarea id="tx-${p.id}" placeholder="Write your answer in a few sentences"></textarea>
+    <div class="prow">${ai===null?`<button class="btn small ghost" data-model="${p.id}">Compare with model answer</button>`:`<button class="btn small" data-ask="${p.id}" ${ai===undefined?"disabled":""}>Get feedback</button><button class="linkbtn" data-model="${p.id}">Show model answer</button>`}</div>
+    <div id="tfb-${p.id}"></div>`;
+  }else{
+    body+=`<div class="prow" id="pv-${p.id}"></div><div id="exp-${p.id}"></div>`;
+  }
+  if(p.hint)body+=`<details class="hint"><summary>Hint</summary><p>${esc(p.hint)}</p></details>`;
+  return `<li class="part"><div class="plabel">(${p.id})</div><div class="pbody"><p class="prompt">${p.prompt}</p>${body}</div></li>`;
+}
+
+function parseNum(s){if(s==null)return NaN;s=String(s).replace(/[$,\s]/g,"").replace(/−/g,"-");if(s===""||s==="-")return NaN;return Number(s)}
+
+function checkAll(){
+  const key=qkey();state.results[key]=state.results[key]||{};
+  let any=false;
+  state.q.parts.forEach(p=>{
+    if(p.text)return;
+    let attempted=false,ok=true,wrong=[];
+    (p.inputs||[]).forEach((inp,i)=>{
+      const el=$(`#in-${p.id}-${i}`),v=parseNum(el.value);
+      el.classList.remove("ok","no");
+      if(isNaN(v)){ok=false;return}
+      attempted=true;
+      const good=Math.abs(v-inp.ans)<=inp.tol;el.classList.add(good?"ok":"no");
+      if(!good){ok=false;wrong.push({label:inp.label,given:v,ans:inp.ans,dp:inp.dp})}
+    });
+    if(p.choice){
+      const s=state.sel[key+":"+p.id];
+      document.querySelectorAll(`.opt[data-part="${p.id}"]`).forEach(b=>b.classList.remove("ok","no"));
+      if(s===undefined)ok=false;else{attempted=true;const b=document.querySelector(`.opt[data-part="${p.id}"][data-opt="${s}"]`);const good=s===p.choice.ans;b.classList.add(good?"ok":"no");if(!good){ok=false;wrong.push({label:"Decision",given:p.choice.options[s],ans:p.choice.options[p.choice.ans]})}}
+    }
+    const pv=$(`#pv-${p.id}`);
+    if(!attempted){pv.innerHTML="";return}
+    any=true;
+    state.results[key][p.id]=ok;
+    pv.innerHTML=ok?`<span class="verdict ok">✓ Correct</span>`
+      :`<span class="verdict no">✗ Not quite${wrong.length?"":" (some boxes are empty)"}</span>${wrong.length&&ai?`<button class="btn small ghost" data-explain="${p.id}">Explain my mistake</button>`:""}<button class="linkbtn" data-reveal="${p.id}">Reveal answer</button>`;
+    pv.dataset.wrong=JSON.stringify(wrong);
+  });
+  if(!any){const b=$("#checkall");b.textContent="Enter an answer first";setTimeout(()=>{if(b.isConnected)b.textContent="Check my answers"},1600)}
+  renderTopics();renderScore();
+}
+
+function reveal(pid){
+  const p=state.q.parts.find(x=>x.id===pid),box=$(`#exp-${pid}`);
+  const bits=(p.inputs||[]).map(i=>`${esc(i.label)} = <b>${f(i.ans,i.dp)}</b>`);
+  if(p.choice)bits.push(`<b>${esc(p.choice.options[p.choice.ans])}</b>`);
+  box.innerHTML=`<div class="model"><b>Answer</b>${bits.join(" · ")}</div>`;
+}
+function showModel(pid){
+  const p=state.q.parts.find(x=>x.id===pid);
+  const box=$(`#tfb-${pid}`);const ex=box.querySelector(".model");if(ex){ex.remove();return}
+  box.insertAdjacentHTML("beforeend",`<div class="model" style="margin-top:8px"><b>Model answer</b>${esc(p.model)}</div>`);
+}
+
+function context(){const q=state.q;return plain(q.scenario)+(q.data?" Data: "+plain(q.data):"")}
+
+async function askFeedback(pid){
+  const p=state.q.parts.find(x=>x.id===pid),ta=$(`#tx-${pid}`),box=$(`#tfb-${pid}`),btn=document.querySelector(`[data-ask="${pid}"]`);
+  const ans=ta.value.trim();
+  if(ans.length<8){box.innerHTML=`<p class="note">Write a sentence or two first, then ask for feedback.</p>`;return}
+  btn.disabled=true;btn.textContent="Marking…";
+  const prompt=`You are a supportive tutor marking a first-year university business statistics revision answer.
+
+Question context: ${context()}
+Part (${p.id}): ${plain(p.prompt)}
+Model answer from the answer key: ${p.model}
+Student's answer: """${ans}"""
+
+Mark the student's answer against the model answer. Accept different wording when the statistical reasoning is right. Only refer to numbers that appear in the question or model answer.
+Return only JSON with this shape:
+{"mark":"full"|"partial"|"none","feedback":"2-3 sentences addressed to the student (use 'you'): what they got right, then what is missing or wrong","improve":"one sentence they could add to get full marks, or an empty string if full marks"}`;
+  try{
+    const r=await ai.json(prompt,{modelTier:"default"});
+    const mark=["full","partial","none"].includes(r&&r.mark)?r.mark:"partial";
+    const label={full:"Full marks",partial:"Partly there",none:"Not yet"}[mark];
+    const key=qkey();state.results[key]=state.results[key]||{};state.results[key][pid]=mark==="full";
+    box.innerHTML=`<div class="fb"><p><span class="pill ${mark}">${label}</span></p><p>${esc(r.feedback||"")}</p>${r.improve?`<p><b>To improve:</b> ${esc(r.improve)}</p>`:""}<p class="src">Feedback by Claude, marked against the model answer</p></div>`;
+    renderTopics();renderScore();
+  }catch(e){
+    const code=e&&e.code;
+    if(code==="not_granted"){ai=null;setAiStatus();box.innerHTML=`<p class="note">Written feedback isn't available here. Compare your answer with the model answer instead.</p>`;showModel(pid)}
+    else if(code==="rate_limited"){box.innerHTML=`<p class="note">Feedback is busy right now. Try again in a minute.</p>`}
+    else{box.innerHTML=`<p class="note">Feedback didn't come through this time. Compare with the model answer below, or try again.</p>`;showModel(pid)}
+  }finally{if(btn.isConnected){btn.disabled=false;btn.textContent="Get feedback again"}}
+}
+
+async function explain(pid){
+  const p=state.q.parts.find(x=>x.id===pid),box=$(`#exp-${pid}`),wrong=JSON.parse($(`#pv-${pid}`).dataset.wrong||"[]");
+  const btn=document.querySelector(`[data-explain="${pid}"]`);if(btn)btn.disabled=true;
+  box.innerHTML=`<div class="fb"><p id="exptext-${pid}">Thinking…</p><p class="src">Explanation by Claude</p></div>`;
+  const prompt=`A first-year business statistics student got part of a revision question wrong. Explain the most likely mistake in 2-3 short sentences, addressed to the student ("you"), and say how to fix it. Don't just restate the correct answer; diagnose the error (for example dividing by n instead of n − 1, not sorting the data, using a two-tailed critical value for a one-tailed test, using the wrong marginal probability). Plain text only, no markdown.
+
+Question context: ${context()}
+Part (${p.id}): ${plain(p.prompt)}
+Their answers versus correct answers: ${wrong.map(w=>`${w.label}: they gave ${w.given}, correct is ${typeof w.ans==="number"?f(w.ans,w.dp):w.ans}`).join("; ")}
+Worked solution for reference: ${plain(state.q.solution)}`;
+  try{
+    const r=await ai(prompt,{modelTier:"quick",onText:({text})=>{const el=$(`#exptext-${pid}`);if(el)el.textContent=text}});
+    const el=$(`#exptext-${pid}`);if(el)el.textContent=r.text;
+  }catch(e){const el=$(`#exptext-${pid}`);if(el)el.textContent=e&&e.code==="rate_limited"?"Explanations are busy right now. Try again in a minute, or open the worked solution.":"No explanation came through. Open the worked solution to compare your steps."}
+}
+
+document.addEventListener("click",e=>{
+  const t=e.target.closest("button");if(!t)return;
+  if(t.dataset.topic){state.topic=t.dataset.topic;state.showSol=false;try{localStorage.setItem("srl-topic",state.topic)}catch(_){}render();return}
+  if(t.id==="newq"){state.seeds[state.topic]=1000+Math.floor(Math.random()*9000);state.showSol=false;render();return}
+  if(t.id==="checkall"){checkAll();return}
+  if(t.id==="togglesol"){
+    const vals={};document.querySelectorAll("#sheet input, #sheet textarea").forEach(el=>vals[el.id]=el.value);
+    const pvs={};document.querySelectorAll('[id^="pv-"],[id^="tfb-"],[id^="exp-"]').forEach(el=>pvs[el.id]={h:el.innerHTML,w:el.dataset.wrong});
+    const cls={};document.querySelectorAll("#sheet input").forEach(el=>cls[el.id]=el.className);
+    state.showSol=!state.showSol;render();
+    for(const id in vals){const el=document.getElementById(id);if(el)el.value=vals[id]}
+    for(const id in cls){const el=document.getElementById(id);if(el)el.className=cls[id]}
+    for(const id in pvs){const el=document.getElementById(id);if(el){el.innerHTML=pvs[id].h;if(pvs[id].w)el.dataset.wrong=pvs[id].w}}
+    if(state.showSol)document.querySelector(".solution").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"});
+    return}
+  if(t.dataset.opt!==undefined){const k=qkey()+":"+t.dataset.part;state.sel[k]=+t.dataset.opt;document.querySelectorAll(`.opt[data-part="${t.dataset.part}"]`).forEach(b=>{b.setAttribute("aria-pressed",b===t);b.classList.remove("ok","no")});return}
+  if(t.dataset.reveal){reveal(t.dataset.reveal);return}
+  if(t.dataset.model){showModel(t.dataset.model);return}
+  if(t.dataset.ask){askFeedback(t.dataset.ask);return}
+  if(t.dataset.explain){explain(t.dataset.explain);return}
+});
+document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.matches("#sheet input")){e.preventDefault();checkAll()}});
+
+function setAiStatus(){
+  $("#aidot").className="dot"+(ai?" on":"");
+  $("#aitext").textContent=ai?"Claude feedback is on for written answers.":ai===null?"Claude feedback isn't available in this view. Model answers are shown instead.":"Connecting to Claude for written feedback…";
+}
+function refreshTextButtons(){
+  // swap feedback buttons without losing typed answers
+  state.q&&state.q.parts.filter(p=>p.text).forEach(p=>{
+    const row=document.querySelector(`#tx-${p.id} + .prow`);if(!row)return;
+    row.innerHTML=ai===null?`<button class="btn small ghost" data-model="${p.id}">Compare with model answer</button>`:`<button class="btn small" data-ask="${p.id}">Get feedback</button><button class="linkbtn" data-model="${p.id}">Show model answer</button>`;
+  });
+}
+
+render();setAiStatus();
+(async()=>{
+  try{ai=window.claude&&window.claude.use?await window.claude.use("sample"):null}catch(e){ai=null}
+  setAiStatus();refreshTextButtons();
+})();
+})();
+</script>
+
+</body></html>
