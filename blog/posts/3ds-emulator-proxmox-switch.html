@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Playing 3DS games on a Switch, via Proxmox | Nacho Dog Blog</title>
-  <meta name="description" content="A 3DS emulator running in my homelab, streamed into the Nintendo Switch's web browser.">
+  <meta name="description" content="A 3DS emulator running on my homelab server, played through the Nintendo Switch's web browser.">
   <meta name="theme-color" content="#1d5a48">
   <link rel="icon" href="../nacho-avatar.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -27,43 +27,43 @@
   </header>
   <div class="wrap">
     <div class="post-head">
-      <p class="meta"><time datetime="2026-11">November 2026</time>, filed under homelab, Proxmox and emulation</p>
+      <p class="meta"><time datetime="2026">2026</time>, filed under homelab, Proxmox and emulation</p>
       <h1>Playing 3DS games on a Switch, via Proxmox</h1>
-      <p class="dek">A 3DS emulator running in my homelab, streamed into the Nintendo Switch's web browser.</p>
+      <p class="dek">A 3DS emulator running on my homelab server, played through the Nintendo Switch's web browser.</p>
     </div>
   </div>
 </div>
 
 <main class="sheet">
   <article>
-<p>The Switch has no 3DS backwards compatibility, but it does have a (hidden) web browser. My homelab runs Proxmox. Put those together and you get 3DS games running on a server in the cupboard and played from the couch on a Switch.</p>
+<p>The Switch can't play 3DS games, but it does have a web browser tucked away, and my homelab runs Proxmox. Put those together and you get 3DS games running on a server in the cupboard and played from the couch on a Switch.</p>
 
 <div class="callout"><strong>Note:</strong> only play games you own, dumped from your own cartridges. This post covers the setup, not where to get games.</div>
 
-<h2>The architecture</h2>
-<p>Three pieces: an emulator running in a VM or container on Proxmox, something that streams its screen to a web page, and the Switch's browser displaying that page.</p>
-<div class="todo">Add a quick diagram or list of your actual stack: VM vs LXC, which emulator, which streaming tool, GPU passthrough or not.</div>
+<h2>How it fits together</h2>
+<p>There are three pieces: a 3DS emulator running in a container or VM on Proxmox, something that streams the emulator's screen to a web page, and the Switch's browser showing that page.</p>
+<div class="todo">Fill in your actual stack: VM or LXC container, which emulator (Azahar, Lime3DS, Citra or another), which tool streams it to the browser, and whether you used GPU passthrough.</div>
 
-<h2>Setting up the Proxmox side</h2>
-<div class="todo">VM/container specs, OS, any GPU passthrough steps, and how you installed the emulator.</div>
+<h2>The Proxmox side</h2>
+<div class="todo">The container or VM's specs and OS, how you installed the emulator, and anything that took a few attempts.</div>
 
 <h2>Streaming it to a browser</h2>
-<div class="todo">What served the emulator's display over the web, and any settings that mattered for latency/quality.</div>
+<div class="todo">What serves the emulator's display over the web, and which settings mattered for lag and picture quality.</div>
 
 <h2>Opening the browser on a Switch</h2>
-<div class="todo">How you got to the browser on the Switch (it isn't in the home menu), and how you pointed it at your server.</div>
+<div class="todo">How you reach the browser (it isn't on the home menu) and point it at your server.</div>
 
-<h2>The dual-screen problem</h2>
-<p>The 3DS has two screens and one of them is a touchscreen, which is the interesting design problem in a setup like this.</p>
-<div class="todo">How you laid out the two screens, and how touch and controls worked from the Switch (Joy-Cons? touchscreen?).</div>
+<h2>The two-screen problem</h2>
+<p>The 3DS has two screens, and the bottom one is a touchscreen. Fitting both onto one display and getting touch to work is the interesting design problem in a setup like this.</p>
+<div class="todo">How you laid out the two screens, and how controls and touch work from the Switch (Joy-Cons, the touchscreen or both).</div>
 
 <h2>How playable is it?</h2>
-<div class="todo">Latency, frame rate, which games work well and which don't. A photo of the Switch running it sells the whole post.</div>
+<div class="todo">Lag, frame rate, and which games work well and which don't. A photo of the Switch running it sells the whole post.</div>
   </article>
 
   <nav class="post-nav">
-    <a href="kinect-quest-golf-sim.html"><small>Previous</small>A golf simulator from a Kinect and a Quest</a>
-    <a class="next" href="kcd2-dog-mod.html"><small>Next</small>Making Mutt look like Nacho in Kingdom Come: Deliverance II</a>
+    <a href="kinect-quest-golf-sim.html"><small>Previous</small>A golf swing trainer from a Kinect and a Quest</a>
+    <a class="next" href="../"><small>Back to</small>All posts</a>
   </nav>
 </main>
 <footer>

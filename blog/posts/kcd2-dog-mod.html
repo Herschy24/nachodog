@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Making Mutt look like Nacho in Kingdom Come: Deliverance II | Nacho Dog Blog</title>
-  <meta name="description" content="Henry already has a loyal dog. I wanted it to be mine.">
+  <meta name="description" content="Henry already has a loyal dog. I wanted it to be mine: a tall black greyhound with a frosted muzzle and white socks.">
   <meta name="theme-color" content="#1d5a48">
   <link rel="icon" href="../nacho-avatar.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -27,44 +27,57 @@
   </header>
   <div class="wrap">
     <div class="post-head">
-      <p class="meta"><time datetime="2026-11">November 2026</time>, filed under modding and KCD2</p>
+      <p class="meta"><time datetime="2026-11">November 2026</time>, filed under modding, KCD2 and Blender</p>
       <h1>Making Mutt look like Nacho in Kingdom Come: Deliverance II</h1>
-      <p class="dek">Henry already has a loyal dog. I wanted it to be mine.</p>
+      <p class="dek">Henry already has a loyal dog. I wanted it to be mine: a tall black greyhound with a frosted muzzle and white socks.</p>
     </div>
   </div>
 </div>
 
 <main class="sheet">
   <article>
-<p>In Kingdom Come: Deliverance II, Henry's companion is Mutt, a scruffy, loyal dog who follows you around Bohemia. I have a scruffy, loyal dog who follows me around the house. This project was about making the two the same dog.</p>
+<p>In Kingdom Come: Deliverance II, Henry's companion is Mutt, a scruffy, loyal mongrel who follows you around Bohemia. I have a loyal dog who follows me around the house: Nacho, a tall black female greyhound with a grey muzzle, a white chest and white socks. People had already made mods that swap Mutt for other breeds, so I set out, with Claude doing most of the hands-on work in Blender, to make Mutt into Nacho.</p>
 
 <figure>
-  <img src="../nacho-avatar.jpg" alt="Nacho, the real dog" style="max-width:240px;border-radius:12px">
+  <img src="../nacho-avatar.jpg" alt="Nacho, a black greyhound, wearing a reindeer-antler headband" style="max-width:240px;border-radius:4px">
   <figcaption>The reference model.</figcaption>
 </figure>
 
-<h2>The plan</h2>
-<div class="todo">What you changed: texture/colour only, or the model (shape, ears, size)? What made Nacho recognisable that you had to capture?</div>
+<h2>Why a recolour wasn't enough</h2>
+<p>I started from an existing mod that turns Mutt into a Dobermann. Unpacking it showed it only replaces Mutt's texture and material settings, with the same body underneath. A greyhound is a different shape altogether: deep chest, tucked waist, thin legs, long narrow head. That meant changing the 3D model itself.</p>
 
-<h2>Tools</h2>
-<div class="todo">Which tools you used to unpack the game files, edit textures/models (e.g. Blender, an image editor), and repack the mod.</div>
+<h2>Reshaping Mutt instead of replacing him</h2>
+<p>The usual way to put a new model into the game is to rig it to the game's dog skeleton and export it through CryEngine's tools, which is fiddly and easy to break. We went the other way. I found a free, rigged whippet model (CC-0, by Patrick W. Crawford), and Claude reshaped <em>Mutt's own mesh</em> in Blender until it matched the whippet's body.</p>
+<p>Because the mesh is still Mutt's, it keeps his skeleton, his weights and every one of his animations. The new vertex positions were written straight back into the game's <code>.skin</code> file, with no exporter involved. Bending the legs, neck, jaw and tail with Mutt's rig in Blender was the check that the new body still moved properly.</p>
 
-<h2>Finding Mutt in the game files</h2>
-<div class="todo">How you located the dog's assets, and anything surprising about how they're stored.</div>
+<h2>From whippet to Nacho</h2>
+<p>A whippet was the right body shape but the wrong dog. The next round repainted the coat to match her: black all over, salt-and-pepper grey on the muzzle and chin, a white chest patch and white toes and socks. Mutt is male and Nacho isn't, so that got fixed in the mesh too.</p>
+<p>Then came a lot of rounds against photos of her. The side view needed a longer muzzle, about 15% longer, with the wedge-shaped profile and blunt rounded nose greyhounds have. The front view needed a head that's widest across the skull and narrows to a fine nose, rather than being widest at the jowls. Then the chin, lips, brow and nostrils got smaller fixes. In all there were eleven preview renders before she looked right from every angle.</p>
+<div class="todo">Add before and after renders. They're on my PC in <code>D:\Downloads\Whippet rigged\kcd2_work</code>: <code>cmp_before.png</code> and <code>cmp_after.png</code>, plus <code>nacho_preview.png</code> through <code>nacho_preview11.png</code> to show how she evolved. Resize to about 1600px wide, put them in <code>blog/img/</code> and use <code>&lt;img src="../img/name.jpg" alt="..."&gt;</code>.</div>
 
-<h2>Painting Nacho</h2>
-<div class="todo">Your texture work: matching his colouring and markings. Before/after screenshots side by side are perfect here.</div>
+<h2>The bugs</h2>
+<p>Most of the time went on things that looked fine in Blender and wrong in the game.</p>
+<ul>
+  <li><strong>She came out grey.</strong> The base black was about three times too light, and a setting copied from the Dobermann mod (<code>ScratchLevel="0.84"</code>) lays a lighter fur layer over the whole body. Darkening the coat and setting that to 0 fixed it.</li>
+  <li><strong>Then she came out green.</strong> The black was now so dark that the game's texture compression stored slightly more green than red or blue, and the game's fur tint boosted that difference into a green dog. The fix was to turn fur saturation down to 0, which suits a black, grey and white dog anyway.</li>
+  <li><strong>Her face broke when she panted.</strong> The game opens Mutt's jaw wide when he pants, and that dragged bits of the reshaped snout down with it. The head was rebuilt from Mutt's original head, narrowed and lengthened, so the jaw, lips and teeth move the way the animations expect.</li>
+  <li><strong>The head was too big.</strong> Greyhounds have small heads. It got shrunk around the skull: narrower, lower and slightly shorter.</li>
+  <li><strong>Updates silently didn't install.</strong> For a while it looked like the game was locking the mod file. It turned out Blender was holding it open from an earlier check, so a couple of "installed" fixes never actually landed.</li>
+</ul>
 
-<h2>Getting it in-game</h2>
-<div class="todo">Packing and loading the mod, plus anything that broke along the way.</div>
+<h2>Her name</h2>
+<p>The last step was the name. Mutt is now Nacho in 89 English text strings: her name tag, the obedience stat, perks, quest titles and logs, item descriptions and tutorials. Henry still says "Mutt" out loud, because that's recorded voice acting, and the spoken subtitles match the voice.</p>
+
+<h2>What I couldn't fix</h2>
+<p>She's the right shape but a bit small. In game she stands about 66 cm at the shoulder; a tall female greyhound like Nacho is more like 71 to 74 cm. Her size comes from Mutt's skeleton and animations, not the mesh, so making her taller would mean scaling the skeleton, which risks breaking every animation and every other dog that shares it. She's believably a greyhound, just a petite one.</p>
 
 <h2>The result</h2>
-<div class="todo">Screenshots of Nacho-Mutt in Bohemia. Optional: link to the mod if you share it (e.g. Nexus Mods).</div>
+<div class="todo">Add an in-game screenshot or two of Nacho in Bohemia. If you share the mod (for example on Nexus Mods), link it here and keep the credit to Patrick W. Crawford for the whippet model.</div>
   </article>
 
   <nav class="post-nav">
-    <a href="3ds-emulator-proxmox-switch.html"><small>Previous</small>Playing 3DS games on a Switch, via Proxmox</a>
-    <a class="next" href="../"><small>Back to</small>All posts</a>
+    <a href="../"><small>Back to</small>All posts</a>
+    <a class="next" href="ai-carabiner.html"><small>Next</small>Can AI design a stronger carabiner?</a>
   </nav>
 </main>
 <footer>

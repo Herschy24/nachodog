@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Can AI design a stronger carabiner? | Nacho Dog Blog</title>
-  <meta name="description" content="I asked AI to help design a stronger carabiner. It was a useful sketching partner and a terrible engineer.">
+  <meta name="description" content="A 3D-printed clip snapped, so I asked AI to make it stronger. It got the clip about five times stronger on paper, and taught me exactly where to stop trusting it.">
   <meta name="theme-color" content="#1d5a48">
   <link rel="icon" href="../nacho-avatar.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29,51 +29,65 @@
     <div class="post-head">
       <p class="meta"><time datetime="2026-11">November 2026</time>, filed under AI, CAD and 3D printing</p>
       <h1>Can AI design a stronger carabiner?</h1>
-      <p class="dek">I asked AI to help design a stronger carabiner. It was a useful sketching partner and a terrible engineer.</p>
+      <p class="dek">A 3D-printed clip snapped, so I asked AI to make it stronger. It got the clip about five times stronger on paper, and taught me exactly where to stop trusting it.</p>
     </div>
   </div>
 </div>
 
 <main class="sheet">
   <article>
-<p>Carabiners are a deceptively simple part: a bent loop with a gate. But the shape is the result of decades of engineering around how load actually flows through the metal. I wanted to see whether an AI could take a standard design and make it stronger, and, just as interesting, where it would fall short.</p>
+<p>I'd printed a carabiner-style clip in PETG at 100% infill to hold a canvas shade onto a metal hook, and it snapped at the bottom corner. Instead of opening CAD, I gave Claude the STL and a photo of the break and asked it to make the clip stronger. What came back was a series of redesigns, a homemade stress simulation and, best of all, a clear record of where an AI's engineering confidence runs out.</p>
 
-<div class="callout"><strong>Safety first:</strong> nothing in this post is climbing gear. A home-designed or 3D-printed carabiner is not rated, not tested and must never hold a person. This was an experiment about AI, not a product.</div>
+<div class="callout"><strong>Safety first:</strong> this is a shade clip, not climbing gear. A home-designed or 3D-printed carabiner is unrated and untested and must never hold a person.</div>
 
-<h2>The goal</h2>
-<p>Start from a typical D-shaped carabiner and ask AI to improve its strength while keeping it a usable size and weight.</p>
-<div class="todo">Describe your starting point: which design you began from, what "stronger" meant to you (major-axis load? gate-open strength?), and which AI tools you used.</div>
+<h2>How it worked</h2>
+<p>Claude didn't use a CAD package. It sliced my STL in Python, rebuilt the clip's outline as a 2D shape, and then thickened, filleted and reshaped that outline in code before extruding it back into a printable, watertight mesh. To compare versions, it wrote a small finite-element stress simulation from scratch, pulling a hook against the top inside of the clip and the shade against the bottom.</p>
 
-<h2>How I used the AI</h2>
-<div class="todo">Walk through the process: the prompts you gave, whether it produced CAD, code (e.g. OpenSCAD / Python) or just ideas, and how many rounds of iteration it took. A screenshot of an early design next to the final one works well here.</div>
-<figure>
-  <div class="todo">Add an image: <code>&lt;img src="../img/carabiner-v1.jpg" alt="First AI-generated design"&gt;</code></div>
-  <figcaption>Early design vs final design.</figcaption>
-</figure>
+<h2>Four versions</h2>
+<ul>
+  <li><strong>The original</strong> was 6 mm thick, with big 1.2 mm chamfers on the edges.</li>
+  <li><strong>Reinforced v1</strong> thickened the weak sections by about 1.25 mm and added a generous fillet in the bottom corner where mine had broken.</li>
+  <li><strong>Max strength</strong> went to 9 mm thick, widened the back and bottom to about 9.5 mm and shrank the chamfers to 0.5 mm. All the extra width went on the outside so the hook still fits.</li>
+  <li><strong>The D-shape</strong> rethought the shape. The clip was failing because the load runs through the middle of the opening while the solid back sits off to the side, so the back bends like a bow. Filling in the spine side made the back about 14 mm wide, and sloped seats now guide the hook and the shade ring into corners right beside it. Now the back gets pulled almost straight instead of bent. It ended up about 39 × 67 × 9 mm, nearly the same outside size.</li>
+</ul>
 
-<h2>What it got right</h2>
-<div class="todo">The good bits: e.g. fast iteration, sensible-looking geometry, thickening the spine, rounding sharp corners.</div>
+<h2>Simulated breaking loads</h2>
+<p>For PETG at 100% infill, assuming the gate carries no load:</p>
+<ul>
+  <li>Original: about 11 kg</li>
+  <li>Reinforced v1: about 17 kg</li>
+  <li>Max strength: about 36 kg</li>
+  <li>D-shape, hook seated in its corner: about 60 kg (47 to 67 kg)</li>
+</ul>
+<p>So, on paper, about five and a half times the original. Treating a third of the breaking load as safe for repeated wind gusts, that's about 20 kg per corner: plenty for a small or medium shade, though a big tensioned sail still wants a stainless hook.</p>
+<div class="todo">Add the stress-map images from the chat if you saved them (the plots that coloured the clip by stress, with the weak point starred), plus a photo of the original break.</div>
 
 <h2>The limitations</h2>
-<p>This is the real point of the project. The places I'd expect an AI to struggle with a load-bearing part:</p>
-<ul>
-  <li><strong>It can't verify its own claims.</strong> "This is 30% stronger" means nothing without simulation or a physical pull test.</li>
-  <li><strong>Load paths and stress concentrations.</strong> Strength lives in the spine and the curves; small geometry changes can move the weak point somewhere unexpected.</li>
-  <li><strong>Material assumptions.</strong> Real carabiners are forged aluminium or steel. A printed part behaves completely differently, especially along layer lines.</li>
-  <li><strong>The gate.</strong> The hinge, nose and gate-open strength are often the weakest part, and the hardest for a model to reason about.</li>
-</ul>
-<div class="todo">Replace or confirm these with what actually happened: where did it fail? Did it contradict itself, hallucinate numbers, or produce something unprintable?</div>
+<p>This is the interesting part. Each of these came up during the project itself.</p>
 
-<h2>Results</h2>
-<div class="todo">If you printed or tested it, add photos and results here (how it broke, where it broke). If not, say what you'd test next.</div>
+<h3>Its first estimates were wrong</h3>
+<p>Before running any simulation, Claude estimated the reinforced v1 would be about 2.2 times stronger and the max version about 5 times. Once the simulation ran, those came out at 1.6 and 3.3 times. It had strengthened the corner where my clip broke, but the highest stress was actually further up the back. To its credit it flagged the correction itself, but on "how strong is this?" a confident-sounding number from an AI is just a guess until something checks it.</p>
 
-<h2>Takeaways</h2>
-<div class="todo">Your verdict in 2–3 sentences: is AI a useful design partner for physical parts, and where does a human (or FEA software) have to take over?</div>
+<h3>The simulation is rough</h3>
+<p>The stress model was a simple 2D one written on the spot. By its own estimate it's only good to about ±30 to 50%, it assumes printed PETG breaks somewhere between 35 and 50 MPa, and it assumes the gate's latch takes no load. If the latch did share the load, the max version could be about three times stronger again, but you can't count on that once wind starts jiggling the clip.</p>
+
+<h3>It designed something I couldn't print</h3>
+<p>I printed the strongest version and the gate was fused shut. The latch gap had been carried over from the original at 0.2 mm, which is narrower than a 0.4 mm nozzle can reliably keep open, especially with PETG, which oozes. The original only printed separated because its big chamfers widened the gap at the top and bottom faces, and the redesign had shrunk those. Version 2 widened the gap to about 0.6 mm. It's the kind of thing anyone who prints a lot knows by instinct, and the model missed it until a real print failed.</p>
+
+<h3>The number that matters is untested</h3>
+<p>Every load above is simulated. None of these clips has been pull-tested.</p>
+
+<h3>Material and settings matter as much as shape</h3>
+<p>Some of the best advice wasn't about geometry at all. On a part this narrow, setting enough walls that the thin sections are all perimeter lines beats 100% infill. Nylon or carbon-fibre nylon bends instead of snapping, and polycarbonate is stronger again. ASA would handle UV better than PETG outdoors.</p>
+
+<h2>Verdict</h2>
+<p>As a design partner, AI was genuinely useful. It found the real cause of the failure (bending of an off-centre back), proposed a shape that fixes it, and turned that into a clean printable mesh in an afternoon. As an engineer, it needed checking at every step: its gut estimates were off, its simulation is approximate, and it didn't know a 0.2 mm gap won't survive a 0.4 mm nozzle until my printer showed it. The numbers are a starting point for a pull test, not a replacement for one.</p>
+<div class="todo">Once you've printed v2 (the 0.6 mm gap version), add how it came out, and if you test it (hanging weights, a luggage scale), where and at what load it broke.</div>
   </article>
 
   <nav class="post-nav">
-    <a href="../"><small>Back to</small>All posts</a>
-    <a class="next" href="kinect-quest-golf-sim.html"><small>Next</small>A golf simulator from a Kinect and a Quest</a>
+    <a href="kcd2-dog-mod.html"><small>Previous</small>Making Mutt look like Nacho in Kingdom Come: Deliverance II</a>
+    <a class="next" href="kinect-quest-golf-sim.html"><small>Next</small>A golf swing trainer from a Kinect and a Quest</a>
   </nav>
 </main>
 <footer>

@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>A golf simulator from a Kinect and a Quest | Nacho Dog Blog</title>
-  <meta name="description" content="An old Xbox Kinect tracks my body and swing, and a Meta Quest puts me on the course.">
+  <title>A golf swing trainer from a Kinect and a Quest | Nacho Dog Blog</title>
+  <meta name="description" content="Full-body tracking from a second-hand Xbox Kinect, streamed into a Meta Quest so I can see my own swing in VR.">
   <meta name="theme-color" content="#1d5a48">
   <link rel="icon" href="../nacho-avatar.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -27,37 +27,38 @@
   </header>
   <div class="wrap">
     <div class="post-head">
-      <p class="meta"><time datetime="2026-11">November 2026</time>, filed under VR, Kinect and Meta Quest</p>
-      <h1>A golf simulator from a Kinect and a Quest</h1>
-      <p class="dek">An old Xbox Kinect tracks my body and swing, and a Meta Quest puts me on the course.</p>
+      <p class="meta"><time datetime="2026-11">November 2026</time>, filed under VR, Kinect, Meta Quest and Unity</p>
+      <h1>A golf swing trainer from a Kinect and a Quest</h1>
+      <p class="dek">Full-body tracking from a second-hand Xbox Kinect, streamed into a Meta Quest so I can see my own swing in VR.</p>
     </div>
   </div>
 </div>
 
 <main class="sheet">
   <article>
-<p>Proper golf simulators cost thousands. I had an old Xbox Kinect gathering dust and a Meta Quest, and wanted to see how close I could get to a home simulator by combining them.</p>
+<p>I wanted to see my golf swing from the outside while I'm making it. Launch monitors and swing-analysis setups cost thousands. I had a Meta Quest 3, and second-hand Xbox Kinects are cheap, so I'm building my own swing trainer: the Kinect tracks my whole body and streams it into a Unity scene running in the Quest, so I can watch and correct my movement in VR.</p>
 
-<h2>Why combine the two?</h2>
-<p>The Quest is great at putting you somewhere else and tracking your hands, but a golf swing is a whole-body motion. The Kinect was built for exactly that: full-body skeleton tracking from across the room. The idea was to let each device do what it's good at.</p>
-<div class="todo">Confirm or adjust: what did the Kinect track (full body, club, ball?) and what did the Quest handle (display, hand/controller tracking)?</div>
+<h2>Where it started</h2>
+<p>The first version of the idea needed no code at all. I mounted my phone on a tripod, streamed its camera over Wi-Fi, and opened the stream as a floating browser window in the Quest's passthrough mode. With the Quest's multitasking setting turned on, the window can sit beside a game like Golf+, so in theory you can play while watching yourself from the side. It worked as a novelty, but the 0.5 to 2 second delay made it useless for looking at a swing as it happens. That's what pushed me to proper body tracking.</p>
 
-<h2>The setup</h2>
-<div class="todo">Hardware list: Kinect model (360 or One), adapter, PC specs, Quest model, space needed. A photo of the room setup is great here.</div>
+<h2>The hardware</h2>
+<p>I bought a pre-owned Kinect for Xbox One (the newer, chunkier Kinect v2). It uses a proprietary plug, so on a PC it needs a "Kinect adapter for Windows / Xbox One S": a small hub with a power brick on one side and a USB 3.0 cable on the other. Microsoft stopped making the official one years ago, but generic ones are easy to find for around AU$30 to 45 (choose the AU plug).</p>
+<p>Two things worth knowing if you try this:</p>
+<ul>
+  <li><strong>It must be a real USB 3.0 port.</strong> Kinect is fussy about USB controllers. Use a port on the back of the PC, not a front-panel port or a hub.</li>
+  <li><strong>Install the Kinect for Windows SDK 2.0 before plugging it in</strong>, then run the Kinect Configuration Verifier that comes with it to confirm everything works.</li>
+</ul>
 
-<h2>Getting the Kinect talking to a PC</h2>
-<div class="todo">Drivers/SDK you used, and any pain getting it running on a modern PC.</div>
+<h2>The software</h2>
+<p>The trainer is a Unity project written in C#. The Kinect side reads the body skeleton (joint positions for the whole body, many times a second) on the PC, and the Quest side renders that skeleton in the headset so I can see my swing in 3D.</p>
+<div class="todo">Confirm or correct: how the Kinect data gets to the Quest (Quest Link or Air Link to a PC-run Unity app, or streamed over the network to a standalone build?), and whether you see an avatar, a stick figure or a mirror of yourself.</div>
 
-<h2>Bringing it into the headset</h2>
-<div class="todo">How the Kinect data got into VR: game engine (Unity?), existing golf software, or your own code? How did you line up the Kinect's coordinate space with the Quest's?</div>
-<pre><code>// Optional: drop in a key snippet here, e.g. how you
-// calculated club speed from the tracked wrist positions.</code></pre>
-
-<h2>How well does it work?</h2>
-<div class="todo">Honest results: latency, accuracy, does ball flight feel right? A short video or GIF of a swing would be the best thing on this page.</div>
+<h2>The hard part</h2>
+<p>The tricky problem is integration: getting two devices with different coordinate systems and different latencies to agree on where my body is. The Kinect measures everything relative to itself, sitting on a shelf in front of me; the Quest measures everything relative to the headset on my head. Until the two are lined up, my VR body floats in the wrong place, and the moment I turn my head the mismatch shows.</p>
+<div class="todo">Describe how you're solving the alignment (a calibration pose, matching the head joint to the headset, a fixed offset) and how bad the lag is. A short clip or GIF of a swing would be the best thing on this page.</div>
 
 <h2>What's next</h2>
-<div class="todo">Improvements you'd make: a launch monitor, better club tracking, more courses, etc.</div>
+<div class="todo">Where it's heading: club and ball tracking, comparing your swing against a reference swing, recording and replaying swings, and so on.</div>
   </article>
 
   <nav class="post-nav">
