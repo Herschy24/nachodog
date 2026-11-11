@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Playing 3DS games on a Switch, via Proxmox · Nacho Dog Blog</title>
+  <meta name="description" content="A 3DS emulator running in my homelab, streamed into the Nintendo Switch's web browser.">
+  <link rel="icon" href="../nacho-avatar.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;1,9..144,600&family=Inter:wght@400;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../blog.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="../"><img src="../nacho-avatar.jpg" alt="">Nacho Dog Blog</a>
+    <nav>
+      <a href="../">Blog</a>
+      <a href="../#projects">Projects</a>
+      <a href="../../">Nacho</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="post-head">
+    <div class="meta"><time datetime="2026-11">Nov 2026</time> · Homelab · Proxmox · Emulation</div>
+    <h1>Playing 3DS games on a Switch, via Proxmox</h1>
+    <p class="dek">A 3DS emulator running in my homelab, streamed into the Nintendo Switch's web browser.</p>
+  </div>
+
+  <article>
+<p>The Switch has no 3DS backwards compatibility, but it does have a (hidden) web browser. My homelab runs Proxmox. Put those together and you get 3DS games running on a server in the cupboard and played from the couch on a Switch.</p>
+
+<div class="callout"><strong>Note:</strong> only play games you own, dumped from your own cartridges. This post covers the setup, not where to get games.</div>
+
+<h2>The architecture</h2>
+<p>Three pieces: an emulator running in a VM or container on Proxmox, something that streams its screen to a web page, and the Switch's browser displaying that page.</p>
+<div class="todo">Add a quick diagram or list of your actual stack: VM vs LXC, which emulator, which streaming tool, GPU passthrough or not.</div>
+
+<h2>Setting up the Proxmox side</h2>
+<div class="todo">VM/container specs, OS, any GPU passthrough steps, and how you installed the emulator.</div>
+
+<h2>Streaming it to a browser</h2>
+<div class="todo">What served the emulator's display over the web, and any settings that mattered for latency/quality.</div>
+
+<h2>Opening the browser on a Switch</h2>
+<div class="todo">How you got to the browser on the Switch (it isn't in the home menu), and how you pointed it at your server.</div>
+
+<h2>The dual-screen problem</h2>
+<p>The 3DS has two screens and one of them is a touchscreen, which is the interesting design problem in a setup like this.</p>
+<div class="todo">How you laid out the two screens, and how touch and controls worked from the Switch (Joy-Cons? touchscreen?).</div>
+
+<h2>How playable is it?</h2>
+<div class="todo">Latency, frame rate, which games work well and which don't. A photo of the Switch running it sells the whole post.</div>
+  </article>
+
+  <nav class="post-nav">
+    <span><a href="kinect-quest-golf-sim.html">← A golf simulator from a Kinect and a Quest</a></span>
+    <span><a href="kcd2-dog-mod.html">Making Mutt look like Nacho in Kingdom Come: Deliverance II →</a></span>
+  </nav>
+</main>
+
+<footer>
+  <div class="wrap">Hosted on GitHub Pages · <a href="https://github.com/Herschy24/nachodog">source</a> · <a href="../../">meet Nacho</a></div>
+</footer>
+
+</body>
+</html>

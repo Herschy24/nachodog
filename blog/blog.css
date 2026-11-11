@@ -1,0 +1,172 @@
+/* Nacho Dog blog — shared styles for blog/index.html and blog/posts/*.html */
+:root {
+  --bg: #f6f1e9;
+  --surface: #fffaf2;
+  --ink: #1f1b16;
+  --muted: #6b6257;
+  --line: #e2d8c8;
+  --accent: #c2410c;
+  --accent-soft: #fbe3d3;
+  --code-bg: #efe7da;
+  --serif: "Fraunces", Georgia, serif;
+  --sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #17140f;
+    --surface: #211d17;
+    --ink: #eee6d8;
+    --muted: #a59a8b;
+    --line: #3a332a;
+    --accent: #fb923c;
+    --accent-soft: #3a2414;
+    --code-bg: #2a241c;
+  }
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 17px;
+  line-height: 1.65;
+}
+a { color: var(--accent); text-underline-offset: 3px; }
+a:hover { text-decoration-thickness: 2px; }
+img { max-width: 100%; height: auto; }
+
+.wrap { max-width: 760px; margin: 0 auto; padding: 0 20px; }
+
+/* ── Top bar ─────────────────────────────── */
+.topbar {
+  border-bottom: 1px solid var(--line);
+  padding: 14px 0;
+}
+.topbar .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.brand {
+  display: flex; align-items: center; gap: 10px;
+  color: var(--ink); text-decoration: none;
+  font-family: var(--serif); font-weight: 700; font-size: 1.15rem;
+}
+.brand img { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; }
+.topbar nav { display: flex; gap: 18px; font-size: 0.95rem; }
+.topbar nav a { color: var(--muted); text-decoration: none; }
+.topbar nav a:hover, .topbar nav a[aria-current="page"] { color: var(--ink); }
+
+/* ── Home hero ───────────────────────────── */
+.hero { padding: 56px 0 36px; }
+.hero h1 {
+  font-family: var(--serif);
+  font-size: clamp(2.2rem, 6vw, 3.4rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  margin: 0 0 16px;
+}
+.hero h1 em { color: var(--accent); font-style: italic; }
+.hero p { color: var(--muted); font-size: 1.1rem; margin: 0; max-width: 34em; }
+
+/* ── Section headings ────────────────────── */
+.section-label {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  margin: 40px 0 14px;
+  display: flex; align-items: center; gap: 12px;
+}
+.section-label::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+/* ── Project cards ───────────────────────── */
+.projects { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+@media (max-width: 560px) { .projects { grid-template-columns: 1fr; } }
+.card {
+  display: flex; flex-direction: column; gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 18px;
+  color: var(--ink);
+  text-decoration: none;
+  transition: transform .15s ease, border-color .15s ease;
+}
+.card:hover { transform: translateY(-2px); border-color: var(--accent); }
+.card .icon { font-size: 1.6rem; line-height: 1; }
+.card h3 { font-family: var(--serif); font-size: 1.15rem; margin: 6px 0 0; line-height: 1.25; }
+.card p { margin: 0; color: var(--muted); font-size: 0.93rem; line-height: 1.5; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; padding-top: 8px; }
+.tag {
+  font-family: var(--mono); font-size: 0.72rem;
+  background: var(--accent-soft); color: var(--accent);
+  padding: 2px 8px; border-radius: 99px;
+}
+
+/* ── Post list ───────────────────────────── */
+.post-list { list-style: none; margin: 0; padding: 0; }
+.post-list li { border-bottom: 1px solid var(--line); }
+.post-list a {
+  display: grid; grid-template-columns: 7.5em 1fr; gap: 16px;
+  padding: 16px 0; text-decoration: none; color: var(--ink);
+}
+.post-list time { font-family: var(--mono); font-size: 0.82rem; color: var(--muted); padding-top: 3px; }
+.post-list strong { font-family: var(--serif); font-size: 1.15rem; font-weight: 600; display: block; }
+.post-list span { color: var(--muted); font-size: 0.93rem; }
+.post-list a:hover strong { color: var(--accent); }
+@media (max-width: 520px) {
+  .post-list a { grid-template-columns: 1fr; gap: 2px; }
+}
+
+/* ── Article ─────────────────────────────── */
+.post-head { padding: 48px 0 8px; }
+.post-head .meta { font-family: var(--mono); font-size: 0.82rem; color: var(--muted); }
+.post-head h1 {
+  font-family: var(--serif);
+  font-size: clamp(2rem, 5.5vw, 2.9rem);
+  line-height: 1.1; letter-spacing: -0.015em;
+  margin: 10px 0 14px;
+}
+.post-head .dek { font-size: 1.15rem; color: var(--muted); margin: 0; }
+article { padding-bottom: 40px; }
+article h2 { font-family: var(--serif); font-size: 1.55rem; margin: 2.2em 0 0.5em; line-height: 1.25; }
+article h3 { font-size: 1.1rem; margin: 1.8em 0 0.4em; }
+article ul, article ol { padding-left: 1.3em; }
+article li { margin: 0.3em 0; }
+article code { font-family: var(--mono); font-size: 0.88em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+article pre { background: var(--code-bg); padding: 14px 16px; border-radius: 8px; overflow-x: auto; font-size: 0.88rem; }
+article pre code { background: none; padding: 0; }
+article figure { margin: 1.8em 0; }
+article figcaption { font-size: 0.88rem; color: var(--muted); margin-top: 6px; }
+article blockquote { margin: 1.5em 0; padding-left: 16px; border-left: 3px solid var(--accent); color: var(--muted); }
+
+.callout {
+  background: var(--accent-soft);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin: 1.6em 0;
+  font-size: 0.97rem;
+}
+.callout strong { color: var(--accent); }
+
+/* Placeholder boxes — delete these as you fill in each post */
+.todo {
+  border: 2px dashed var(--line);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin: 1.4em 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+.todo::before { content: "✏️ TO DO  "; font-family: var(--mono); font-size: 0.75rem; letter-spacing: .08em; }
+
+.post-nav {
+  display: flex; justify-content: space-between; gap: 16px;
+  border-top: 1px solid var(--line);
+  padding: 22px 0 8px; font-size: 0.95rem;
+}
+
+/* ── Footer ──────────────────────────────── */
+footer { border-top: 1px solid var(--line); margin-top: 48px; padding: 24px 0 40px; color: var(--muted); font-size: 0.88rem; }

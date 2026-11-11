@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Can AI design a stronger carabiner? · Nacho Dog Blog</title>
+  <meta name="description" content="I asked AI to help design a stronger carabiner. It was a useful sketching partner and a terrible engineer.">
+  <link rel="icon" href="../nacho-avatar.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;1,9..144,600&family=Inter:wght@400;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../blog.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="../"><img src="../nacho-avatar.jpg" alt="">Nacho Dog Blog</a>
+    <nav>
+      <a href="../">Blog</a>
+      <a href="../#projects">Projects</a>
+      <a href="../../">Nacho</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="post-head">
+    <div class="meta"><time datetime="2026-11">Nov 2026</time> · AI · CAD · 3D printing</div>
+    <h1>Can AI design a stronger carabiner?</h1>
+    <p class="dek">I asked AI to help design a stronger carabiner. It was a useful sketching partner and a terrible engineer.</p>
+  </div>
+
+  <article>
+<p>Carabiners are a deceptively simple part: a bent loop with a gate. But the shape is the result of decades of engineering around how load actually flows through the metal. I wanted to see whether an AI could take a standard design and make it stronger, and, just as interesting, where it would fall short.</p>
+
+<div class="callout"><strong>Safety first:</strong> nothing in this post is climbing gear. A home-designed or 3D-printed carabiner is not rated, not tested and must never hold a person. This was an experiment about AI, not a product.</div>
+
+<h2>The goal</h2>
+<p>Start from a typical D-shaped carabiner and ask AI to improve its strength while keeping it a usable size and weight.</p>
+<div class="todo">Describe your starting point: which design you began from, what "stronger" meant to you (major-axis load? gate-open strength?), and which AI tools you used.</div>
+
+<h2>How I used the AI</h2>
+<div class="todo">Walk through the process: the prompts you gave, whether it produced CAD, code (e.g. OpenSCAD / Python) or just ideas, and how many rounds of iteration it took. A screenshot of an early design next to the final one works well here.</div>
+<figure>
+  <div class="todo">Add an image: <code>&lt;img src="../img/carabiner-v1.jpg" alt="First AI-generated design"&gt;</code></div>
+  <figcaption>Early design vs final design.</figcaption>
+</figure>
+
+<h2>What it got right</h2>
+<div class="todo">The good bits: e.g. fast iteration, sensible-looking geometry, thickening the spine, rounding sharp corners.</div>
+
+<h2>The limitations</h2>
+<p>This is the real point of the project. The places I'd expect an AI to struggle with a load-bearing part:</p>
+<ul>
+  <li><strong>It can't verify its own claims.</strong> "This is 30% stronger" means nothing without simulation or a physical pull test.</li>
+  <li><strong>Load paths and stress concentrations.</strong> Strength lives in the spine and the curves; small geometry changes can move the weak point somewhere unexpected.</li>
+  <li><strong>Material assumptions.</strong> Real carabiners are forged aluminium or steel. A printed part behaves completely differently, especially along layer lines.</li>
+  <li><strong>The gate.</strong> The hinge, nose and gate-open strength are often the weakest part, and the hardest for a model to reason about.</li>
+</ul>
+<div class="todo">Replace or confirm these with what actually happened: where did it fail? Did it contradict itself, hallucinate numbers, or produce something unprintable?</div>
+
+<h2>Results</h2>
+<div class="todo">If you printed or tested it, add photos and results here (how it broke, where it broke). If not, say what you'd test next.</div>
+
+<h2>Takeaways</h2>
+<div class="todo">Your verdict in 2–3 sentences: is AI a useful design partner for physical parts, and where does a human (or FEA software) have to take over?</div>
+  </article>
+
+  <nav class="post-nav">
+    <span><a href="../">← All posts</a></span>
+    <span><a href="kinect-quest-golf-sim.html">A golf simulator from a Kinect and a Quest →</a></span>
+  </nav>
+</main>
+
+<footer>
+  <div class="wrap">Hosted on GitHub Pages · <a href="https://github.com/Herschy24/nachodog">source</a> · <a href="../../">meet Nacho</a></div>
+</footer>
+
+</body>
+</html>
