@@ -3,34 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Post title · Nacho Dog Blog</title>
-  <meta name="description" content="One-sentence summary.">
+  <title>Post title | Nacho Dog Blog</title>
+  <meta name="description" content="One-sentence summary shown under the title.">
+  <meta name="theme-color" content="#1d5a48">
   <link rel="icon" href="../nacho-avatar.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;1,9..144,600&family=Inter:wght@400;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../blog.css">
 </head>
 <body>
-
-<header class="topbar">
+<div class="mat">
+  <div class="ruler" aria-hidden="true"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span><span>15</span><span>16</span><span>17</span><span>18</span><span>19</span><span>20</span><span>21</span><span>22</span><span>23</span><span>24</span><span>25</span><span>26</span><span>27</span><span>28</span><span>29</span><span>30</span><span>31</span><span>32</span><span>33</span><span>34</span><span>35</span><span>36</span><span>37</span><span>38</span><span>39</span><span>40</span><span>41</span><span>42</span><span>43</span><span>44</span><span>45</span><span>46</span><span>47</span><span>48</span><span>49</span><span>50</span><span>51</span><span>52</span><span>53</span><span>54</span><span>55</span><span>56</span><span>57</span><span>58</span><span>59</span></div>
+  <header class="topbar">
+    <div class="wrap">
+      <a class="brand" href="../"><img src="../nacho-avatar.jpg" alt="">Nacho Dog Blog</a>
+      <nav>
+        <a href="../">Blog</a>
+        <a href="../#projects">Projects</a>
+        <a href="../../">Meet Nacho</a>
+      </nav>
+    </div>
+  </header>
   <div class="wrap">
-    <a class="brand" href="../"><img src="../nacho-avatar.jpg" alt="">Nacho Dog Blog</a>
-    <nav>
-      <a href="../">Blog</a>
-      <a href="../#projects">Projects</a>
-      <a href="../../">Nacho</a>
-    </nav>
+    <div class="post-head">
+      <p class="meta"><time datetime="2026-12">December 2026</time>, filed under tag and tag</p>
+      <h1>Post title</h1>
+      <p class="dek">One-sentence summary shown under the title.</p>
+    </div>
   </div>
-</header>
+</div>
 
-<main class="wrap">
-  <div class="post-head">
-    <div class="meta"><time datetime="2026-12">Dec 2026</time> · Tag · Tag</div>
-    <h1>Post title</h1>
-    <p class="dek">One-sentence summary shown under the title.</p>
-  </div>
-
+<main class="sheet">
   <article>
 <p>Intro paragraph.</p>
 
@@ -44,14 +48,12 @@
   </article>
 
   <nav class="post-nav">
-    <span><a href="../">← All posts</a></span>
-    <span></span>
+    <a href="../"><small>Back to</small>All posts</a>
+    <a class="next" href="../"><small>Back to</small>All posts</a>
   </nav>
 </main>
-
 <footer>
-  <div class="wrap">Hosted on GitHub Pages · <a href="https://github.com/Herschy24/nachodog">source</a> · <a href="../../">meet Nacho</a></div>
+  <div class="wrap">Built by hand and hosted on GitHub Pages. <a href="https://github.com/Herschy24/nachodog">View the source</a> or <a href="../../">meet Nacho</a>.</div>
 </footer>
-
 </body>
 </html>

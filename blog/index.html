@@ -4,75 +4,71 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nacho Dog Blog</title>
-  <meta name="description" content="Projects, tinkering and write-ups: 3D printing, VR, homelab and game mods.">
+  <meta name="description" content="Projects, tinkering and write-ups: AI-assisted design, VR, homelab and game mods.">
+  <meta name="theme-color" content="#1d5a48">
   <link rel="icon" href="nacho-avatar.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;1,9..144,600&family=Inter:wght@400;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="blog.css">
 </head>
 <body>
-
-<header class="topbar">
+<div class="mat">
+  <div class="ruler" aria-hidden="true"><span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span><span>15</span><span>16</span><span>17</span><span>18</span><span>19</span><span>20</span><span>21</span><span>22</span><span>23</span><span>24</span><span>25</span><span>26</span><span>27</span><span>28</span><span>29</span><span>30</span><span>31</span><span>32</span><span>33</span><span>34</span><span>35</span><span>36</span><span>37</span><span>38</span><span>39</span><span>40</span><span>41</span><span>42</span><span>43</span><span>44</span><span>45</span><span>46</span><span>47</span><span>48</span><span>49</span><span>50</span><span>51</span><span>52</span><span>53</span><span>54</span><span>55</span><span>56</span><span>57</span><span>58</span><span>59</span></div>
+  <header class="topbar">
+    <div class="wrap">
+      <a class="brand" href="./"><img src="nacho-avatar.jpg" alt="">Nacho Dog Blog</a>
+      <nav>
+        <a href="./" aria-current="page">Blog</a>
+        <a href="#projects">Projects</a>
+        <a href="../">Meet Nacho</a>
+      </nav>
+    </div>
+  </header>
   <div class="wrap">
-    <a class="brand" href="./"><img src="nacho-avatar.jpg" alt="">Nacho Dog Blog</a>
-    <nav>
-      <a href="./" aria-current="page">Blog</a>
-      <a href="#projects">Projects</a>
-      <a href="../">Nacho</a>
-    </nav>
+    <section class="hero">
+      <h1>Carabiners, golf swings, 3DS games and a medieval dog.</h1>
+      <p>Write-ups of the things I build on weekends: AI-assisted design, homebrew VR, homelab tinkering and game mods. Nacho supervises.</p>
+    </section>
+    <section class="projects" id="projects" aria-label="Recent projects">
+      <a class="card" href="posts/ai-carabiner.html">
+        <h3>Designing a stronger carabiner with AI</h3>
+        <p>What AI got right, what it got badly wrong, and why you shouldn't hang off the result.</p>
+        <p class="filed">AI, CAD and 3D printing</p>
+      </a>
+      <a class="card" href="posts/kinect-quest-golf-sim.html">
+        <h3>A Kinect and Meta Quest golf simulator</h3>
+        <p>An old Xbox Kinect tracks my swing while the course plays out in the headset.</p>
+        <p class="filed">VR, Kinect and Meta Quest</p>
+      </a>
+      <a class="card" href="posts/3ds-emulator-proxmox-switch.html">
+        <h3>3DS games on a Switch, served from Proxmox</h3>
+        <p>A 3DS emulator in my homelab, played through the Switch's hidden web browser.</p>
+        <p class="filed">Homelab, Proxmox and emulation</p>
+      </a>
+      <a class="card" href="posts/kcd2-dog-mod.html">
+        <h3>Putting Nacho into Kingdom Come 2</h3>
+        <p>Modding Mutt, Henry's dog in KCD2, to look like my own dog.</p>
+        <p class="filed">Modding and KCD2</p>
+      </a>
+    </section>
   </div>
-</header>
+</div>
 
 <main class="wrap">
-
-  <section class="hero">
-    <h1>Things I've built, broken, and <em>made the dog do.</em></h1>
-    <p>Write-ups of side projects: 3D printing with AI, homebrew VR golf, homelab emulation and game modding. Nacho supervises.</p>
+  <section class="listing measure">
+    <h2>All posts</h2>
+    <ul class="post-list">
+      <!-- Newest first. Add a new <li> at the top when you publish a post. -->
+      <li><a href="posts/ai-carabiner.html"><time datetime="2026-11">November 2026</time><div><strong>Can AI design a stronger carabiner?</strong><span>Using AI for a load-bearing part, and where it falls over.</span></div></a></li>
+      <li><a href="posts/kinect-quest-golf-sim.html"><time datetime="2026-11">November 2026</time><div><strong>A golf simulator from a Kinect and a Quest</strong><span>Body tracking from 2010 meets a modern VR headset.</span></div></a></li>
+      <li><a href="posts/3ds-emulator-proxmox-switch.html"><time datetime="2026-11">November 2026</time><div><strong>Playing 3DS games on a Switch, via Proxmox</strong><span>Emulator in the homelab, controller in the hand.</span></div></a></li>
+      <li><a href="posts/kcd2-dog-mod.html"><time datetime="2026-11">November 2026</time><div><strong>Making Mutt look like Nacho in Kingdom Come: Deliverance II</strong><span>Re-skinning a medieval dog after my own.</span></div></a></li>
+    </ul>
   </section>
-
-  <h2 class="section-label" id="projects">Recent projects</h2>
-  <div class="projects">
-    <a class="card" href="posts/ai-carabiner.html">
-      <span class="icon">🧗</span>
-      <h3>Designing a stronger carabiner with AI</h3>
-      <p>What AI got right, what it got badly wrong, and why you shouldn't hang off the result.</p>
-      <div class="tags"><span class="tag">AI</span><span class="tag">CAD</span><span class="tag">3D print</span></div>
-    </a>
-    <a class="card" href="posts/kinect-quest-golf-sim.html">
-      <span class="icon">⛳</span>
-      <h3>Kinect + Meta Quest golf simulator</h3>
-      <p>An old Xbox Kinect tracking my swing, with the course in the Quest headset.</p>
-      <div class="tags"><span class="tag">VR</span><span class="tag">Kinect</span><span class="tag">Quest</span></div>
-    </a>
-    <a class="card" href="posts/3ds-emulator-proxmox-switch.html">
-      <span class="icon">🎮</span>
-      <h3>3DS on Proxmox, played on a Switch</h3>
-      <p>A 3DS emulator in my homelab, streamed to the Switch's browser.</p>
-      <div class="tags"><span class="tag">Homelab</span><span class="tag">Proxmox</span><span class="tag">Emulation</span></div>
-    </a>
-    <a class="card" href="posts/kcd2-dog-mod.html">
-      <span class="icon">🐕</span>
-      <h3>Putting Nacho into Kingdom Come 2</h3>
-      <p>Modding Mutt, Henry's dog in KCD2, to look like my own dog.</p>
-      <div class="tags"><span class="tag">Modding</span><span class="tag">KCD2</span></div>
-    </a>
-  </div>
-
-  <h2 class="section-label">All posts</h2>
-  <ul class="post-list">
-    <!-- Newest first. Add a new <li> at the top when you publish a post. -->
-    <li><a href="posts/ai-carabiner.html"><time datetime="2026-11">Nov 2026</time><div><strong>Can AI design a stronger carabiner?</strong><span>Using AI for a load-bearing part, and where it falls over.</span></div></a></li>
-    <li><a href="posts/kinect-quest-golf-sim.html"><time datetime="2026-11">Nov 2026</time><div><strong>A golf simulator from a Kinect and a Quest</strong><span>Body tracking from 2010 meets a 2020s headset.</span></div></a></li>
-    <li><a href="posts/3ds-emulator-proxmox-switch.html"><time datetime="2026-11">Nov 2026</time><div><strong>Playing 3DS games on a Switch, via Proxmox</strong><span>Emulator in the homelab, controller in the hand.</span></div></a></li>
-    <li><a href="posts/kcd2-dog-mod.html"><time datetime="2026-11">Nov 2026</time><div><strong>Making Mutt look like Nacho in KCD2</strong><span>Re-skinning a medieval dog after my own.</span></div></a></li>
-  </ul>
-
 </main>
-
 <footer>
-  <div class="wrap">Hosted on GitHub Pages · <a href="https://github.com/Herschy24/nachodog">source</a> · <a href="../">meet Nacho</a></div>
+  <div class="wrap">Built by hand and hosted on GitHub Pages. <a href="https://github.com/Herschy24/nachodog">View the source</a> or <a href="../">meet Nacho</a>.</div>
 </footer>
-
 </body>
 </html>
