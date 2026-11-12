@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Orchid Microsystems</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -104,6 +104,27 @@ button.b95.love{color:#8a1060}
 @keyframes floatup{from{transform:translateY(0) rotate(var(--rot))}to{transform:translateY(-175vh) rotate(calc(var(--rot) * -1))}}
 @keyframes pulse{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.12)}}
 .lovecap{position:absolute;left:50%;bottom:calc(70px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);font:30px var(--crt);color:#fff;background:rgba(120,0,40,.75);padding:4px 16px;white-space:nowrap}
+button{touch-action:manipulation}
+@media (pointer:coarse), (max-width:700px){
+  #taskbar{flex-wrap:nowrap;overflow-x:auto;gap:4px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  #taskbar::-webkit-scrollbar{display:none}
+  #taskbar > *{flex:none}
+  #taskbar button.b95{padding:5px 9px;font-size:12px}
+  #taskbar small{display:none}
+  .meter{gap:3px}.meter span{font-size:9px;letter-spacing:0}.meter .bar{width:38px;height:10px}
+  #ticker{font-size:16px;min-width:0;padding:2px 6px}#pl{font-size:15px}
+  #clock{margin-left:0;font-size:12px;padding:3px 6px}
+  #toasts{top:calc(8px + env(safe-area-inset-top,0px));bottom:auto;max-width:min(300px,62vw)}
+  .toast{font-size:12px;padding:5px 8px}
+  #prompt{pointer-events:auto;font-size:14px;padding:9px 14px;white-space:normal;text-align:center;max-width:70vw}
+  .win .body{padding:10px;gap:8px}
+  .memo{padding:10px 12px;font-size:13.5px}
+  .opts button.b95{padding:10px 12px}
+  #joy{bottom:calc(50px + env(safe-area-inset-bottom,0px));width:132px;height:132px}
+  #knob{left:45px;top:45px}
+  #tbtn{bottom:calc(64px + env(safe-area-inset-bottom,0px));padding:20px 24px;font-size:16px;border-radius:0}
+}
+@media (pointer:coarse) and (orientation:portrait){#crosshair{display:none}}
 @media (prefers-reduced-motion:reduce){.heart{animation:none;bottom:auto;top:15%}.heart.big{animation:none;transform:translate(-50%,-50%)}}
 @media (prefers-reduced-motion:reduce){.toast{animation:none}#fade{transition:none}}
 </style>
@@ -121,6 +142,7 @@ button.b95.love{color:#8a1060}
     <button class="b95" id="dosbtn">Dossier <small>(N)</small></button>
     <button class="b95" id="brokerbtn">Broker <small>(B)</small></button>
     <button class="b95" id="heldbtn" hidden></button>
+    <button class="b95" id="coverbtn" hidden>TIMES <small>(T)</small></button>
     <div class="meter bad" title="Secrets leaked to the MSS"><span>Leaks</span><div class="bar sunk"><div class="fill" id="m-leak"></div></div></div>
     <div class="meter bad" title="How close you are to a front-page scandal"><span>Scandal</span><div class="bar sunk"><div class="fill" id="m-scan"></div></div></div>
     <div class="meter" title="Staff morale"><span>Morale</span><div class="bar sunk"><div class="fill" id="m-mor"></div></div></div>
@@ -157,11 +179,17 @@ button.b95.love{color:#8a1060}
         <div class="memo">
           <h2>CONFIDENTIAL MEMORANDUM</h2>
           <div class="hdr"><b>TO:</b><span>You, Chief Executive Officer</span><b>FROM:</b><span>Board of Directors</span><b>DATE:</b><span>Monday, March 3, 1997</span><b>RE:</b><span>Project ORCHID</span></div>
-          <p>Our security consultant believes <b>three people on this floor</b> are passing ORCHID chip designs to China's Ministry of State Security. We don't know who. Anyone could be one of them, so watch what people <i>do</i>.</p>
+          <p>Our security consultant believes <b>three people on this floor</b> are passing ORCHID chip designs to three different foreign services: one to <b>China's MSS</b>, one to <b>Russia's SVR</b>, and one to <b>IDF Military Intelligence</b>. We don't know who. Anyone could be one of them, so watch what people <i>do</i>.</p>
           <p>Catch all three before 5:00 PM Friday, or before ORCHID leaks. Keep the stock up. And stay on the right side of Margaret Thornbury in Legal. She has buried better CEOs than you.</p>
           <p>And for God's sake, keep your personal life out of the papers.</p>
         </div>
-        <div class="keys">
+        <div class="keys" id="touchkeys" hidden>
+          <kbd>Left stick</kbd><span>Walk (push all the way to hurry)</span>
+          <kbd>Drag</kbd><span>Drag anywhere else on the screen to look around</span>
+          <kbd>USE</kbd><span>Talk to people and use things (or tap the yellow prompt)</span>
+          <kbd>Taskbar</kbd><span>Dossier, Broker, TIMES and snacks live down here. Swipe it sideways for more.</span>
+        </div>
+        <div class="keys" id="deskkeys">
           <kbd>Click</kbd><span>Look around with the mouse (Esc to release)</span>
           <kbd>W A S D</kbd><span>Walk (Shift to hurry)</span>
           <kbd>E</kbd><span>Talk to people, use the copier, fax, server rack, water cooler…</span>
@@ -190,18 +218,35 @@ const pick = a => a[Math.floor(Math.random() * a.length)];
 const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const fmtMoney = v => (v < 0 ? '-' : '') + '$' + Math.abs(Math.round(v)).toLocaleString('en-US');
+// Three foreign services, one spy each. Who works for whom is random every game.
+const SVC = {
+  MSS: { agency: "China's Ministry of State Security (MSS)", short: 'MSS', code: '+86', city: 'Beijing',
+    desk: ['A business card for a "trade delegation" at the Chinese consulate in San Francisco, with Thursday\'s date on the back.', 'A pager whose only messages say "MEET THU" from a number with no area code.'],
+    phone: ['A man\'s voice: "Is the package ready? Uncle grows impatient." Click.', 'Someone says "Orchid. Thursday. The usual place." and hangs up.'],
+    pkg: ['Twenty blank floppy disks, a roll of microfilm, and a note: "THE ORCHID. THURSDAY."', 'A miniature camera hidden inside a hollowed-out Webster\'s dictionary.'] },
+  SVR: { agency: "Russia's Foreign Intelligence Service (SVR)", short: 'SVR', code: '+7', city: 'Moscow',
+    desk: ['A one-time pad: a tiny booklet of random five-digit numbers, half of them crossed out.', 'A hollowed-out nickel. There is microfilm inside. That is a very old trick.', 'A visitor badge from the Russian consulate in San Francisco, dated last Tuesday.'],
+    phone: ['A flat voice reads out a string of five-digit number groups, then hangs up.', '"The cousin from the consulate says the chip spec is late. He is not a patient cousin." Click.'],
+    pkg: ['A shortwave radio and a codebook disguised as a TV Guide.', 'A hollowed-out bolt containing three rolls of microfilm.'] },
+  AMAN: { agency: "the IDF's Military Intelligence Directorate (Aman)", short: 'IDF', code: '+972', city: 'Tel Aviv',
+    desk: ['A business card for a "defense technology attaché" at the Israeli consulate, with a pager number scrawled on the back.', 'A signals-processing conference badge from Tel Aviv. ORCHID wasn\'t public when that conference happened.', 'A floppy labeled "UNIT 8200 — NOT TAX STUFF". Subtle.'],
+    phone: ['"Tell our friend the attaché needs the full ORCHID spec, not the brochure." Click.', 'A crisp voice: "The colonel would like the test results by Friday." Then silence.'],
+    pkg: ['A ruggedized laptop with the asset tag scraped off and a signals-analysis manual.', 'A box of encrypted floppies and a thank-you card signed only "the attaché".'] },
+};
+const svc = n => SVC[n.service] || SVC.MSS;
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
 /* ---------------- renderer ---------------- */
 const canvas = $('#c');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-let pr = Math.min(devicePixelRatio || 1, 1.5); const prMax = pr;
+const MOBILE = matchMedia('(pointer: coarse)').matches;
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: !MOBILE, powerPreference: 'high-performance' });
+let pr = Math.min(devicePixelRatio || 1, MOBILE ? 1 : 1.5); const prMax = MOBILE ? Math.min(devicePixelRatio || 1, 1.5) : pr;
 renderer.setPixelRatio(pr);
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xd9dccf);
 scene.fog = new THREE.Fog(0xd9dccf, 16, 42);
 const camera = new THREE.PerspectiveCamera(70, 1, 0.05, 100);
-function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.fov = w / h < 1 ? 84 : 70; camera.updateProjectionMatrix(); }
 addEventListener('resize', resize); resize();
 
 const hemi = new THREE.HemisphereLight(0xf6f8ee, 0x58625c, 0.95); scene.add(hemi);
@@ -707,8 +752,8 @@ const L = {
     'A disposable camera, 24 of 24 shots used. Tucked under it: prints of R&D whiteboards.',
     'A floppy disk labeled "ORCHID_v3 – DO NOT COPY". It is a copy.',
     'A pager whose only messages say "MEET THU" from a number with no area code.',
-    'A Palm Pilot with exactly one contact, saved as "UNCLE (WORK)".',
-    'A stack of photocopied chip diagrams folded into a road atlas of British Columbia.',
+    'A Palm Pilot with exactly one contact, saved as "HANDLER (WORK)".',
+    'A stack of photocopied chip diagrams folded inside a road atlas.',
   ],
   deskInno: [
     'A stack of AOL free-trial CDs. At least forty. Some still in shrink-wrap.',
@@ -739,6 +784,7 @@ function newGame() {
   const roster = shuffle(ROSTER).slice(0, 12);
   if (!roster.some(r => r[1] === 'IT')) roster[0] = ROSTER.find(r => r[1] === 'IT');
   const spyIdx = new Set(shuffle([...Array(12).keys()]).slice(0, 3));
+  const svcOrder = shuffle(['MSS', 'SVR', 'AMAN']), svcOf = {}; [...spyIdx].forEach((idx, k) => svcOf[idx] = svcOrder[k]);
   const romIdx = new Set(shuffle([...Array(12).keys()]).slice(0, 4));
   const bathIdx = new Set([...shuffle([...spyIdx]).slice(0, 2), shuffle([...romIdx])[0]]);
   const deskOrder = shuffle(desks);
@@ -749,7 +795,7 @@ function newGame() {
     const tag = makeLabel(name, dept); tag.position.set(d.home.x, 2.05, d.home.z); tag.visible = false; scene.add(tag);
     const plate = makeLabel('#' + d.num, short.toUpperCase(), 256, 64); plate.scale.set(0.9, 0.225, 1); plate.position.set(d.x + 1.5, 1.68, d.z + 1.4); scene.add(plate);
     return {
-      id: i, name, first: name.split(' ')[0], dept, spy: spyIdx.has(i), romance: romIdx.has(i), desk: d, mesh, tag, plate,
+      id: i, name, first: name.split(' ')[0], dept, spy: spyIdx.has(i), service: svcOf[i] || null, romance: romIdx.has(i), desk: d, mesh, tag, plate,
       status: 'active', state: 'desk', path: [], target: null, leaveAt: 0, nextTrip: 540 + rnd(15, 180),
       sit: 1, speed: 0, heading: Math.PI, walkAmp: 0, maxSpeed: rnd(1.05, 1.45), sip: 0, sipUntil: 0, slotIdx: -1, waitT: 0,
       affection: 0, nervous: 0, talking: false, searched: false, seenTrip: false, mark: 0,
@@ -807,7 +853,8 @@ function movePlayer(dt) {
   const len = Math.hypot(fx, fz); if (len < 0.05) return 0;
   if (len > 1) { fx /= len; fz /= len; }
   const rush = G.rush && G.min < G.rush.until ? G.rush.mult : 1;
-  const sp = (keys.ShiftLeft || keys.ShiftRight ? 5 : 3) * rush * dt;
+  const run = keys.ShiftLeft || keys.ShiftRight || Math.hypot(joy.x, joy.y) > 0.92;
+  const sp = (run ? 5 : 3) * rush * dt;
   const sx = Math.sin(yaw), cz = Math.cos(yaw);
   const dx = (fx * cz - fz * sx) * sp, dz = (-fx * sx - fz * cz) * sp;
   if (!blocked(player.x + dx, player.z, player.r)) player.x += dx;
@@ -1048,7 +1095,7 @@ function gameOver(win, head, text) {
   G.over = true; G.paused = true;
   const fortune = `<p>Your personal net worth: <b>${fmtMoney(G.cash)}</b> (you started the week with $250,000).</p>`;
   const caught = npcs.filter(n => n.spy && n.status !== 'active').length;
-  const reveal = npcs.filter(n => n.spy).map(n => `${n.name} (${n.dept}, desk #${n.desk.num})`).join('<br>');
+  const reveal = npcs.filter(n => n.spy).map(n => `${n.name} (${n.dept}, desk #${n.desk.num}) — ${svc(n).short}`).join('<br>');
   const body = win
     ? `<div class="memo"><h2>MEMO: CONGRATULATIONS</h2><p>All three agents are in federal custody. ORCHID ships on schedule and ORCH closes at <b>$${G.stock.toFixed(2)}</b>.</p><p>Wrongful accusations: ${G.wrong}. Scandal: ${Math.round(G.scandal)}%.${G.affair ? ` Your spouse still doesn't know about ${G.affair.first}. Yet.` : ''}</p><p>The board would like to discuss your bonus.</p>${fortune}</div>`
     : `<div class="memo"><h2>${head.toUpperCase()}</h2><p>${text}</p><p>Agents caught: ${caught}/3.</p><p><b>The agents were:</b><br>${reveal}</p>${fortune}</div>`;
@@ -1064,6 +1111,7 @@ function updateHUD() {
   $('#m-legal').style.width = clamp(G.legal.anger, 0, 100) + '%';
   const pl = $('#pl'); pl.hidden = !G.short;
   if (G.short) { const v = pnl(); pl.textContent = `SHORT ${Math.round(G.short / 1000)}K ${v >= 0 ? '+' : ''}${fmtMoney(v)}`; pl.classList.toggle('neg', v < 0); }
+  $('#coverbtn').hidden = !G.lastCover;
   const hb = $('#heldbtn'); hb.hidden = !G.held; if (G.held) hb.textContent = `Holding: ${G.held.n} (Q)`;
 }
 function toast(title, text) {
@@ -1167,7 +1215,7 @@ function searchDesk(n, present) {
   if (n.searched) return present ? reply(n, 'You already went through my stuff, boss.') : say(`Desk #${n.desk.num}`, 'You already searched this desk. Same Beanie Babies. Same stapler.');
   n.searched = true;
   let item;
-  if (n.spy && Math.random() < .8) { item = pick(L.deskSpy); note(n, `Desk: ${item}`, true); }
+  if (n.spy && Math.random() < .8) { item = pick([...L.deskSpy, ...svc(n).desk, ...svc(n).desk]); note(n, `Desk: ${item}`, true); }
   else if (n.odd && Math.random() < .7) { item = pick(L.deskOdd); note(n, `Desk: ${item}`); }
   else { item = pick(L.deskInno); note(n, `Desk: ${item}`); }
   if (present) {
@@ -1228,7 +1276,7 @@ function resolveAct(n, kind) {
   scene.remove(n.mesh); scene.remove(n.tag); n.plate.material.opacity = 0.35;
   if (G.affair === n) G.affair = null;
   if (kind === 'fbi') {
-    if (n.spy) { legalGrr(-12); G.arrests++; G.stock += 3; G.morale = clamp(G.morale + 6, 0, 100); note(n, 'Arrested by the FBI. Confirmed MSS asset.', true); fade(`The agents find a microfilm reader in ${n.first}'s glovebox.<br><br>Confirmed: Ministry of State Security.`); }
+    if (n.spy) { legalGrr(-12); G.arrests++; G.stock += 3; G.morale = clamp(G.morale + 6, 0, 100); note(n, `Arrested by the FBI. Confirmed asset of ${svc(n).agency}.`, true); fade(`The agents find a microfilm reader in ${n.first}'s glovebox.<br><br>Confirmed: ${svc(n).agency}.`); toast('FBI', `${n.name} worked for ${svc(n).agency}. ${3 - G.arrests} to go.`); }
     else { legalGrr(40, `calling the FBI on ${n.name}, who is completely innocent and now has a lawyer`); G.wrong++; G.stock -= 4; G.morale = clamp(G.morale - 20, 0, 100); G.scandal += 10; note(n, 'Wrongly arrested. Released. Suing.'); fade(`${n.first} is released after six hours. They were never a spy.<br><br>Their lawyer calls before lunch.`); }
   } else {
     legalGrr(n.spy ? 6 : 15, `firing ${n.name} without a single page of documentation`);
@@ -1282,7 +1330,7 @@ function useFax() {
   const s = evidenceDesk('fax', .65);
   if (!s) return say('Fax machine', 'Just a lunch menu.');
   note(s, `Misdialed fax from ext. ${s.desk.num} to an overseas number.`, true);
-  say('Fax machine', `A misdialed fax is stuck in the tray. Cover sheet: <b>FROM EXT. ${s.desk.num}</b>, sent to a number starting +86. The pages are blank, as if someone grabbed them fast.`);
+  say('Fax machine', `A misdialed fax is stuck in the tray. Cover sheet: <b>FROM EXT. ${s.desk.num}</b>, sent to a number starting ${s.spy ? svc(s).code : pick(['+86', '+7', '+972'])}. The pages are blank, as if someone grabbed them fast.`);
 }
 function useServer() {
   if (!once('server')) return say('Server rack', 'The login log hasn\'t changed since you last checked. The fans hum.');
@@ -1299,7 +1347,7 @@ function useCeoDesk() {
   opts.push({ label: 'Log into DialTrade (private)', fn: () => openBroker('desk') });
   if (G.lastCover) opts.push({ label: 'Read the latest TIMES', fn: () => showCover(G.lastCover) });
   opts.push({ label: 'Crawl into the bed under your desk (2 hours)', cls: 'love', fn: underDeskNap });
-  opts.push({ label: 'Read the security consultant\'s report', fn: () => say('Report', `"Three suspected assets on the floor. Typical behaviors: after-hours copying, interest in R&D access, contact with foreign numbers, unexplained cash. <b>Do not profile by name, accent or background.</b> Half the people who fit a stereotype are your best engineers. Watch behavior."`) });
+  opts.push({ label: 'Read the security consultant\'s report', fn: () => say('Report', `"Three suspected assets on the floor, one each for China\'s MSS, Russia\'s SVR and IDF Military Intelligence. Each has a handler who calls, faxes and mails. Typical behaviors: after-hours copying, interest in R&D access, contact with foreign numbers, unexplained cash. <b>Do not profile by name, accent or background.</b> Half the people who fit a stereotype are your best engineers. Watch behavior."`) });
   if (G.seated) opts.push({ label: 'Stand up', fn: standUp });
   opts.push({ label: G.seated ? 'Stay seated' : 'Walk away' });
   dialog('Your desk', `<div class="memo" style="font-size:14px">Leather chair. A framed photo of your family, angled slightly away. A Rolodex nobody has touched since 1994. Under the desk, behind a panel only you know about: a mattress, a pillow, and an alarm clock.</div>`, opts);
@@ -1392,7 +1440,7 @@ function bathScene(n) {
   loveScene(n, () => {
     updateHUD(); checkEnd(); if (G.over) return;
     if (n.spy) {
-      const line = 'Afterwards, they straighten their collar, check under the stalls, run the tap, and lean in. "Some friends of mine overseas admire ORCHID very much. They would pay. Generously. And your short position would do very well when the news breaks."';
+      const line = `Afterwards, they straighten their collar, check under the stalls, run the tap, and lean in. "Some friends of mine in ${svc(n).city} admire ORCHID very much. They would pay. Generously. And your short position would do very well when the news breaks."`;
       n.talking = true; speak(n, line);
       dialog(`Restroom — ${n.name}`, `<div class="speech">${portrait(n)}<p>${line}</p></div>`, [
         { label: 'Take the envelope ($150,000)', cls: 'danger', fn: () => {
@@ -1617,12 +1665,12 @@ function randomEvent() {
 }
 function openPackage() {
   const { n } = G.pkg; G.pkg.opened = true; if (pkgMesh) { scene.remove(pkgMesh); pkgMesh = null; }
-  if (n.spy) { const t = pick(['Twenty blank floppy disks, a roll of microfilm, and a note: "THE ORCHID. THURSDAY."', 'A miniature camera hidden inside a hollowed-out Webster\'s dictionary.', 'A bundle of cash in a box of Girl Scout cookies. The cookies are also real.']); note(n, `Mystery package on their desk: ${t}`, true); say(`Package on desk #${n.desk.num}`, `You slit the tape. Inside: ${t}<br><br>You tape it back up. Mostly.`); }
+  if (n.spy) { const t = pick([...svc(n).pkg, 'A bundle of cash in a box of Girl Scout cookies. The cookies are also real.']); note(n, `Mystery package on their desk: ${t}`, true); say(`Package on desk #${n.desk.num}`, `You slit the tape. Inside: ${t}<br><br>You tape it back up. Mostly.`); }
   else { const t = pick(['A limited-edition Beanie Baby. In mint condition. Well, it WAS mint.', 'A mail-order NordicTrack. Some assembly required.', 'Forty pounds of Columbia House CDs they forgot to cancel.', 'A box of Franklin Planner refills. Thrilling.']); note(n, `Package on their desk: ${t}`); say(`Package on desk #${n.desk.num}`, `You slit the tape. Inside: ${t}<br><br>Opening other people's mail is a federal crime. Margaret will hear about this.`); legalGrr(4, `opening ${n.name}'s mail`); }
 }
 function answerPhone(n) {
   n.ringUntil = 0; n.desk.ring.visible = false;
-  if (n.spy && Math.random() < .7) { const t = pick(['A man\'s voice: "Is the package ready? Uncle grows impatient." Click.', 'Someone says "Orchid. Thursday. The usual place." and hangs up.', 'A voice says a string of numbers, then: "Repeat that back." You hang up.']); note(n, `Answered their desk phone: ${t}`, true); say(`Desk #${n.desk.num} phone`, t); }
+  if (n.spy && Math.random() < .7) { const t = pick(svc(n).phone); note(n, `Answered their desk phone: ${t}`, true); say(`Desk #${n.desk.num} phone`, t); }
   else say(`Desk #${n.desk.num} phone`, pick(['"Hi, this is Dr. Feldman\'s office confirming a root canal at 3." You promise to pass it on.', '"Congratulations! You\'ve won a timeshare presentation in Branson, Missouri!"', '"Honey? Did you remember the dry cleaning?" You hang up very quietly.', '"This is the library. Your copy of The Bridges of Madison County is 14 weeks overdue."']));
 }
 
@@ -1841,7 +1889,7 @@ function openDossier() {
     const row = document.createElement('div'); row.className = 'drow sunk';
     const gone = n.status !== 'active';
     const notes = n.notes.length ? `<ul>${n.notes.map(x => `<li class="${x.strong ? 'strong' : ''}">${x.text}</li>`).join('')}</ul>` : `<div class="gone">Nothing yet.</div>`;
-    row.innerHTML = `<div class="num">#${n.desk.num}</div><div style="min-width:0"><h4>${n.name}<small>${n.dept}${gone ? ' · ' + n.status.toUpperCase() : ''}${G.affair === n ? ' · ♥' : ''}</small></h4>${notes}</div>`;
+    row.innerHTML = `<div class="num">#${n.desk.num}</div><div style="min-width:0"><h4>${n.name}<small>${n.dept}${gone ? ' · ' + n.status.toUpperCase() + (n.spy && n.status === 'arrested' ? ' · ' + svc(n).short : '') : ''}${G.affair === n ? ' · ♥' : ''}</small></h4>${notes}</div>`;
     const b = document.createElement('button'); b.className = 'b95 stamp ' + MARKS[n.mark][1]; b.textContent = MARKS[n.mark][0];
     b.onclick = () => { n.mark = (n.mark + 1) % 3; b.className = 'b95 stamp ' + MARKS[n.mark][1]; b.textContent = MARKS[n.mark][0]; };
     row.appendChild(b); list.appendChild(row);
@@ -1880,10 +1928,13 @@ function interact() {
   if (G.ui || G.paused || !current) return;
   if (current.npc) talk(current.npc); else current.it.use();
 }
+$('#coverbtn').onclick = () => { if (G.lastCover && !G.paused && !G.ui) showCover(G.lastCover); };
+$('#prompt').addEventListener('click', () => { if (isTouch) interact(); });
 $('#brokerbtn').onclick = () => { if (!G.paused && !G.ui) openBroker('phone'); }; $('#heldbtn').onclick = consume;
 $('#dlg-x').onclick = closeDialog; $('#dos-x').onclick = closeDossier; $('#dosbtn').onclick = () => $('#dossier').hidden ? openDossier() : closeDossier();
 $('#startbtn').onclick = () => { if ($('#intro').hidden) dialog('Orchid Microsystems', `<div class="memo" style="font-size:14px">ORCHID 56K-on-a-chip. Est. 1991. Mountain View, CA.<br><br>Day: ${DAYS[G.day]}. Agents caught: ${G.arrests}/3. Wrong calls: ${G.wrong}.</div>`, [{ label: 'Resume' }, { label: 'Quit and start over', cls: 'danger', fn: () => { newGame(); G.paused = false; } }]); };
-$('#startgame').onclick = () => { $('#intro').hidden = true; G.ui = false; G.paused = false; toast('Welcome', 'Walk the floor. Talk to people. Trust nobody completely.'); if (!isTouch) canvas.click(); };
+if (isTouch) { $('#touchkeys').hidden = false; $('#deskkeys').hidden = true; }
+$('#startgame').onclick = () => { $('#intro').hidden = true; G.ui = false; G.paused = false; toast('Welcome', 'Walk the floor. Talk to people. Trust nobody completely.'); if (isTouch && innerHeight > innerWidth) toast('Tip', 'Turn your phone sideways for a better view.'); if (!isTouch) canvas.click(); };
 
 // touch controls
 const joy = { x: 0, y: 0 };
