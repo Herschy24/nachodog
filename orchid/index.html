@@ -77,7 +77,7 @@ button.b95.love{color:#8a1060}
 
 #dossier .win{width:min(720px,100%)}
 .dlist{display:flex;flex-direction:column;gap:6px}
-.drow{display:grid;grid-template-columns:40px 1fr auto;gap:10px;background:var(--paper);padding:8px;align-items:start}
+.drow{display:grid;grid-template-columns:52px 1fr auto;gap:10px;background:var(--paper);padding:8px;align-items:start}
 .drow .num{font:22px/1 var(--crt);color:var(--teal)}
 .drow h4{margin:0;font-size:13px}
 .drow h4 small{font-weight:normal;color:#555;margin-left:6px}
@@ -125,6 +125,17 @@ button{touch-action:manipulation}
   #tbtn{bottom:calc(64px + env(safe-area-inset-bottom,0px));padding:20px 24px;font-size:16px;border-radius:0}
 }
 @media (pointer:coarse) and (orientation:portrait){#crosshair{display:none}}
+.board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+@media (max-width:560px){.board{grid-template-columns:1fr}}
+.board .col{background:var(--paper);padding:8px;min-width:0}
+.board h4{margin:0 0 4px;font-size:12.5px}
+.board small{color:#555;font-size:11.5px}
+.chip{display:inline-block;font-size:11px;padding:1px 6px;border:1px solid var(--shadow);background:#fff;margin:3px 4px 0 0;white-space:nowrap}
+.board .chip{background:#ffe9a8;border-color:#b08a20}
+.rumors{background:var(--paper);padding:6px 10px;font-size:12.5px}
+.rumors summary{cursor:pointer;font-weight:bold}
+.rumors ul{margin:6px 0 0;padding-left:18px}
+.rumors small{color:#777}
 @media (prefers-reduced-motion:reduce){.heart{animation:none;bottom:auto;top:15%}.heart.big{animation:none;transform:translate(-50%,-50%)}}
 @media (prefers-reduced-motion:reduce){.toast{animation:none}#fade{transition:none}}
 </style>
@@ -168,7 +179,7 @@ button{touch-action:manipulation}
   <div id="dossier" class="layer" hidden>
     <div class="win bevel" role="dialog" aria-modal="true">
       <div class="tb"><span>DOSSIER.TXT — Notepad</span><button class="b95" id="dos-x" aria-label="Close">×</button></div>
-      <div class="body"><div style="font-size:12px;color:#333">Everything you've learned, by desk. Click a stamp to mark your own hunch.</div><div class="dlist" id="dlist"></div></div>
+      <div class="body"><div style="font-size:12px;color:#333">Evidence on each service's asset is at the top. Every clue describes the spy, never names them. Compare it against your staff below and click a stamp to mark your hunch.</div><div class="dlist" id="dlist"></div></div>
     </div>
   </div>
 
@@ -179,7 +190,7 @@ button{touch-action:manipulation}
         <div class="memo">
           <h2>CONFIDENTIAL MEMORANDUM</h2>
           <div class="hdr"><b>TO:</b><span>You, Chief Executive Officer</span><b>FROM:</b><span>Board of Directors</span><b>DATE:</b><span>Monday, March 3, 1997</span><b>RE:</b><span>Project ORCHID</span></div>
-          <p>Our security consultant believes <b>three people on this floor</b> are passing ORCHID chip designs to three different foreign services: one to <b>China's MSS</b>, one to <b>Russia's SVR</b>, and one to <b>IDF Military Intelligence</b>. We don't know who. Anyone could be one of them, so watch what people <i>do</i>.</p>
+          <p>Our security consultant believes <b>three people on this floor</b> are passing ORCHID chip designs to three different foreign services: one to <b>China's MSS</b>, one to <b>Russia's SVR</b>, and one to <b>IDF Military Intelligence</b>. We don't know who. Every clue you find will describe a spy (hair, glasses, where they sit…), never name them. Cross off suspects like a game of Clue, then tell the FBI <b>who</b> and <b>who they work for</b>.</p>
           <p>Catch all three before 5:00 PM Friday, or before ORCHID leaks. Keep the stock up. And stay on the right side of Margaret Thornbury in Legal. She has buried better CEOs than you.</p>
           <p>And for God's sake, keep your personal life out of the papers.</p>
         </div>
@@ -221,15 +232,15 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const fmtMoney = v => (v < 0 ? '-' : '') + '$' + Math.abs(Math.round(v)).toLocaleString('en-US');
 // Three foreign services, one spy each. Who works for whom is random every game.
 const SVC = {
-  MSS: { agency: "China's Ministry of State Security (MSS)", short: 'MSS', code: '+86', city: 'Beijing',
+  MSS: { label: "China's MSS", agency: "China's Ministry of State Security (MSS)", short: 'MSS', code: '+86', city: 'Beijing',
     desk: ['A business card for a "trade delegation" at the Chinese consulate in San Francisco, with Thursday\'s date on the back.', 'A pager whose only messages say "MEET THU" from a number with no area code.'],
     phone: ['A man\'s voice: "Is the package ready? Uncle grows impatient." Click.', 'Someone says "Orchid. Thursday. The usual place." and hangs up.'],
     pkg: ['Twenty blank floppy disks, a roll of microfilm, and a note: "THE ORCHID. THURSDAY."', 'A miniature camera hidden inside a hollowed-out Webster\'s dictionary.'] },
-  SVR: { agency: "Russia's Foreign Intelligence Service (SVR)", short: 'SVR', code: '+7', city: 'Moscow',
+  SVR: { label: "Russia's SVR", agency: "Russia's Foreign Intelligence Service (SVR)", short: 'SVR', code: '+7', city: 'Moscow',
     desk: ['A one-time pad: a tiny booklet of random five-digit numbers, half of them crossed out.', 'A hollowed-out nickel. There is microfilm inside. That is a very old trick.', 'A visitor badge from the Russian consulate in San Francisco, dated last Tuesday.'],
     phone: ['A flat voice reads out a string of five-digit number groups, then hangs up.', '"The cousin from the consulate says the chip spec is late. He is not a patient cousin." Click.'],
     pkg: ['A shortwave radio and a codebook disguised as a TV Guide.', 'A hollowed-out bolt containing three rolls of microfilm.'] },
-  AMAN: { agency: "the IDF's Military Intelligence Directorate (Aman)", short: 'IDF', code: '+972', city: 'Tel Aviv',
+  AMAN: { label: 'IDF Military Intelligence', agency: "the IDF's Military Intelligence Directorate (Aman)", short: 'IDF', code: '+972', city: 'Tel Aviv',
     desk: ['A business card for a "defense technology attaché" at the Israeli consulate, with a pager number scrawled on the back.', 'A signals-processing conference badge from Tel Aviv. ORCHID wasn\'t public when that conference happened.', 'A floppy labeled "UNIT 8200 — NOT TAX STUFF". Subtle.'],
     phone: ['"Tell our friend the attaché needs the full ORCHID spec, not the brochure." Click.', 'A crisp voice: "The colonel would like the test results by Friday." Then silence.'],
     pkg: ['A ruggedized laptop with the asset tag scraped off and a signals-analysis manual.', 'A box of encrypted floppies and a thank-you card signed only "the attaché".'] },
@@ -612,7 +623,7 @@ function makePerson(opts = {}) {
   const skinHex = pick(SKIN), hairHex = pick(HAIR);
   const shirtM = M(pick(SHIRT)), skinM = M(skinHex), hairM = M(hairHex), pantsM = M(pick(PANTS));
   const add = (geo, m, x, y, z, parent = g) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); parent.add(o); return o; };
-  const shoeM = M(pick([0x1a1410, 0x3a2414, 0x222222, 0xe8e4dc]));
+  const shoeHex = pick([0x1a1410, 0x3a2414, 0x222222, 0xe8e4dc, 0xe8e4dc]); const shoeM = M(shoeHex);
   const mkLeg = x => {
     const hip = new THREE.Group(); hip.position.set(x, 0.82, 0); g.add(hip);
     add(new THREE.BoxGeometry(0.16, 0.44, 0.2), pantsM, 0, -0.21, 0, hip);
@@ -624,7 +635,8 @@ function makePerson(opts = {}) {
   const legL = mkLeg(-0.1), legR = mkLeg(0.1);
   add(new THREE.BoxGeometry(0.46, 0.62, 0.26), shirtM, 0, 1.11, 0);
   add(new THREE.BoxGeometry(0.2, 0.06, 0.02), M(0xf2efe6), 0, 1.4, 0.13);
-  if (Math.random() < .55) add(new THREE.BoxGeometry(0.07, 0.4, 0.02), M(pick([0x8b0000, 0x1a237e, 0x4a148c, 0xbfa000, 0x2e7d32])), 0, 1.17, 0.14);
+  const hasTie = Math.random() < .55;
+  if (hasTie) add(new THREE.BoxGeometry(0.07, 0.4, 0.02), M(pick([0x8b0000, 0x1a237e, 0x4a148c, 0xbfa000, 0x2e7d32])), 0, 1.17, 0.14);
   const mkArm = x => {
     const sh = new THREE.Group(); sh.position.set(x, 1.38, 0); g.add(sh);
     add(new THREE.BoxGeometry(0.12, 0.56, 0.14), shirtM, 0, -0.27, 0, sh);
@@ -675,7 +687,8 @@ function makePerson(opts = {}) {
   else { add(new THREE.BoxGeometry(0.31, 0.09, 0.3), hairM, 0, 0.15, -0.005, head); back(0.168, 1.65); }
 
   mergeRig(g);
-  g.userData = { legL, legR, armL, armR, head, faceMat, tex, nextBlink: Math.random() * 4, blinkEnd: 0, shirt: shirtM.color.getHexString() };
+  const traits = { hair: HAIRCAT[hairHex] || 'dark', glasses: !!f.glasses, tie: hasTie, shoes: shoeHex === 0xe8e4dc, beard: [1, 2, 3].includes(f.facial) };
+  g.userData = { traits, legL, legR, armL, armR, head, faceMat, tex, nextBlink: Math.random() * 4, blinkEnd: 0, shirt: shirtM.color.getHexString() };
   return g;
 }
 
@@ -813,9 +826,20 @@ function newGame() {
   });
   G = { min: 540, day: 0, leaks: 0, scandal: 0, morale: 70, stock: 24, paused: true, over: false, ui: false, affair: null, daily: {}, lastHour: 9, dayStart: { leaks: 0, stock: 24 }, arrests: 0, wrong: 0,
     seated: false, covers: 0, lastCover: null, ceo: { hair: pick(['#3b2314', '#1b1b1b', '#8c8c8c', '#6a4a2a']), skin: pick(['#f1c9a5', '#e0ac7e', '#c68642', '#8d5524']), glasses: Math.random() < .4 },
+    known: { MSS: {}, SVR: {}, AMAN: {} }, evidence: [], rumors: [],
     legal: { anger: 0, summoned: false, deadline: 0, log: [], memos: 0, nagAt: 0 },
     cash: 250000, short: 0, avg: 0, sec: 0, hist: [24], lastTick: 540, held: null, rush: null };
   npcs.forEach(n => pose(n, 0));
+  // Cluedo setup: spies get a unique combination of traits so the case is always solvable
+  npcs.forEach(n => n.tr = traitsOf(n));
+  const tkey = n => TRAIT_KEYS.map(k => n.tr[k]).join('|');
+  const uniq = npcs.filter(n => npcs.filter(o => tkey(o) === tkey(n)).length === 1);
+  const chosen = shuffle(uniq.length >= 3 ? uniq : npcs).slice(0, 3), order = shuffle(['MSS', 'SVR', 'AMAN']);
+  npcs.forEach(n => { n.spy = false; n.service = null; });
+  chosen.forEach((n, k) => { n.spy = true; n.service = order[k]; n.clueQ = shuffle(TRAIT_KEYS); });
+  npcs.forEach(n => { n.odd = !n.spy && Math.random() < .35; });
+  const roms = npcs.filter(n => n.romance), lover = pick(roms.length ? roms : npcs), bathSpies = shuffle(chosen).slice(0, 2);
+  npcs.forEach(n => { n.bathYes = n === lover || bathSpies.includes(n); });
   legalStaff.forEach(o => { scene.remove(o.mesh); scene.remove(o.tag); });
   const mkStaff = (id, name, title, home, rotY, suit) => {
     const mesh = makePerson({ angry: true, suit }); mesh.position.set(home.x, 0, home.z); mesh.rotation.y = rotY; scene.add(mesh);
@@ -912,9 +936,9 @@ function findTarget() {
 function planTrip(n) {
   const r = Math.random(); let key;
   const casual = ['cooler', 'coffee', 'copier', 'fax', 'cooler', 'snacks', 'soda'];
-  if (n.spy) key = r < 0.45 ? 'server' : pick(casual);
+  if (n.spy) key = r < 0.22 ? 'server' : pick(casual);
   else if (n.dept === 'IT') key = r < 0.4 ? 'server' : pick(casual);
-  else key = r < 0.05 ? 'server' : pick(casual);
+  else key = r < 0.1 ? 'server' : pick(casual);
   if (n.forceKey) { key = n.forceKey; n.forceKey = null; }
   const t = TARGETS[key];
   const taken = npcs.filter(o => o !== n && o.status === 'active' && o.target === key && ['standup', 'go', 'at'].includes(o.state)).map(o => o.slotIdx);
@@ -967,7 +991,7 @@ function steer(n, dt) {
 }
 function arrive(n) {
   n.speed = 0;
-  if (n.state === 'go') { n.state = 'at'; n.leaveAt = n.invite ? Infinity : G.min + rnd(15, 45); }
+  if (n.state === 'go') { n.state = 'at'; n.leaveAt = n.invite ? Infinity : G.min + rnd(15, 45); if (n.invite) toast('Restroom', `${n.first} is waiting for you in the restroom (west wall).`); }
   else { n.state = 'desk'; n.nextTrip = G.min + rnd(60, 200) * (n.spy ? 0.7 : 1); }
 }
 function pose(n, t) {
@@ -989,6 +1013,7 @@ function updateNPC(n, dt) {
   if (n.status !== 'active') return;
   const u = n.mesh.userData, t = performance.now() / 1000;
   let moving = false;
+  if (n.invite && !n.talking && !G.ui && !G.paused && n.pos.x < -11.15 && inBathroom()) return bathScene(n);
   if (n.talking) { n.speed = 0; faceToward(n, player.x, player.z, dt); n.heading = n.mesh.rotation.y; }
   else if (n.state === 'desk') {
     n.mesh.rotation.y = lerpAngle(n.mesh.rotation.y, Math.PI, dt * 3);
@@ -1004,11 +1029,10 @@ function updateNPC(n, dt) {
     if (n.target === 'server' && !n.seenTrip && Math.hypot(player.x - n.pos.x, player.z - n.pos.z) < 9) {
       n.seenTrip = true;
       if (n.dept === 'IT') note(n, `Seen at the server room door (${stamp()}). They're IT, so maybe normal.`);
-      else { note(n, `Seen lurking outside the server room (${stamp()}). Not their department.`, true); toast('Huh.', `${n.name} is hanging around the server room door.`); }
+      else note(n, `Seen near the server room door (${stamp()}). Could be nothing.`);
     }
     if (n.target === 'bathroom' && n.invite) {
-      if (inBathroom() && Math.hypot(player.x - n.pos.x, player.z - n.pos.z) < 3.2 && !G.ui && !G.paused) bathScene(n);
-      else if (G.min >= n.invite.until) { n.invite = null; toast('Restroom', `${n.first} waited in the bathroom for an hour and gave up. They look… relieved? Hurt? Both.`); n.leaveAt = G.min; }
+      if (G.min >= n.invite.until) { n.invite = null; toast('Restroom', `${n.first} waited in the bathroom for an hour and gave up. They look… relieved? Hurt? Both.`); n.leaveAt = G.min; }
     }
     if (G.min >= n.leaveAt) { n.path = n.back; n.state = 'back'; n.heading = n.mesh.rotation.y; n.speed = 0; }
   }
@@ -1178,15 +1202,7 @@ function talk(n, line) {
     if (!once(n.id + 'prop')) return reply(n, 'You already said that. I\'m starting to think you\'re after my ' + PROP_INFO[pk][0] + '.');
     G.morale = clamp(G.morale + 1, 0, 100); if (n.romance) n.affection++; updateHUD(); reply(n, pick(PROP_INFO[pk][1]));
   } });
-  opts.splice(2, 0, { label: 'Noticed anything odd about anyone?', fn: () => {
-    if (!once(n.id + 'gossip')) return reply(n, 'I told you what I know. Which is nothing. I see nothing. I\'m in Accounting.'.replace('Accounting', n.dept));
-    const others = active().filter(o => o !== n), inno = others.filter(o => !o.spy), spies = activeSpies().filter(o => o !== n);
-    let line;
-    if (n.spy && inno.length) { const v = pick(inno); line = pick([`Honestly? I'd keep an eye on ${v.first}. Very quiet. Always at the copier.`, `${v.first} asked me about the server room last week. I thought that was strange.`]); note(v, `${n.first} says to keep an eye on them.`); note(n, `Was very eager to point the finger at ${v.first}.`); }
-    else if (spies.length && Math.random() < .4) { const v = pick(spies); line = pick([`${v.first} has been taking a LOT of photos of the whiteboards. Says it's for "documentation."`, `I saw ${v.first} put something in the snack machine. Not money. Something else.`, `${v.first} took a call, said "not yet" three times, and hung up the second I walked by.`]); note(v, `${n.first} noticed: "${line}"`, true); }
-    else { const v = pick(others); line = v ? pick([`${v.first} microwaves fish. That's the only crime I've witnessed.`, `${v.first} has been weird since the Christmas party. Not spy weird. Karaoke weird.`, `Nothing. Unless you count ${v.first}'s ties.`]) : 'It\'s just us now, boss.'; }
-    reply(n, line);
-  } });
+  opts.splice(2, 0, { label: 'Noticed anything odd about anyone?', fn: () => askOdd(n) });
   if (G.bday === n) opts.unshift({ label: 'Happy birthday!', cls: 'love', fn: () => {
     if (!once(n.id + 'bday')) return reply(n, 'You already said that! But thanks again.');
     G.morale = clamp(G.morale + 4, 0, 100); if (n.romance) n.affection++; updateHUD();
@@ -1207,11 +1223,11 @@ function chat(n, topic) {
   let t;
   if (topic === 'work') {
     if (G.affair === n && n.spy && Math.random() < .7) { t = 'Pillow talk aside… where do you keep the ORCHID master disk at night? Just so I know you\'re safe.'; note(n, 'Asked, very casually, where you keep the ORCHID master disk.', true); }
-    else if (n.spy && Math.random() < .65) { t = pick(L.workSpy); note(n, `Said: "${t}"`, true); }
+    else if (n.spy && Math.random() < .3) { t = pick(L.workSpy); note(n, `Said: "${t}"`); }
     else if (n.odd && Math.random() < .6) { t = pick(L.workOdd); note(n, `Said: "${t}"`); }
     else { t = pick(L.workInno); if (G.affair === n && Math.random() < .5) { const s = activeSpies().filter(x => x !== n); if (s.length) { const v = pick(s); t += ` Between us? ${v.first} has been asking everyone about R&D badges.`; note(v, `${n.first} says they've been asking around about R&D badges.`, true); } } }
   } else {
-    if (n.spy && Math.random() < .6) { t = pick(L.wkSpy); note(n, `Weekend: "${t}"`, true); }
+    if (n.spy && Math.random() < .25) { t = pick(L.wkSpy); note(n, `Weekend: "${t}"`); }
     else t = pick(L.wkInno);
     if (n.romance && Math.random() < .65) { t += ' ' + pick(L.romanceHint); note(n, 'Seems to like you. A lot.'); }
   }
@@ -1222,7 +1238,7 @@ function searchDesk(n, present) {
   if (n.searched) return present ? reply(n, 'You already went through my stuff, boss.') : say(`Desk #${n.desk.num}`, 'You already searched this desk. Same Beanie Babies. Same stapler.');
   n.searched = true;
   let item;
-  if (n.spy && Math.random() < .8) { item = pick([...L.deskSpy, ...svc(n).desk, ...svc(n).desk]); note(n, `Desk: ${item}`, true); }
+  if (n.spy && Math.random() < .5) { item = pick([...L.deskSpy, ...svc(n).desk, ...svc(n).desk]); note(n, `Desk: ${item}`, true); }
   else if (n.odd && Math.random() < .7) { item = pick(L.deskOdd); note(n, `Desk: ${item}`); }
   else { item = pick(L.deskInno); note(n, `Desk: ${item}`); }
   if (present) {
@@ -1271,29 +1287,6 @@ function endAffair(n) {
   G.morale = clamp(G.morale - 3, 0, 100); updateHUD(); checkEnd();
   reply(n, pick(['Fine. Enjoy your marriage.', 'You\'ll regret this. Maybe not today.', 'Okay. I\'ll be fine. Probably.']));
 }
-function confirmAct(n, kind) {
-  const fbi = kind === 'fbi';
-  dialog(fbi ? 'Call the FBI?' : 'Fire employee?', `<div class="memo" style="font-size:14px">${fbi
-    ? `Two agents in windbreakers will walk <b>${n.name}</b> out in handcuffs. If you're wrong, expect a wrongful-accusation lawsuit and a very bad week.`
-    : `Security will escort <b>${n.name}</b> out with a cardboard box. Nobody will be told why.`}</div>`,
-    [{ label: fbi ? 'Make the call' : 'Fire them', cls: 'danger', fn: () => resolveAct(n, kind) }, { label: 'Cancel', fn: () => talk(n) }]);
-}
-function resolveAct(n, kind) {
-  n.status = kind === 'fbi' ? 'arrested' : 'fired';
-  scene.remove(n.mesh); scene.remove(n.tag); n.plate.material.opacity = 0.35;
-  if (G.affair === n) G.affair = null;
-  if (kind === 'fbi') {
-    if (n.spy) { legalGrr(-12); G.arrests++; G.stock += 3; G.morale = clamp(G.morale + 6, 0, 100); note(n, `Arrested by the FBI. Confirmed asset of ${svc(n).agency}.`, true); fade(`The agents find a microfilm reader in ${n.first}'s glovebox.<br><br>Confirmed: ${svc(n).agency}.`); toast('FBI', `${n.name} worked for ${svc(n).agency}. ${3 - G.arrests} to go.`); }
-    else { legalGrr(40, `calling the FBI on ${n.name}, who is completely innocent and now has a lawyer`); G.wrong++; G.stock -= 4; G.morale = clamp(G.morale - 20, 0, 100); G.scandal += 10; note(n, 'Wrongly arrested. Released. Suing.'); fade(`${n.first} is released after six hours. They were never a spy.<br><br>Their lawyer calls before lunch.`); }
-  } else {
-    legalGrr(n.spy ? 6 : 15, `firing ${n.name} without a single page of documentation`);
-    G.morale = clamp(G.morale - (n.spy ? 6 : 15), 0, 100); G.stock += n.spy ? 1 : -1;
-    note(n, 'Fired.'); toast('Security', `${n.name} has been escorted out.${n.spy ? ' The leaks seem quieter.' : ''}`);
-  }
-  updateHUD();
-  if (!activeSpies().length) return setTimeout(() => gameOver(true), 1600);
-  checkEnd();
-}
 function fade(html, after) {
   G.paused = true; G.ui = true; releaseLock();
   const f = $('#fade'); f.innerHTML = html; f.classList.add('on');
@@ -1301,60 +1294,14 @@ function fade(html, after) {
 }
 
 /* ---------------- object uses ---------------- */
-function useCooler() {
-  if (!once('gossip' + Math.floor(G.min / 60))) return say('Water cooler', 'Nobody new around. You drink a paper cone of water. It immediately goes soggy.');
-  const spies = activeSpies(), others = active();
-  let line;
-  if (G.affair && Math.random() < .3) { G.scandal += 3; line = `"People are saying things about you and ${G.affair.first}. Not that I listen."`; updateHUD(); }
-  else if (spies.length && Math.random() < .55) {
-    const s = pick(spies);
-    line = pick([`"${s.first} was here 'til 9 last night. Nobody in ${s.dept} works that late."`, `"${s.first} asked me which badge opens R&D. Weird, right?"`, `"${s.first} takes calls at their desk and only says 'yes' and 'not yet'."`]);
-    note(s, `Water cooler gossip: ${line}`, true);
-  } else if (others.length) {
-    const o = pick(others);
-    line = pick([`"I think ${o.first} is interviewing at Netscape. The suit gives it away."`, `"${o.first} has been weird lately. Probably the divorce."`, `"${o.first} took a whole box of pens home. Thief."`, `"${o.first} is DEFINITELY hiding something. They won't let anyone see their screensaver."`]);
-    note(o, `Water cooler gossip: ${line}`);
-  }
-  say('Water cooler', `Someone from Facilities leans in.<br><br>${line || '"Quiet day."'}<br><br><small>Gossip refreshes every hour. Not all of it is true.</small>`);
-}
 function useCoffee() { say('Coffee machine', pick(L.coffee)); }
-function evidenceDesk(key, rate, msg) {
-  const spies = activeSpies(); if (!spies.length) return null;
-  const truth = Math.random() < rate; const s = truth ? pick(spies) : pick(active());
-  return s;
-}
-function useCopier() {
-  if (!once('copier')) return say('Copier', 'PC LOAD LETTER. You already checked the counter today.');
-  const s = evidenceDesk('copier', .7);
-  if (!s) return say('Copier', 'Nothing unusual. Just a jam.');
-  const ini = s.name.split(' ').map(w => w[0]).join('');
-  note(s, `Copier log: 340 after-hours copies under access code "${ini}".`, true);
-  say('Copier', `The counter shows 340 copies made after hours. The access code typed in: <b>${ini}</b>.<br><br><small>Logged to your dossier. The copier is right about 70% of the time.</small>`);
-}
-function useFax() {
-  if (!once('fax')) return say('Fax machine', 'The fax screeches at you. Nothing new today.');
-  if (G.leaks < 8) return say('Fax machine', 'A fax about a pizza party in Accounting. Nothing else.');
-  const s = evidenceDesk('fax', .65);
-  if (!s) return say('Fax machine', 'Just a lunch menu.');
-  note(s, `Misdialed fax from ext. ${s.desk.num} to an overseas number.`, true);
-  say('Fax machine', `A misdialed fax is stuck in the tray. Cover sheet: <b>FROM EXT. ${s.desk.num}</b>, sent to a number starting ${s.spy ? svc(s).code : pick(['+86', '+7', '+972'])}. The pages are blank, as if someone grabbed them fast.`);
-}
-function useServer() {
-  if (!once('server')) return say('Server rack', 'The login log hasn\'t changed since you last checked. The fans hum.');
-  const it = active().find(n => n.dept === 'IT');
-  if (it && Math.random() < .3) { note(it, `Server log shows after-hours login from #${it.desk.num} (marked "routine backup").`); return say('Server rack', `The green-screen terminal shows last night's logins: <b>terminal #${it.desk.num}</b>, 11:42 PM, marked "routine backup".`); }
-  const s = evidenceDesk('server', .75);
-  if (!s) return say('Server rack', 'Clean logs.');
-  note(s, `Server log: after-hours login to the ORCHID share from terminal #${s.desk.num}.`, true);
-  say('Server rack', `The green-screen terminal shows a login to the ORCHID share at 2:13 AM from <b>terminal #${s.desk.num}</b>. 412 files copied.`);
-}
 function useCeoDesk() {
   const opts = [];
   if (!G.seated) opts.push({ label: 'Sit down', fn: sitDown });
   opts.push({ label: 'Log into DialTrade (private)', fn: () => openBroker('desk') });
   if (G.lastCover) opts.push({ label: 'Read the latest TIMES', fn: () => showCover(G.lastCover) });
   opts.push({ label: 'Crawl into the bed under your desk (2 hours)', cls: 'love', fn: underDeskNap });
-  opts.push({ label: 'Read the security consultant\'s report', fn: () => say('Report', `"Three suspected assets on the floor, one each for China\'s MSS, Russia\'s SVR and IDF Military Intelligence. Each has a handler who calls, faxes and mails. Typical behaviors: after-hours copying, interest in R&D access, contact with foreign numbers, unexplained cash. <b>Do not profile by name, accent or background.</b> Half the people who fit a stereotype are your best engineers. Watch behavior."`) });
+  opts.push({ label: 'Read the security consultant\'s report', fn: () => say('Report', `"Three suspected assets on the floor, one each for China\'s MSS, Russia\'s SVR and IDF Military Intelligence. Each has a handler who calls, faxes and mails. Witnesses will only ever give you descriptions, so build a profile for each service and eliminate. Typical behaviors: after-hours copying, interest in R&D access, contact with foreign numbers, unexplained cash. <b>Do not profile by name, accent or background.</b> Half the people who fit a stereotype are your best engineers. Watch behavior."`) });
   if (G.seated) opts.push({ label: 'Stand up', fn: standUp });
   opts.push({ label: G.seated ? 'Stay seated' : 'Walk away' });
   dialog('Your desk', `<div class="memo" style="font-size:14px">Leather chair. A framed photo of your family, angled slightly away. A Rolodex nobody has touched since 1994. Under the desk, behind a panel only you know about: a mattress, a pillow, and an alarm clock.</div>`, opts);
@@ -1383,7 +1330,7 @@ function inviteBath(n) {
     updateHUD();
     return reply(n, pick(['To the… what? No. Absolutely not.', 'Is that a thing CEOs do? Is that in a book?', 'I\'m going to pretend you didn\'t say that. Forever.', 'I… I already went. Thanks.']));
   }
-  n.invite = { until: G.min + 60 };
+  n.invite = { until: G.min + 180 };
   const [px, pz] = TARGETS.bathroom.spots[Math.floor(Math.random() * 3)];
   n.target = 'bathroom'; n.slotIdx = -1; n.leaveAt = Infinity;
   const inCub = n.state === 'desk' || n.state === 'standup';
@@ -1661,19 +1608,18 @@ function randomEvent() {
     act.forEach(n => { if (n.state === 'desk' && !n.invite) { n.forceKey = pick(keys); n.nextTrip = G.min + rnd(0, 6); } });
     toast(ev === 'pizza' ? 'Pizza party!' : 'FIRE DRILL', ev === 'pizza' ? 'Someone ordered 12 pizzas to the break room. The floor empties out. Nobody is watching their desk…' : 'The alarm is DEAFENING. Everyone shuffles to the south wall. Desks are unattended for a few minutes.');
   } else if (ev === 'package' && !G.pkg) {
-    const spies = activeSpies(), n = spies.length && Math.random() < .55 ? pick(spies) : pick(act);
+    const n = pick(act);
     pkgMesh = new THREE.Mesh(new THREE.BoxGeometry(.32, .2, .26), Mc(0xb8864b)); pkgMesh.position.set(n.desk.x - 0.85, Y + .1, n.desk.z - 1.05); pkgMesh.rotation.y = 0.3; scene.add(pkgMesh);
     G.pkg = { n, opened: false };
-    toast('Mailroom', `A FedEx box just landed on desk #${n.desk.num}. No return address.`);
+    toast('Mailroom', `A FedEx box was dropped on desk #${n.desk.num}. Looks misdelivered. No return address.`);
   } else if (ev === 'phone') {
     const away = act.filter(n => n.state !== 'desk'); if (!away.length) return;
     const n = pick(away); n.ringUntil = G.min + 30;
     toast('Ring ring', `The phone on desk #${n.desk.num} is ringing. ${n.first} isn't there.`);
   } else if (ev === 'flicker') {
     G.flickerUntil = performance.now() + 3500;
-    const spies = activeSpies();
-    if (spies.length) { const s = Math.random() < .6 ? pick(spies) : pick(act); note(s, `During the power flicker, someone hurried away from the server room. It looked like ${s.first}.`, true); }
-    toast('Power flicker', 'The lights stutter and the CRTs all go "thunk". In the dark you think you see someone dart away from the server room.');
+    toast('Power flicker', 'The lights stutter and the CRTs all go "thunk". Someone darts away from the server room in the dark.');
+    setTimeout(() => spyClue('Power flicker sighting'), 1800);
   } else if (ev === 'birthday') {
     const n = pick(act); G.bday = n;
     balloons = new THREE.Group();
@@ -1681,16 +1627,6 @@ function randomEvent() {
     scene.add(balloons);
     toast('Birthday!', `It's ${n.name}'s birthday. There are balloons on desk #${n.desk.num}.`);
   }
-}
-function openPackage() {
-  const { n } = G.pkg; G.pkg.opened = true; if (pkgMesh) { scene.remove(pkgMesh); pkgMesh = null; }
-  if (n.spy) { const t = pick([...svc(n).pkg, 'A bundle of cash in a box of Girl Scout cookies. The cookies are also real.']); note(n, `Mystery package on their desk: ${t}`, true); say(`Package on desk #${n.desk.num}`, `You slit the tape. Inside: ${t}<br><br>You tape it back up. Mostly.`); }
-  else { const t = pick(['A limited-edition Beanie Baby. In mint condition. Well, it WAS mint.', 'A mail-order NordicTrack. Some assembly required.', 'Forty pounds of Columbia House CDs they forgot to cancel.', 'A box of Franklin Planner refills. Thrilling.']); note(n, `Package on their desk: ${t}`); say(`Package on desk #${n.desk.num}`, `You slit the tape. Inside: ${t}<br><br>Opening other people's mail is a federal crime. Margaret will hear about this.`); legalGrr(4, `opening ${n.name}'s mail`); }
-}
-function answerPhone(n) {
-  n.ringUntil = 0; n.desk.ring.visible = false;
-  if (n.spy && Math.random() < .7) { const t = pick(svc(n).phone); note(n, `Answered their desk phone: ${t}`, true); say(`Desk #${n.desk.num} phone`, t); }
-  else say(`Desk #${n.desk.num} phone`, pick(['"Hi, this is Dr. Feldman\'s office confirming a root canal at 3." You promise to pass it on.', '"Congratulations! You\'ve won a timeshare presentation in Branson, Missouri!"', '"Honey? Did you remember the dry cleaning?" You hang up very quietly.', '"This is the library. Your copy of The Bridges of Madison County is 14 weeks overdue."']));
 }
 
 /* ---------------- legal ---------------- */
@@ -1780,18 +1716,6 @@ function talkLegal(msg) {
   ];
   dialog('Margaret Thornbury — General Counsel', `<div class="speech">${portrait(gc)}<p>${line}</p></div><div style="font-size:12px;color:#444">Legal mood: ${L2.anger < 30 ? 'tolerating you' : L2.anger < 60 ? 'deeply annoyed' : 'FURIOUS'} · ${Math.round(L2.anger)}%</div>`, opts);
 }
-function reviewCase() {
-  const opts = active().map(n => ({ label: `#${n.desk.num} ${n.name}`, fn: () => {
-    const strong = n.notes.filter(x => x.strong).length;
-    const v = strong >= 4 ? `${n.first}? Copier logs, faxes, behavior… That would hold up. Call them. Quietly.` :
-      strong >= 2 ? `On ${n.first}? It's thin. Circumstantial. Get me more and I'll sign off.` :
-      strong === 1 ? `One odd moment? I can't take one odd moment to the FBI. Neither can you.` :
-      `On ${n.first}? Based on WHAT? Their face? Absolutely not. That's a lawsuit with a bow on it.`;
-    talkLegal(v);
-  } }));
-  opts.push({ label: 'Never mind', fn: () => talkLegal('Then stop wasting billable time.') });
-  dialog('Legal review', `<div class="speech">${portrait(gc)}<p>Who? I'll tell you if your evidence would survive a lawyer. Not whether they're guilty. That's your problem.</p></div>`, opts);
-}
 function talkPara() {
   para.talking = true;
   const line = G.legal.anger >= 60 ? pick(["She threw a Black's Law Dictionary at the wall. That's a two-pound book.", "I've never seen her this mad. And I was here for the Netscape thing."]) :
@@ -1821,12 +1745,6 @@ function shake(list, title) {
   const w = witnesses(null); if (w.length) legalGrr(3, 'physically assaulting a vending machine in front of staff'); G.scandal += 3 + Math.min(3, w.length) * 3; G.morale = clamp(G.morale - 1, 0, 100); updateHUD(); checkEnd();
   say(title, w.length ? `The machine tips forward with a BANG. ${w[0].first} watches the CEO wrestle a vending machine. This will be at the water cooler by lunch.` : 'The machine tips forward with a BANG. Luckily, nobody saw.');
 }
-function deadDrop() {
-  G.daily[G.day + ':deaddrop'] = 1;
-  const s = Math.random() < 0.65 ? pick(activeSpies()) : pick(active());
-  note(s, `Dead drop behind coil B4 of the snack machine: a note reading "THU 7PM — EXT. ${s.desk.num}".`, true);
-  say('Behind coil B4', `Taped behind the coil, under a stale Cosmic Nougat: a folded index card.<br><br><b>THU 7PM — EXT. ${s.desk.num}</b><br><br>You put it back exactly where you found it.`);
-}
 function consume() {
   if (!G.held || G.ui) return;
   const it = G.held; G.held = null;
@@ -1837,7 +1755,7 @@ function consume() {
 function gift(n) {
   const it = G.held; G.held = null; G.morale = clamp(G.morale + 2, 0, 100); if (n.romance) n.affection++; updateHUD();
   let line;
-  if (n.spy && Math.random() < .5) { line = pick(['Thanks. I usually eat at my desk. Late. Very late.', 'From the snack machine? I know that machine… very well. Especially B4.']); note(n, `Said: "${line}"`, true); }
+  if (n.spy && Math.random() < .2) { line = pick(['Thanks. I usually eat at my desk. Late. Very late.', 'From the snack machine? I know that machine… very well. Especially B4.']); note(n, `Said: "${line}"`); }
   else line = pick([`Ooh, ${it.n}! The good stuff.`, 'You noticed I skipped lunch? That\'s… sweet.', 'Is this a bribe? Because I accept.', 'My kid would kill for one of these. I\'m eating it anyway.']);
   reply(n, line);
 }
@@ -1900,22 +1818,170 @@ function cover(where) {
 }
 
 /* ---------------- dossier ---------------- */
-const MARKS = [['UNSURE', ''], ['SPY?', 's1'], ['CLEAR', 's2']];
+function closeDossier() { $('#dossier').hidden = true; G.ui = !$('#dlg').hidden; }
+
+/* ---------------- deduction (Cluedo-style) ---------------- */
+// Every clue reveals ONE true trait of one service's asset, never a name.
+const HAIRCAT = { 0x1b1b1b: 'dark', 0x2a1a10: 'dark', 0x3b2314: 'dark', 0x6a4a2a: 'brown', 0xa0522d: 'brown', 0xb08a4a: 'blond', 0xd9b26a: 'blond', 0x8c8c8c: 'grey', 0xc8c8c8: 'grey' };
+const ROWN = ['window row (desks 101–104)', 'middle row (desks 105–108)', 'break-room row (desks 109–112)'];
+const TRAIT_DESC = {
+  hair: v => `has ${v} hair`, glasses: v => v ? 'wears glasses' : 'does not wear glasses', tie: v => v ? 'wears a tie' : 'does not wear a tie',
+  shoes: v => v ? 'wears white sneakers' : 'wears dark shoes', beard: v => v ? 'has a beard or mustache' : 'is clean-shaven',
+  row: v => `sits in the ${ROWN[v]}`, side: v => `sits on the ${v} half of the floor`, dept: v => `works in ${v}`,
+};
+const TRAIT_SHORT = { hair: v => `${v} hair`, glasses: v => v ? 'glasses' : 'no glasses', tie: v => v ? 'tie' : 'no tie', shoes: v => v ? 'sneakers' : 'dark shoes', beard: v => v ? 'beard/mustache' : 'clean-shaven', row: v => ['window row', 'middle row', 'break row'][v], side: v => `${v} side`, dept: v => v };
+const TRAIT_KEYS = Object.keys(TRAIT_DESC);
+const traitsOf = n => ({ ...n.mesh.userData.traits, row: n.desk.row, side: n.desk.x < 0 ? 'west' : 'east', dept: n.dept });
+function spyClue(source, spy) {
+  const pool = activeSpies(); if (!pool.length) return null;
+  const s = spy || pick(pool), known = G.known[s.service];
+  let k = s.clueQ.find(k => !(k in known)); if (!k) k = pick(TRAIT_KEYS);
+  const v = s.tr[k], desc = TRAIT_DESC[k](v), fresh = !(k in known);
+  known[k] = v;
+  G.evidence.push({ svc: s.service, text: `${source}: the ${SVC[s.service].short} asset ${desc}.`, when: stamp() });
+  toast(`Evidence · ${SVC[s.service].short}`, `The ${SVC[s.service].short} asset ${desc}.${fresh ? '' : ' (You knew that already.)'} Logged in your dossier.`);
+  return { s, k, v, desc, svc: SVC[s.service] };
+}
+function addRumor(source) {
+  const s = pick(activeSpies()); if (!s) return null;
+  const k = pick(TRAIT_KEYS), truthful = Math.random() < .65;
+  const v = truthful ? s.tr[k] : pick(npcs.filter(o => o !== s)).tr[k];
+  const desc = TRAIT_DESC[k](v);
+  G.rumors.push({ svc: s.service, text: `${source}: the ${SVC[s.service].short} mole ${desc}.`, when: stamp() });
+  return { s, desc, svc: SVC[s.service] };
+}
+function matchesKnown(n, sk) { const kn = G.known[sk]; return Object.keys(kn).every(k => n.tr[k] === kn[k]); }
+
+function useCooler() {
+  if (!once('gossip' + Math.floor(G.min / 60))) return say('Water cooler', 'Nobody new around. You drink a paper cone of water. It immediately goes soggy.');
+  let line;
+  if (G.affair && Math.random() < .3) { G.scandal += 3; line = `"People are saying things about you and ${G.affair.first}. Not that I listen."`; updateHUD(); }
+  else { const r = addRumor('Water cooler gossip'); line = r ? `"Word around the floor is that the ${r.svc.short} mole ${r.desc}. Don't quote me."` : '"Quiet day."'; }
+  say('Water cooler', `Someone from Facilities leans in.<br><br>${line}<br><br><small>Gossip goes in your dossier as a rumor. About a third of it is wrong.</small>`);
+}
+function useCopier() {
+  if (!once('copier')) return say('Copier', 'PC LOAD LETTER. You already checked the counter today.');
+  const c = spyClue('Copier, after hours'); if (!c) return say('Copier', 'Nothing unusual. Just a jam.');
+  say('Copier', `The counter shows 340 after-hours copies of ORCHID schematics, sent with a ${c.svc.short}-style cover sheet. The night cleaner saw who made them, but not their face. All she remembers: they <b>${c.desc}</b>.`);
+}
+function useFax() {
+  if (!once('fax')) return say('Fax machine', 'The fax screeches at you. Nothing new today.');
+  if (G.leaks < 6) return say('Fax machine', 'A fax about a pizza party in Accounting. Nothing else.');
+  const c = spyClue('Misdialed fax'); if (!c) return say('Fax machine', 'Just a lunch menu.');
+  say('Fax machine', `A misdialed fax is stuck in the tray, addressed to a number starting <b>${c.svc.code}</b>. The sender's extension is torn off, but the receptionist remembers who used the machine at 7 PM: someone who <b>${c.desc}</b>.`);
+}
+function useServer() {
+  if (!once('server')) return say('Server rack', 'The login log hasn\'t changed since you last checked. The fans hum.');
+  const c = spyClue('Server room badge camera'); if (!c) return say('Server rack', 'Clean logs.');
+  say('Server rack', `412 ORCHID files were copied at 2:13 AM using a cloned badge, then sent to a ${c.svc.short} drop server. The badge camera caught a blurry still. You can make out one thing: the person <b>${c.desc}</b>.`);
+}
+function deadDrop() {
+  G.daily[G.day + ':deaddrop'] = 1;
+  const c = spyClue('Dead drop, snack machine coil B4'); if (!c) return say('Behind coil B4', 'Just an old Cosmic Nougat.');
+  say('Behind coil B4', `Taped behind the coil, under a stale Cosmic Nougat: a folded index card in ${c.svc.short} shorthand.<br><br><b>"THU 7PM. Our friend who ${c.desc} brings the disk."</b><br><br>You put it back exactly where you found it.`);
+}
+function openPackage() {
+  const { n } = G.pkg; G.pkg.opened = true; if (pkgMesh) { scene.remove(pkgMesh); pkgMesh = null; }
+  legalGrr(4, `opening ${n.name}'s mail`);
+  if (activeSpies().length && Math.random() < .6) {
+    const c = spyClue('Misdelivered package'); const t = pick(SVC[c.s.service].pkg);
+    say(`Package on desk #${n.desk.num}`, `It was misdelivered: the label is for "our friend on the floor." Inside: ${t}<br><br>The packing slip says: <b>"For the one who ${c.desc}."</b><br><br>You tape it back up. Mostly.`);
+  } else say(`Package on desk #${n.desk.num}`, `You slit the tape. Inside: ${pick(['A limited-edition Beanie Baby. In mint condition. Well, it WAS mint.', 'A mail-order NordicTrack. Some assembly required.', 'Forty pounds of Columbia House CDs they forgot to cancel.', 'A box of Franklin Planner refills. Thrilling.'])}<br><br>Opening other people's mail is a federal crime. Margaret will hear about this.`);
+}
+function answerPhone(n) {
+  n.ringUntil = 0; n.desk.ring.visible = false;
+  if (activeSpies().length && Math.random() < .65) {
+    const c = spyClue('Wrong-number call'); const t = pick(SVC[c.s.service].phone);
+    say(`Desk #${n.desk.num} phone`, `Wrong extension. ${t}<br><br>Before hanging up, the caller adds: <b>"Tell our friend, the one who ${c.desc}, that we are waiting."</b>`);
+  } else say(`Desk #${n.desk.num} phone`, pick(['"Hi, this is Dr. Feldman\'s office confirming a root canal at 3." You promise to pass it on.', '"Congratulations! You\'ve won a timeshare presentation in Branson, Missouri!"', '"Honey? Did you remember the dry cleaning?" You hang up very quietly.', '"This is the library. Your copy of The Bridges of Madison County is 14 weeks overdue."']));
+}
+function askOdd(n) {
+  if (!once(n.id + 'gossip')) return reply(n, `I told you what I know. Which is nothing. I see nothing. I'm in ${n.dept}.`);
+  let line;
+  if (n.spy) {
+    const inno = active().filter(o => !o.spy && o !== n);
+    const v = pick(inno), k = pick(TRAIT_KEYS);
+    line = v ? `Honestly? I think whoever's leaking ${TRAIT_DESC[k](v.tr[k])}. Just a feeling.` : 'No. Nothing. Why do you ask?';
+    if (v) G.rumors.push({ svc: null, text: `${n.first} thinks the leaker ${TRAIT_DESC[k](v.tr[k])}.`, when: stamp() });
+  } else if (Math.random() < .4) {
+    const c = spyClue(`Tip from ${n.first}`);
+    line = c ? pick([`I saw someone feeding ORCHID drawings into the fax at 8 PM. I didn't see the face, but they ${c.desc}.`, `Somebody's been in the server room at night. The guard told me they ${c.desc}.`]) : 'Nope. Quiet floor.';
+  } else { const v = pick(active().filter(o => o !== n)); line = v ? pick([`${v.first} microwaves fish. That's the only crime I've witnessed.`, `${v.first} has been weird since the Christmas party. Not spy weird. Karaoke weird.`, `Nothing. Unless you count ${v.first}'s ties.`]) : 'It\'s just us now, boss.'; }
+  reply(n, line);
+}
+function reviewCase() {
+  const opts = active().map(n => ({ label: `#${n.desk.num} ${n.name}`, fn: () => {
+    const fits = Object.keys(SVC).filter(k => npcs.some(o => o.spy && o.service === k && o.status === 'active') && Object.keys(G.known[k]).length && matchesKnown(n, k));
+    let v;
+    if (!fits.length) v = `${n.first} doesn't match any of the evidence profiles. Accuse them and I'll be drafting your apology letter.`;
+    else {
+      const k = fits.sort((a, b) => Object.keys(G.known[b]).length - Object.keys(G.known[a]).length)[0], cnt = Object.keys(G.known[k]).length;
+      const rivals = active().filter(o => o !== n && matchesKnown(o, k)).length;
+      v = rivals === 0 && cnt >= 2 ? `${n.first} is the only person on this floor who fits everything we have on the ${SVC[k].short} asset. That would hold up. Name the right service when you call.`
+        : `${n.first} fits the ${SVC[k].short} evidence, but so do ${rivals} other${rivals === 1 ? '' : 's'}. Thin. Get me more before you call anyone.`;
+    }
+    talkLegal(v);
+  } }));
+  opts.push({ label: 'Never mind', fn: () => talkLegal('Then stop wasting billable time.') });
+  dialog('Legal review', `<div class="speech">${portrait(gc)}<p>Who? I'll tell you whether they fit the evidence. Not whether they're guilty. That's your problem.</p></div>`, opts);
+}
+function confirmAct(n, kind) {
+  if (kind === 'fbi') return dialog('Call the FBI?', `<div class="memo" style="font-size:14px">The FBI needs <b>who</b> and <b>who for</b>. Name the service <b>${n.name}</b> works for.<br><br>Wrong person: a wrongful-arrest lawsuit. Right person, wrong service: they walk, and they know you're onto them.</div>`,
+    [...Object.keys(SVC).map(k => ({ label: `${n.first} works for ${SVC[k].label}`, cls: 'danger', fn: () => resolveAct(n, 'fbi', k) })), { label: 'Cancel', fn: () => talk(n) }]);
+  dialog('Fire employee?', `<div class="memo" style="font-size:14px">Security will escort <b>${n.name}</b> out with a cardboard box. Nobody will be told why.</div>`,
+    [{ label: 'Fire them', cls: 'danger', fn: () => resolveAct(n, kind) }, { label: 'Cancel', fn: () => talk(n) }]);
+}
+function resolveAct(n, kind, sk) {
+  if (kind === 'fbi' && n.spy && sk !== n.service) {
+    n.nervous = G.min + 600; G.stock = Math.max(0.5, G.stock - 1); legalGrr(15, `telling the FBI that ${n.name} worked for ${SVC[sk].label}. They didn't.`);
+    note(n, `Accused of working for ${SVC[sk].label}. The FBI released them: "the evidence points elsewhere."`);
+    updateHUD(); checkEnd();
+    return fade(`The agents question ${n.first} for three hours.<br><br>"Nothing ties them to ${SVC[sk].label}," says the lead agent, and lets them go.<br><br>${n.first} looks at you on the way back to their desk. They know.`);
+  }
+  n.status = kind === 'fbi' ? 'arrested' : 'fired';
+  scene.remove(n.mesh); scene.remove(n.tag); n.plate.material.opacity = 0.35;
+  if (G.affair === n) G.affair = null;
+  if (kind === 'fbi') {
+    if (n.spy) { legalGrr(-12); G.arrests++; G.stock += 3; G.morale = clamp(G.morale + 6, 0, 100); note(n, `Arrested by the FBI. Confirmed asset of ${svc(n).agency}.`, true); fade(`The agents find a microfilm reader in ${n.first}'s glovebox.<br><br>Confirmed: ${svc(n).agency}.`); toast('FBI', `${n.name} worked for ${svc(n).agency}. ${3 - G.arrests} to go.`); }
+    else { legalGrr(40, `calling the FBI on ${n.name}, who is completely innocent and now has a lawyer`); G.wrong++; G.stock -= 4; G.morale = clamp(G.morale - 20, 0, 100); G.scandal += 10; note(n, 'Wrongly arrested. Released. Suing.'); fade(`${n.first} is released after six hours. They were never a spy.<br><br>Their lawyer calls before lunch.`); }
+  } else {
+    legalGrr(n.spy ? 6 : 15, `firing ${n.name} without a single page of documentation`);
+    G.morale = clamp(G.morale - (n.spy ? 6 : 15), 0, 100); G.stock += n.spy ? 1 : -1;
+    note(n, 'Fired.'); toast('Security', `${n.name} has been escorted out.${n.spy ? ' The leaks seem quieter.' : ''}`);
+  }
+  updateHUD();
+  if (!activeSpies().length) return setTimeout(() => gameOver(true), 1600);
+  checkEnd();
+}
+
+const MARKS = [['UNSURE', ''], ['MSS?', 's1'], ['SVR?', 's1'], ['IDF?', 's1'], ['CLEAR', 's2']];
 function openDossier() {
   G.ui = true; releaseLock();
   const list = $('#dlist'); list.innerHTML = '';
+  const chip = t => `<span class="chip">${t}</span>`;
+  const board = document.createElement('div'); board.className = 'board';
+  board.innerHTML = Object.keys(SVC).map(k => {
+    const caught = npcs.find(n => n.spy && n.service === k && n.status !== 'active');
+    const kn = G.known[k], keys = Object.keys(kn);
+    const fits = caught ? null : active().filter(n => matchesKnown(n, k)).length;
+    return `<div class="col sunk"><h4>${SVC[k].label}</h4>${caught ? `<div class="stamp s2">CAUGHT: ${caught.name}</div>` :
+      (keys.length ? `<div>${keys.map(t => chip(TRAIT_SHORT[t](kn[t]))).join('')}</div><small>${keys.length} clue${keys.length === 1 ? '' : 's'} so far</small>` : '<small>No evidence yet.</small>')}</div>`;
+  }).join('');
+  list.appendChild(board);
+  if (G.rumors.length) { const r = document.createElement('details'); r.className = 'rumors'; r.innerHTML = `<summary>Rumors (${G.rumors.length}) — unreliable</summary><ul>${G.rumors.slice(-12).reverse().map(x => `<li>${x.text} <small>${x.when}</small></li>`).join('')}</ul>`; list.appendChild(r); }
+  if (G.evidence.length) { const r = document.createElement('details'); r.className = 'rumors'; r.innerHTML = `<summary>Evidence log (${G.evidence.length})</summary><ul>${G.evidence.slice().reverse().map(x => `<li>${x.text} <small>${x.when}</small></li>`).join('')}</ul>`; list.appendChild(r); }
   npcs.slice().sort((a, b) => a.desk.num - b.desk.num).forEach(n => {
     const row = document.createElement('div'); row.className = 'drow sunk';
     const gone = n.status !== 'active';
-    const notes = n.notes.length ? `<ul>${n.notes.map(x => `<li class="${x.strong ? 'strong' : ''}">${x.text}</li>`).join('')}</ul>` : `<div class="gone">Nothing yet.</div>`;
-    row.innerHTML = `<div class="num">#${n.desk.num}</div><div style="min-width:0"><h4>${n.name}<small>${n.dept}${gone ? ' · ' + n.status.toUpperCase() + (n.spy && n.status === 'arrested' ? ' · ' + svc(n).short : '') : ''}${G.affair === n ? ' · ♥' : ''}</small></h4>${notes}</div>`;
+    const traits = TRAIT_KEYS.filter(k => k !== 'dept').map(k => chip(TRAIT_SHORT[k](n.tr[k]))).join('');
+    const notes = n.notes.length ? `<ul>${n.notes.map(x => `<li class="${x.strong ? 'strong' : ''}">${x.text}</li>`).join('')}</ul>` : '';
+    row.innerHTML = `<div class="num">#${n.desk.num}</div><div style="min-width:0"><h4>${n.name}<small>${n.dept}${gone ? ' · ' + n.status.toUpperCase() + (n.spy && n.status === 'arrested' ? ' · ' + svc(n).short : '') : ''}${G.affair === n ? ' · ♥' : ''}</small></h4><div>${traits}</div>${notes}</div>`;
     const b = document.createElement('button'); b.className = 'b95 stamp ' + MARKS[n.mark][1]; b.textContent = MARKS[n.mark][0];
-    b.onclick = () => { n.mark = (n.mark + 1) % 3; b.className = 'b95 stamp ' + MARKS[n.mark][1]; b.textContent = MARKS[n.mark][0]; };
+    b.onclick = () => { n.mark = (n.mark + 1) % MARKS.length; b.className = 'b95 stamp ' + MARKS[n.mark][1]; b.textContent = MARKS[n.mark][0]; };
     row.appendChild(b); list.appendChild(row);
   });
   $('#dossier').hidden = false;
 }
-function closeDossier() { $('#dossier').hidden = true; G.ui = !$('#dlg').hidden; }
 
 /* ---------------- input ---------------- */
 const isTouch = matchMedia('(pointer: coarse)').matches;
