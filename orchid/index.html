@@ -97,6 +97,14 @@ button.b95.love{color:#8a1060}
 .toast.cover{pointer-events:auto;cursor:pointer;display:flex;gap:8px;align-items:center;max-width:300px}
 .toast.cover img{width:72px;height:96px;flex:none;border:1px solid var(--dark)}
 .coverbig{display:block;width:min(360px,100%);height:auto;margin:0 auto;box-shadow:3px 3px 0 rgba(0,0,0,.4)}
+#hearts{position:absolute;inset:0;pointer-events:none;overflow:hidden;background:radial-gradient(ellipse at center,rgba(255,120,170,0) 35%,rgba(255,60,130,.5) 100%)}
+.heart{position:absolute;bottom:-45%;animation:floatup linear infinite;opacity:.85}
+.heart svg{width:100%;height:100%;fill:#ff2d6f;filter:drop-shadow(0 4px 10px rgba(120,0,40,.4))}
+.heart.big{left:50%;top:46%;bottom:auto;width:min(70vw,560px);height:min(70vw,560px);animation:pulse .9s ease-in-out infinite;opacity:.35}
+@keyframes floatup{from{transform:translateY(0) rotate(var(--rot))}to{transform:translateY(-175vh) rotate(calc(var(--rot) * -1))}}
+@keyframes pulse{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.12)}}
+.lovecap{position:absolute;left:50%;bottom:calc(70px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);font:30px var(--crt);color:#fff;background:rgba(120,0,40,.75);padding:4px 16px;white-space:nowrap}
+@media (prefers-reduced-motion:reduce){.heart{animation:none;bottom:auto;top:15%}.heart.big{animation:none;transform:translate(-50%,-50%)}}
 @media (prefers-reduced-motion:reduce){.toast{animation:none}#fade{transition:none}}
 </style>
 
@@ -168,6 +176,7 @@ button.b95.love{color:#8a1060}
     </div>
   </div>
 
+  <div id="hearts" hidden></div>
   <div id="fade"></div>
 </div>
 
@@ -195,7 +204,7 @@ const camera = new THREE.PerspectiveCamera(70, 1, 0.05, 100);
 function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
 addEventListener('resize', resize); resize();
 
-scene.add(new THREE.HemisphereLight(0xf6f8ee, 0x58625c, 0.95));
+const hemi = new THREE.HemisphereLight(0xf6f8ee, 0x58625c, 0.95); scene.add(hemi);
 scene.add(new THREE.AmbientLight(0xffffff, 0.22));
 const sun = new THREE.DirectionalLight(0xfff6e0, 0.35); sun.position.set(-4, 10, -6); scene.add(sun);
 
@@ -624,6 +633,7 @@ const TARGETS = {
   copier: { fx: -15.2, fz: 9, spots: [[-14.2, 9], [-13.8, 10.0], [-13.8, 8.0], [-13.1, 9.2]] },
   fax: { fx: -15.3, fz: 5, spots: [[-14.4, 5], [-13.9, 6.0], [-13.9, 4.0], [-13.2, 5.2]] },
   server: { fx: -10.6, fz: -10.25, spots: [[-9.0, -10.25], [-8.6, -11.2], [-8.6, -9.3]] },
+  assembly: { fx: 0, fz: 14, spots: [...Array(22).keys()].map(i => [-5.25 + (i % 11) * 1.05, i < 11 ? 12.5 : 11.6]) },
   bathroom: { fx: -13.2, fz: -0.4, spots: [[-13.0, -2.9], [-12.4, -1.9], [-13.6, -1.9]] },
   snacks: { fx: 15.3, fz: 3.2, spots: [[14.3, 3.2], [13.8, 4.1], [13.8, 2.3]] },
   soda: { fx: 15.3, fz: 11.4, spots: [[14.3, 11.4], [13.8, 12.2], [13.8, 10.5]] },
@@ -643,6 +653,9 @@ const SODAS = [
 /* ---------------- dialogue pools ---------------- */
 const L = {
   workSpy: [
+    'Do you know when the R&D team takes lunch? All of them? At the same time?',
+    'I volunteered to archive the old ORCHID drafts. All of them. At my apartment.',
+    'Who has the master key to the server room? Hypothetically.',
     'Work is fine. Say, which floor keeps the ORCHID schematics? Just curious.',
     'I stay late most nights. The server room is so peaceful after six.',
     'My cousin asked what chip we make. I said nothing, of course. …What chip DO we make, exactly?',
@@ -650,6 +663,12 @@ const L = {
     "Do we photocopy the full ORCHID spec, or just the summary? For… filing.",
   ],
   workInno: [
+    'The Pentium in my new machine is so fast I can hear it thinking.',
+    'Marketing wants ORCHID in "jazzier colors." It\'s a chip. It goes inside a box.',
+    'Spent the morning untangling a fax roll. Highlight of my week.',
+    'Someone set my screensaver to flying toasters. I can\'t stop watching.',
+    'I got an email from a prince who needs my bank details. Is that normal?',
+    'Lotus 1-2-3 ate my spreadsheet. Again. It\'s a hungry program.',
     'Drowning in TPS reports. The new cover sheets are killing me.',
     'The Y2K audit is going to eat my whole fourth quarter.',
     'Lotus Notes crashed again. Lost a whole memo. Third time this week.',
@@ -663,12 +682,19 @@ const L = {
     "Honestly I'd love to see the ORCHID specs. Nobody tells QA anything.",
   ],
   wkSpy: [
+    'I spent the weekend at the harbor. Watching ships. Counting them. For fun.',
+    'Met a friend at the airport. We swapped briefcases. Normal briefcase stuff.',
     'I took a lot of photos downtown. Of buildings. Mostly government buildings. For a hobby.',
     'Dropped some film off with a guy. Not the pharmacy. A guy.',
     'Went to a "trade conference". Very boring. Got paid in cash, though.',
     'I had dinner with some old friends from the consulate. Lovely people.',
   ],
   wkInno: [
+    'Stayed up all night looking at Hale-Bopp through my neighbor\'s telescope. Worth it.',
+    'Rented a Nintendo 64 from Blockbuster. Did not sleep. Do not regret.',
+    'Did the Macarena at my cousin\'s wedding. Eleven times. My knees hate me.',
+    'Saw Jerry Maguire again. I cried. Twice. Same scene.',
+    'Signed up for AOL. 500 free hours! I\'ve used 470.',
     'Blockbuster was out of every new release, so we watched Twister again.',
     'Our Tamagotchi died. The kids held a funeral in the backyard.',
     'Watched the Bulls game. Then watched it again on tape.',
@@ -685,6 +711,11 @@ const L = {
     'A stack of photocopied chip diagrams folded into a road atlas of British Columbia.',
   ],
   deskInno: [
+    'A stack of AOL free-trial CDs. At least forty. Some still in shrink-wrap.',
+    'Three dead Tamagotchis in a little shoebox. There\'s a tiny handwritten eulogy.',
+    'A Hale-Bopp viewing schedule, highlighted in four colors.',
+    'A crumpled printout of the dancing baby email. Someone drew a mustache on it.',
+    'A Fruit Roll-Up from what appears to be 1995.',
     'Beanie Babies. So many Beanie Babies.',
     'A half-finished crossword and a stapler with MINE written on it in Sharpie.',
     'A Dilbert calendar. Someone taped your face over the pointy-haired boss.',
@@ -702,7 +733,7 @@ const L = {
 };
 
 /* ---------------- game state ---------------- */
-let G, npcs = [], interactables = [], legalStaff = [], gc = null, para = null;
+let G, npcs = [], interactables = [], legalStaff = [], gc = null, para = null, ceo = null;
 function newGame() {
   npcs.forEach(n => scene.remove(n.mesh, n.tag));
   const roster = shuffle(ROSTER).slice(0, 12);
@@ -742,6 +773,9 @@ function newGame() {
   gc = mkStaff(100, 'Margaret Thornbury', 'General Counsel', { x: 15.0, z: -3.8 }, -Math.PI / 2, 0x2b2b3a);
   para = mkStaff(101, 'Kyle Bentsen', 'Paralegal', { x: 12.4, z: 0.2 }, 0, null);
   legalStaff = [gc, para];
+  if (ceo) scene.remove(ceo.mesh);
+  { const mesh = makePerson({ suit: 0x1d2433 }); mesh.visible = false; scene.add(mesh); ceo = { id: 999, mesh, pos: mesh.position, sit: 0, walkT: 0, walkAmp: 0, sip: 0, talking: false, state: 'cut' }; }
+  buildDeskProps(); clearEvents(); G.cut = null; $('#hearts').hidden = true;
   setupInteractables();
   player.x = 0; player.z = 11; yaw = 0; pitch = 0;
   updateHUD();
@@ -760,8 +794,8 @@ const keys = {};
 function blocked(x, z, r, ignore) {
   if (x - r < B.minX || x + r > B.maxX || z - r < B.minZ || z + r > B.maxZ) return true;
   for (const c of colliders) if (x + r > c.minX && x - r < c.maxX && z + r > c.minZ && z - r < c.maxZ) return true;
-  for (const o of legalStaff) { const dx = o.pos.x - x, dz = o.pos.z - z; if (dx * dx + dz * dz < (r + 0.3) ** 2) return true; }
-  for (const n of npcs) if (n.status === 'active' && n !== ignore) { const dx = n.pos.x - x, dz = n.pos.z - z; if (dx * dx + dz * dz < (r + 0.3) ** 2) return true; }
+  // people only block you if you'd move CLOSER to them, so nobody can pin you in place
+  for (const o of [...legalStaff, ...npcs]) { if (o.status !== 'active' || o === ignore) continue; const dx = o.pos.x - x, dz = o.pos.z - z, d2 = dx * dx + dz * dz; if (d2 < (r + 0.28) ** 2) { const cx = o.pos.x - player.x, cz = o.pos.z - player.z; if (d2 < cx * cx + cz * cz) return true; } }
   return false;
 }
 function movePlayer(dt) {
@@ -801,6 +835,10 @@ function setupInteractables() {
     { name: 'Sink', x: -13.2, z: -0.5, use: () => say('Restroom', pick(['You wash your hands. The mirror shows a person with a lot of problems.', 'The soap dispenser is empty. It has been empty since 1995.'])), r: 1.8 },
     { name: 'Supply closet', x: 0, z: 13.9, use: () => say('Supply closet', 'It smells like toner and bad decisions. Someone has been hoarding the good pens.') },
   ];
+  npcs.forEach(n => {
+    interactables.push({ get name() { return `Answer the ringing phone on desk #${n.desk.num}`; }, x: n.desk.x + 1.0, z: n.desk.z - 0.85, when: () => n.ringUntil > G.min, use: () => answerPhone(n), r: 2.2 });
+    interactables.push({ get name() { return `Open the package on desk #${n.desk.num}`; }, x: n.desk.x - 0.85, z: n.desk.z - 1.05, when: () => G.pkg && G.pkg.n === n && !G.pkg.opened, use: openPackage, r: 2.2 });
+  });
   npcs.forEach(n => interactables.push({ desk: n, x: n.desk.x, z: n.desk.z - 1.05, get name() { return `Search desk #${n.desk.num}`; }, use: () => searchDesk(n, false), when: () => n.state !== 'desk' || n.status !== 'active' }));
 }
 function findTarget() {
@@ -823,6 +861,7 @@ function planTrip(n) {
   if (n.spy) key = r < 0.45 ? 'server' : pick(casual);
   else if (n.dept === 'IT') key = r < 0.4 ? 'server' : pick(casual);
   else key = r < 0.05 ? 'server' : pick(casual);
+  if (n.forceKey) { key = n.forceKey; n.forceKey = null; }
   const t = TARGETS[key];
   const taken = npcs.filter(o => o !== n && o.status === 'active' && o.target === key && ['standup', 'go', 'at'].includes(o.state)).map(o => o.slotIdx);
   let idx = t.spots.findIndex((_, i) => !taken.includes(i)); if (idx < 0) idx = Math.floor(Math.random() * t.spots.length);
@@ -861,8 +900,11 @@ function steer(n, dt) {
   const want = n.maxSpeed * slow * (last ? clamp(d / 0.9, 0.3, 1) : 1);
   n.speed += (want - n.speed) * Math.min(1, dt * (want > n.speed ? 2.5 : 7));
   const mx = Math.sin(n.heading) * n.speed * dt, mz = Math.cos(n.heading) * n.speed * dt;
-  if (!blockedStatic(n.pos.x + mx, n.pos.z, 0.18)) n.pos.x += mx;
-  if (!blockedStatic(n.pos.x, n.pos.z + mz, 0.18)) n.pos.z += mz;
+  const npd = Math.hypot(n.pos.x + mx - player.x, n.pos.z + mz - player.z), cpd = Math.hypot(n.pos.x - player.x, n.pos.z - player.z);
+  if (!(npd < 0.62 && npd < cpd)) {
+    if (!blockedStatic(n.pos.x + mx, n.pos.z, 0.18)) n.pos.x += mx;
+    if (!blockedStatic(n.pos.x, n.pos.z + mz, 0.18)) n.pos.z += mz;
+  } else n.speed *= 0.6;
   n.mesh.rotation.y = n.heading;
   n.walkT += dt * n.speed * 6.3;
   n.walkAmp += (Math.min(1, n.speed / 1.1) - n.walkAmp) * Math.min(1, dt * 6);
@@ -900,7 +942,7 @@ function updateNPC(n, dt) {
   } else if (n.state === 'standup') { if (n.sit < 0.06) { n.state = 'go'; n.heading = n.mesh.rotation.y; } }
   else if (n.state === 'go' || n.state === 'back') moving = steer(n, dt);
   else if (n.state === 'at') {
-    const tg = TARGETS[n.target];
+    const tg = TARGETS[n.target] || TARGETS.cooler;
     const buddy = npcs.find(o => o !== n && o.status === 'active' && o.state === 'at' && Math.hypot(o.pos.x - n.pos.x, o.pos.z - n.pos.z) < 1.8);
     if (buddy) { faceToward(n, buddy.pos.x, buddy.pos.z, dt * 0.5); if (Math.random() < dt * 0.35 && !(performance.now() < (buddy.speakUntil || 0))) n.speakUntil = performance.now() + rnd(900, 2400); }
     else faceToward(n, tg.fx, tg.fz, dt * 0.5);
@@ -961,6 +1003,7 @@ function hourTick() {
   if (G.short) { const drop = before - G.stock; if (drop > 0) G.sec += drop * G.short / 1000 * 1.1; if (netWorth() < 0) marginCall(); }
   else G.sec = Math.max(0, G.sec - 1);
   G.hist.push(G.stock);
+  if (Math.random() < 0.45) randomEvent();
   makeCover();
   if (G.morale < 30 && Math.random() < 0.3) toast('Morale', 'Somebody wrote "THIS PLACE IS A SINKING SHIP" on the break room whiteboard.');
   updateHUD(); checkEnd();
@@ -985,7 +1028,7 @@ function nextDay() {
   G.day++; G.min = 540; G.lastHour = 9; G.lastTick = 540; G.rush = null; G.dayStart = { leaks: G.leaks, stock: G.stock };
   for (const o of legalStaff) { o.state = G.legal.summoned ? 'summon' : 'desk'; o.path = []; o.talking = false; o.pos.set(o.home.x, 0, o.home.z); o.mesh.rotation.y = o.rotY; o.sit = 1; }
   if (G.legal.summoned) G.legal.deadline = 540 + 90;
-  G.seated = false; npcs.forEach(n => n.invite = null);
+  G.seated = false; npcs.forEach(n => n.invite = null); clearEvents();
   for (const n of active()) { n.state = 'desk'; n.path = []; n.pos.set(n.desk.home.x, 0, n.desk.home.z); n.mesh.rotation.y = Math.PI; n.sit = 1; n.speed = 0; n.walkAmp = 0; n.target = null; n.nextTrip = 540 + rnd(15, 150); }
   player.x = 0; player.z = 11; yaw = 0; pitch = 0;
   toast(DAYS[G.day], pick(['A memo says casual Friday is cancelled. It is not Friday.', 'The coffee machine has been fixed. It has not been fixed.', 'IT announces everyone is getting Windows 95. Groans echo across the floor.', 'Someone brought donuts. They are gone by 9:04.']));
@@ -1075,6 +1118,25 @@ function talk(n, line) {
   ];
   if (G.held) opts.push({ label: `Want my ${G.held.n}?`, fn: () => gift(n) });
   if (!n.invite) opts.push({ label: 'Join me in the bathroom?', cls: 'love', fn: () => inviteBath(n) });
+  const pk = n.props && n.props.length ? n.props[(G.day + n.id) % n.props.length] : null;
+  if (pk && PROP_INFO[pk]) opts.splice(2, 0, { label: `Nice ${PROP_INFO[pk][0]}!`, fn: () => {
+    if (!once(n.id + 'prop')) return reply(n, 'You already said that. I\'m starting to think you\'re after my ' + PROP_INFO[pk][0] + '.');
+    G.morale = clamp(G.morale + 1, 0, 100); if (n.romance) n.affection++; updateHUD(); reply(n, pick(PROP_INFO[pk][1]));
+  } });
+  opts.splice(2, 0, { label: 'Noticed anything odd about anyone?', fn: () => {
+    if (!once(n.id + 'gossip')) return reply(n, 'I told you what I know. Which is nothing. I see nothing. I\'m in Accounting.'.replace('Accounting', n.dept));
+    const others = active().filter(o => o !== n), inno = others.filter(o => !o.spy), spies = activeSpies().filter(o => o !== n);
+    let line;
+    if (n.spy && inno.length) { const v = pick(inno); line = pick([`Honestly? I'd keep an eye on ${v.first}. Very quiet. Always at the copier.`, `${v.first} asked me about the server room last week. I thought that was strange.`]); note(v, `${n.first} says to keep an eye on them.`); note(n, `Was very eager to point the finger at ${v.first}.`); }
+    else if (spies.length && Math.random() < .4) { const v = pick(spies); line = pick([`${v.first} has been taking a LOT of photos of the whiteboards. Says it's for "documentation."`, `I saw ${v.first} put something in the snack machine. Not money. Something else.`, `${v.first} took a call, said "not yet" three times, and hung up the second I walked by.`]); note(v, `${n.first} noticed: "${line}"`, true); }
+    else { const v = pick(others); line = v ? pick([`${v.first} microwaves fish. That's the only crime I've witnessed.`, `${v.first} has been weird since the Christmas party. Not spy weird. Karaoke weird.`, `Nothing. Unless you count ${v.first}'s ties.`]) : 'It\'s just us now, boss.'; }
+    reply(n, line);
+  } });
+  if (G.bday === n) opts.unshift({ label: 'Happy birthday!', cls: 'love', fn: () => {
+    if (!once(n.id + 'bday')) return reply(n, 'You already said that! But thanks again.');
+    G.morale = clamp(G.morale + 4, 0, 100); if (n.romance) n.affection++; updateHUD();
+    reply(n, n.spy ? pick(['Thank you. I will celebrate… later. Somewhere private.', 'Birthdays are for people with nothing to hide. …That was a joke.']) : pick(['You remembered! Nobody remembers!', 'Thanks, boss! There\'s cake in the break room. It\'s carrot. Sorry.']));
+  } });
   if (G.affair === n) opts.push({ label: 'We need to end this.', cls: 'love', fn: () => endAffair(n) });
   else if (n.romance && n.affection >= 2 && !G.affair) opts.push({ label: 'Supply closet. After five?', cls: 'love', fn: () => startAffair(n) });
   opts.push({ label: 'You\'re fired.', cls: 'danger', fn: () => confirmAct(n, 'fire') });
@@ -1284,30 +1346,64 @@ function inviteBath(n) {
   toast('Restroom', `${n.first} is heading to the restroom on the west wall.`);
   reply(n, n.spy ? pick(['…Yes. I think we should talk. Somewhere private.', 'Good. There\'s something I\'ve been meaning to discuss with you.']) : pick(['Ha. Okay. Give me five minutes.', 'You\'re terrible. …West side, right?']));
 }
-function bathScene(n) {
-  n.invite = null; n.leaveAt = G.min + 10; n.talking = true;
-  if (n.spy) {
-    const line = 'They check under the stalls, run the tap, and lean in. "Some friends of mine overseas admire ORCHID very much. They would like a copy. They would pay. Generously. And your short position would do very well when the news breaks."';
-    speak(n, line);
-    dialog(`Restroom — ${n.name}`, `<div class="speech">${portrait(n)}<p>${line}</p></div>`, [
-      { label: 'Take the envelope ($150,000)', cls: 'danger', fn: () => {
-        G.cash += 150000; G.leaks = clamp(G.leaks + 18, 0, 100); G.sec += 12; note(n, 'Handed you $150,000 in the bathroom for ORCHID access. You took it.', true);
-        fade('The envelope is thick. Very thick.<br><br>You flush, for no reason, and walk out with your pockets full.'); updateHUD(); checkEnd();
-      } },
-      { label: 'Play along. Learn more.', fn: () => { note(n, 'Tried to buy ORCHID from you in the bathroom. Works for "friends overseas".', true); n.nervous = G.min + 600; reply(n, 'Good. We\'ll be in touch. Wash your hands, boss. Appearances.'); } },
-      { label: 'Get out of my bathroom.', fn: () => { note(n, 'Tried to bribe you in the bathroom for ORCHID. You refused.', true); reply(n, 'A pity. Forget we spoke. I certainly will.'); } },
-    ]);
-  } else {
-    const line = pick(['They lock the door behind them and grin. "So. This is the executive washroom?" "It\'s the only washroom." "Even better."', '"Five minutes," they whisper, "and then we never speak of the hand dryer again."']);
-    speak(n, line);
-    dialog(`Restroom — ${n.name}`, `<div class="speech">${portrait(n)}<p>${line}</p></div>`, [
-      { label: 'Lock the door', cls: 'love', fn: () => {
-        if (!G.affair) G.affair = n; G.scandal += 10; n.affection += 2; legalGrr(8, 'a twelve-minute "meeting" in the restroom');
-        fade('The hand dryer runs for a very long time.<br><br>You leave first. They leave four minutes later. Gloria from reception notices both.', () => { updateHUD(); checkEnd(); });
-      } },
-      { label: 'Actually… I just wanted to talk.', fn: () => reply(n, 'In the BATHROOM? You\'re a strange person, boss.') },
-    ]);
+/* ---------------- restroom love scene ---------------- */
+const HEART = '<svg viewBox="0 0 32 29" aria-hidden="true"><path d="M16 28C6 20 0 14 0 8 0 3 4 0 8 0c3 0 6 2 8 5 2-3 5-5 8-5 4 0 8 3 8 8 0 6-6 12-16 20z"/></svg>';
+function loveScene(n, after) {
+  G.ui = true; G.paused = true; releaseLock();
+  n.talking = false; n.state = 'at'; n.path = []; n.sit = 0; n.walkAmp = 0;
+  n.pos.set(-12.25, 0, -2.0); n.mesh.rotation.set(0, Math.atan2(-0.3, 0.58), 0);
+  ceo.mesh.visible = true; ceo.pos.set(-12.55, 0, -1.42); ceo.mesh.rotation.set(0, Math.atan2(0.3, -0.58), 0);
+  const hz = $('#hearts'); hz.innerHTML = '';
+  for (let i = 0; i < 18; i++) {
+    const h = document.createElement('div'); h.className = 'heart';
+    const size = 90 + Math.random() * 260;
+    h.style.cssText = `left:${Math.random() < .5 ? rnd(-12, 22) : rnd(62, 92)}%;width:${size}px;height:${size}px;animation-delay:${rnd(0, 2.6).toFixed(2)}s;animation-duration:${rnd(2.4, 3.6).toFixed(2)}s;--rot:${rnd(-25, 25).toFixed(0)}deg`;
+    h.innerHTML = HEART; hz.appendChild(h);
   }
+  const big = document.createElement('div'); big.className = 'heart big'; big.innerHTML = HEART; hz.appendChild(big);
+  const cap = document.createElement('div'); cap.className = 'lovecap'; cap.textContent = `You & ${n.first}`; hz.appendChild(cap);
+  hz.hidden = false;
+  G.cut = { n, t0: performance.now(), dur: 5000, after };
+}
+function updateCut(now) {
+  const c = G.cut, t = now / 1000, k = (now - c.t0) / c.dur;
+  for (const o of [c.n, ceo]) {
+    pose(o, t);
+    const u = o.mesh.userData;
+    u.armL.rotation.set(-1.25, 0, 0.6); u.armR.rotation.set(-1.25, 0, -0.6);
+    u.head.rotation.set(0.12, 0, (o === ceo ? 1 : -1) * 0.22);
+    o.mesh.rotation.z = Math.sin(t * 1.6 + (o === ceo ? 0 : 1)) * 0.03;
+  }
+  c.n.tag.visible = false;
+  camera.position.set(-11.3, 1.55, -0.85 - k * 0.2);
+  camera.lookAt(-12.4, 1.45, -1.75);
+  if (k >= 1) {
+    G.cut = null; ceo.mesh.visible = false; $('#hearts').hidden = true; $('#hearts').innerHTML = '';
+    G.ui = false; G.paused = false; camera.rotation.set(pitch, yaw, 0, 'YXZ');
+    player.x = -11.7; player.z = -3; yaw = Math.PI / 2; pitch = 0;
+    c.after && c.after();
+  }
+}
+function bathScene(n) {
+  n.invite = null; n.leaveAt = G.min + 10;
+  G.scandal += 8; legalGrr(8, 'a twelve-minute "meeting" in the restroom');
+  if (!G.affair) G.affair = n;
+  n.affection += 2;
+  loveScene(n, () => {
+    updateHUD(); checkEnd(); if (G.over) return;
+    if (n.spy) {
+      const line = 'Afterwards, they straighten their collar, check under the stalls, run the tap, and lean in. "Some friends of mine overseas admire ORCHID very much. They would pay. Generously. And your short position would do very well when the news breaks."';
+      n.talking = true; speak(n, line);
+      dialog(`Restroom — ${n.name}`, `<div class="speech">${portrait(n)}<p>${line}</p></div>`, [
+        { label: 'Take the envelope ($150,000)', cls: 'danger', fn: () => {
+          G.cash += 150000; G.leaks = clamp(G.leaks + 18, 0, 100); G.sec += 12; note(n, 'Seduced you in the restroom, then handed you $150,000 for ORCHID access. You took it.', true);
+          fade('The envelope is thick. Very thick.<br><br>You flush, for no reason. It doesn\'t work. Level 7.'); updateHUD(); checkEnd();
+        } },
+        { label: 'Play along. Learn more.', fn: () => { note(n, 'Honeytrap in the restroom, then tried to buy ORCHID. Works for "friends overseas".', true); n.nervous = G.min + 600; reply(n, 'Good. We\'ll be in touch. Wash your hands, boss. Appearances.'); } },
+        { label: 'Get out of my bathroom.', fn: () => { note(n, 'Seduced you in the restroom, then tried to bribe you for ORCHID. You refused.', true); reply(n, 'A pity. Forget we spoke. I certainly will.'); } },
+      ]);
+    } else toast('Restroom', `The hand dryer ran for a very long time. You leave first; ${n.first} leaves four minutes later. Gloria from reception notices both.`);
+  });
 }
 
 function flushToilet() {
@@ -1384,6 +1480,152 @@ function makeCover() {
 }
 function showCover(url) { dialog('TIMES', `<img class="coverbig" alt="TIMES magazine cover" src="${url}">`, [{ label: 'Put it down' }]); }
 
+/* ---------------- desk clutter ---------------- */
+const MC = {}; const Mc = h => MC[h] || (MC[h] = M(h));
+const TM = {};
+const texMat = (key, w, h, draw, transparent) => TM[key] || (TM[key] = new THREE.MeshLambertMaterial({ map: canvasTex(w, h, draw), transparent: !!transparent }));
+const posterDraw = {
+  hang: (g, w, h) => { g.fillStyle = '#9cc7e8'; g.fillRect(0, 0, w, h); g.strokeStyle = '#5a3a1a'; g.lineWidth = 8; g.beginPath(); g.moveTo(0, 50); g.lineTo(w, 44); g.stroke(); g.fillStyle = '#e8a050'; g.beginPath(); g.ellipse(64, 92, 20, 26, 0, 0, 7); g.fill(); g.beginPath(); g.arc(64, 64, 14, 0, 7); g.fill(); g.fillRect(52, 46, 6, 20); g.fillRect(70, 46, 6, 20); g.fillStyle = '#111'; g.fillRect(57, 60, 3, 3); g.fillRect(68, 60, 3, 3); g.font = 'bold 15px Arial'; g.textAlign = 'center'; g.fillStyle = '#fff'; g.fillText('HANG IN THERE', 64, 160); },
+  team: (g, w, h) => { g.fillStyle = '#111'; g.fillRect(0, 0, w, h); const gr = g.createLinearGradient(0, 20, 0, 120); gr.addColorStop(0, '#f2a65a'); gr.addColorStop(1, '#5a2a4a'); g.fillStyle = gr; g.fillRect(10, 10, 108, 110); g.fillStyle = '#111'; g.fillRect(20, 95, 88, 6); for (let i = 0; i < 5; i++) g.fillRect(28 + i * 16, 82, 4, 13); g.font = 'bold 16px Georgia'; g.textAlign = 'center'; g.fillStyle = '#fff'; g.fillText('TEAMWORK', 64, 145); g.font = '9px Georgia'; g.fillText('Together we achieve more', 64, 160); },
+  synergy: (g, w, h) => { g.fillStyle = '#111'; g.fillRect(0, 0, w, h); g.fillStyle = '#5a7fa8'; g.fillRect(10, 10, 108, 110); g.fillStyle = '#eef'; g.beginPath(); g.moveTo(10, 120); g.lineTo(50, 50); g.lineTo(80, 90); g.lineTo(100, 60); g.lineTo(118, 120); g.fill(); g.fillStyle = '#222'; g.beginPath(); g.moveTo(40, 40); g.quadraticCurveTo(64, 25, 88, 40); g.quadraticCurveTo(64, 33, 40, 40); g.fill(); g.font = 'bold 17px Georgia'; g.textAlign = 'center'; g.fillStyle = '#fff'; g.fillText('SYNERGY', 64, 145); },
+  grunge: (g, w, h) => { g.fillStyle = '#2a2a2a'; g.fillRect(0, 0, w, h); g.fillStyle = '#c0392b'; g.font = 'bold 22px Impact, Arial Black'; g.textAlign = 'center'; g.fillText('GRUNGE', 64, 50); g.fillText('FEST', 64, 76); g.fillStyle = '#f1c40f'; g.font = 'bold 16px Impact, Arial'; g.fillText("SEATTLE '96", 64, 104); g.fillStyle = '#ddd'; g.font = '10px Arial'; g.fillText('3 STAGES · 40 BANDS', 64, 130); g.fillText('FLANNEL MANDATORY', 64, 146); },
+  y2k: (g, w, h) => { g.fillStyle = '#fff'; g.fillRect(0, 0, w, h); g.fillStyle = '#b00000'; g.font = 'bold 40px Arial Black, Arial'; g.textAlign = 'center'; g.fillText('Y2K', 64, 62); g.fillStyle = '#111'; g.font = 'bold 16px Arial'; g.fillText('IS YOUR', 64, 92); g.fillText('COMPUTER', 64, 110); g.fillText('READY?', 64, 128); g.font = '9px Arial'; g.fillText('Only 1,034 days left!', 64, 150); },
+  aloha: (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#ff8c42'); gr.addColorStop(0.6, '#ffd166'); gr.addColorStop(0.6, '#1d7fa8'); gr.addColorStop(1, '#0b4a66'); g.fillStyle = gr; g.fillRect(0, 0, w, h); g.fillStyle = '#ffef9a'; g.beginPath(); g.arc(64, 100, 22, Math.PI, 0); g.fill(); g.fillStyle = '#2a1a10'; g.fillRect(100, 40, 5, 70); g.fillStyle = '#1e5a2a'; for (let i = 0; i < 5; i++) { g.beginPath(); g.ellipse(102, 40, 24, 6, i * 0.6, 0, 7); g.fill(); } g.font = 'bold 20px Georgia'; g.fillStyle = '#fff'; g.textAlign = 'center'; g.fillText('ALOHA', 50, 30); },
+  mars: (g, w, h) => { g.fillStyle = '#0a0a1a'; g.fillRect(0, 0, w, h); for (let i = 0; i < 40; i++) { g.fillStyle = '#fff'; g.fillRect(Math.random() * w, Math.random() * 100, 1, 1); } g.fillStyle = '#c1440e'; g.beginPath(); g.arc(64, 70, 34, 0, 7); g.fill(); g.fillStyle = '#e07a3a'; g.beginPath(); g.arc(56, 62, 10, 0, 7); g.fill(); g.font = 'bold 18px Arial'; g.fillStyle = '#fff'; g.textAlign = 'center'; g.fillText('MARS 1997', 64, 135); g.font = '10px Arial'; g.fillText('Pathfinder lands July 4', 64, 152); },
+  eotm: (g, w, h) => { g.fillStyle = '#f8f2dc'; g.fillRect(0, 0, w, h); g.strokeStyle = '#b8902a'; g.lineWidth = 6; g.strokeRect(6, 6, w - 12, h - 12); g.fillStyle = '#5a3a0a'; g.font = 'bold 13px Georgia'; g.textAlign = 'center'; g.fillText('EMPLOYEE', 64, 40); g.fillText('OF THE MONTH', 64, 58); g.font = 'italic 11px Georgia'; g.fillText('November 1996', 64, 80); g.fillStyle = '#b8902a'; g.beginPath(); g.arc(64, 112, 16, 0, 7); g.fill(); },
+};
+const POSTERS = Object.keys(posterDraw);
+const PROP_INFO = {
+  mug: ['coffee mug', ['It said WORLD\'S BEST something. The rest wore off in the dishwasher.', 'Fourth cup today. Don\'t tell my doctor.']],
+  photo: ['family photo', ['That\'s us at Lake Tahoe. My kid is the blur.', 'Thanks! That\'s my wife and our dog. The dog is the one smiling.']],
+  plant: ['plant', ['It\'s the only thing on this floor that gets enough water.', 'His name is Gerald. Gerald is thriving.']],
+  lava: ['lava lamp', ['It\'s a conversation piece. Mostly the conversation is "turn that off."', 'Mesmerizing, right? I lose maybe an hour a day to it.']],
+  troll: ['troll doll', ['Lucky troll. I rub his hair before every meeting.', 'I have 31 more at home. Don\'t judge.']],
+  rubik: ['puzzle cube', ['I\'ve never solved it. I just peeled the stickers off once.', 'I can do one side. One side is enough.']],
+  binders: ['binders', ['Those are the TPS binders. All of them. Every single one.', 'Color-coded. Red means urgent. They are all red.']],
+  fan: ['desk fan', ['The AC on this floor is a rumor.', 'It\'s my white noise. Drowns out the copier.']],
+  globe: ['globe', ['I spin it and go wherever it lands. Usually the Pacific.', 'It still says USSR. I keep meaning to update it.']],
+  cradle: ['executive desk toy', ['Click. Click. Click. It helps me think. It does not help anyone else think.', 'Newton invented it. Probably.']],
+  eightball: ['Magic 8-ball', ['I asked if I\'d get a promotion. It said "outlook not so good." Then you walked in.', 'Ask it something! …"Reply hazy." Typical.']],
+  bobble: ['bobblehead', ['I won it at a ballgame. Look at him go.', 'He nods at everything. Like a good middle manager.']],
+  boombox: ['boombox', ['Only on lunch break, I swear. Mostly Ace of Base.', 'It has a CD player AND a tape deck. The future.']],
+  alien: ['inflatable alien', ['Got it at a gas station in Roswell. The truth is… somewhere.', 'He\'s named Zorp. Zorp watches over the quarterly numbers.']],
+  gumball: ['gumball machine', ['A penny a gumball. I\'m running a business here.', 'Want one? The blue ones are vintage.']],
+  tama: ['virtual pet', ['Shh, he\'s sleeping. If he dies again my kid will know.', 'I have to feed it every 20 minutes. It\'s ruining my career.']],
+  snowglobe: ['snow globe', ['From my trip to Niagara Falls. It\'s the Falls, but with snow. For some reason.', 'Shake it. Go ahead. Very calming.']],
+  cactus: ['cactus', ['Low maintenance. Like me.', 'It\'s the only plant I haven\'t killed.']],
+  trophy: ['bowling trophy', ['Third place, league championship, 1994. I don\'t want to talk about the 7-10 split.', 'Thursday night league. We\'re called the Gutter Ballers.']],
+  stress: ['stress ball', ['I squeeze it every time someone says "synergy."', 'This is my third this week.']],
+  poster: ['poster', ['Gets me through the afternoons.', 'My cubicle, my art gallery.']],
+  calendar: ['calendar', ['I cross off every day at 4:59. It\'s a ritual.', 'Only 1,034 days to the year 2000.']],
+  lights: ['string lights', ['I never took them down after Christmas. Now it\'s a lifestyle.', 'Facilities says they\'re a fire hazard. Facilities can come take them.']],
+  hoop: ['mini basketball hoop', ['I\'m 4 for 300 this week. Personal best.', 'Want to shoot? Loser does the TPS reports.']],
+  pennant: ['pennant', ['Go team! Whichever one. Go them.', 'My alma mater. We were not good at sports.']],
+};
+const DESK_PROPS = ['mug', 'photo', 'plant', 'lava', 'troll', 'rubik', 'binders', 'fan', 'globe', 'cradle', 'eightball', 'bobble', 'boombox', 'alien', 'gumball', 'tama', 'snowglobe', 'cactus', 'trophy', 'stress'];
+let propGroup = null;
+function pm(geo, mat, x, y, z, rx = 0, ry = 0, rz = 0) { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.set(rx, ry, rz); propGroup.add(m); return m; }
+const Y = 0.77;
+const PB = {
+  mug: (x, z) => { const c = pick([0xffffff, 0xc0392b, 0x2c3e50, 0xf1c40f, 0x27ae60]); pm(new THREE.CylinderGeometry(.045, .04, .1, 10), Mc(c), x, Y + .05, z); pm(new THREE.BoxGeometry(.015, .05, .03), Mc(c), x + .05, Y + .05, z); pm(new THREE.CylinderGeometry(.04, .04, .005, 10), Mc(0x3a2210), x, Y + .098, z); },
+  photo: (x, z) => { pm(new THREE.BoxGeometry(.16, .13, .015), Mc(0x8a6a3a), x, Y + .065, z, -0.2); pm(new THREE.PlaneGeometry(.13, .1), texMat('photo', 64, 48, (g, w, h) => { g.fillStyle = '#7ec0ee'; g.fillRect(0, 0, w, h); g.fillStyle = '#e8d8a0'; g.fillRect(0, 34, w, 14); [[14, '#c0392b'], [28, '#2980b9'], [42, '#f39c12'], [54, '#8e44ad']].forEach(([px, c], i) => { g.fillStyle = c; g.fillRect(px - 3, 20 + (i > 1 ? 6 : 0), 7, 16 - (i > 1 ? 6 : 0)); g.fillStyle = '#e0ac7e'; g.beginPath(); g.arc(px, 16 + (i > 1 ? 6 : 0), 4, 0, 7); g.fill(); }); }), x, Y + .067, z + .009, -0.2); },
+  plant: (x, z) => { pm(new THREE.CylinderGeometry(.06, .045, .09, 8), Mc(0x9a5a3a), x, Y + .045, z); const s = pm(new THREE.IcosahedronGeometry(.1, 0), Mc(0x3f7d3a), x, Y + .16, z); s.scale.set(1, 1.3, 1); },
+  lava: (x, z) => { const c = pick([0xff6a00, 0xb03ac0, 0x30d050, 0xff2a6a]); pm(new THREE.CylinderGeometry(.035, .06, .08, 10), Mc(0x555a60), x, Y + .04, z); pm(new THREE.CylinderGeometry(.03, .045, .2, 10), new THREE.MeshBasicMaterial({ color: c }), x, Y + .18, z); pm(new THREE.CylinderGeometry(.02, .03, .05, 10), Mc(0x555a60), x, Y + .305, z); },
+  troll: (x, z) => { pm(new THREE.BoxGeometry(.05, .06, .04), Mc(0x2a7a3a), x, Y + .03, z); pm(new THREE.SphereGeometry(.03, 8, 6), Mc(0xd9a066), x, Y + .085, z); pm(new THREE.ConeGeometry(.035, .13, 6), Mc(pick([0xff2a9a, 0x2ad0ff, 0xa0ff2a, 0xffa000])), x, Y + .17, z); },
+  rubik: (x, z) => pm(new THREE.BoxGeometry(.06, .06, .06), texMat('rubik', 48, 48, (g) => { const c = ['#c0392b', '#f1c40f', '#27ae60', '#2980b9', '#fff', '#e67e22']; for (let i = 0; i < 9; i++) { g.fillStyle = '#111'; g.fillRect((i % 3) * 16, Math.floor(i / 3) * 16, 16, 16); g.fillStyle = pick(c); g.fillRect((i % 3) * 16 + 2, Math.floor(i / 3) * 16 + 2, 12, 12); } }), x, Y + .03, z, 0, 0.5),
+  binders: (x, z) => { [0xc0392b, 0x2c3e50, 0x27ae60].forEach((c, i) => pm(new THREE.BoxGeometry(.06, .28, .22), Mc(c), x - .07 + i * .07, Y + .14, z)); },
+  fan: (x, z) => { pm(new THREE.CylinderGeometry(.07, .08, .03, 12), Mc(0xd8d0bb), x, Y + .015, z); pm(new THREE.CylinderGeometry(.012, .012, .16, 6), Mc(0xd8d0bb), x, Y + .1, z); pm(new THREE.CylinderGeometry(.11, .11, .05, 14), Mc(0xb8b8b0), x, Y + .26, z, Math.PI / 2); },
+  globe: (x, z) => { pm(new THREE.CylinderGeometry(.05, .06, .02, 10), Mc(0x5a3a1a), x, Y + .01, z); pm(new THREE.CylinderGeometry(.008, .008, .08, 6), Mc(0x8a6a2a), x, Y + .05, z); pm(new THREE.SphereGeometry(.08, 14, 10), texMat('globe', 64, 32, (g, w, h) => { g.fillStyle = '#3a7ac0'; g.fillRect(0, 0, w, h); g.fillStyle = '#5aa04a'; [[8, 10, 10, 8], [22, 8, 8, 14], [38, 6, 16, 10], [48, 20, 8, 6], [14, 22, 6, 6]].forEach(r => g.fillRect(...r)); }), x, Y + .16, z); },
+  cradle: (x, z) => { pm(new THREE.BoxGeometry(.2, .015, .1), Mc(0x222222), x, Y + .008, z); pm(new THREE.BoxGeometry(.2, .012, .012), Mc(0xc0c0c0), x, Y + .16, z - .04); pm(new THREE.BoxGeometry(.2, .012, .012), Mc(0xc0c0c0), x, Y + .16, z + .04); for (let i = 0; i < 5; i++) pm(new THREE.SphereGeometry(.017, 8, 6), Mc(0xd0d0d8), x - .07 + i * .035, Y + .06, z); },
+  eightball: (x, z) => { pm(new THREE.SphereGeometry(.05, 12, 10), Mc(0x111111), x, Y + .05, z); pm(new THREE.CircleGeometry(.02, 10), Mc(0xffffff), x, Y + .07, z + .045, -0.4); },
+  bobble: (x, z) => { pm(new THREE.CylinderGeometry(.04, .04, .015, 8), Mc(0x333333), x, Y + .008, z); pm(new THREE.BoxGeometry(.04, .06, .03), Mc(pick([0x2c5aa0, 0xc0392b, 0x2e7d32])), x, Y + .045, z); pm(new THREE.SphereGeometry(.045, 10, 8), Mc(0xe0ac7e), x, Y + .12, z); },
+  boombox: (x, z) => { pm(new THREE.BoxGeometry(.3, .15, .1), Mc(0x3a3a3e), x, Y + .075, z); [-.09, .09].forEach(o => pm(new THREE.CylinderGeometry(.045, .045, .01, 12), Mc(0x111111), x + o, Y + .07, z + .05, Math.PI / 2)); pm(new THREE.BoxGeometry(.22, .015, .02), Mc(0x777777), x, Y + .17, z); },
+  alien: (x, z) => { pm(new THREE.CylinderGeometry(.03, .05, .14, 8), Mc(0x6fdc6f), x, Y + .07, z); const h = pm(new THREE.SphereGeometry(.07, 10, 8), Mc(0x6fdc6f), x, Y + .2, z); h.scale.set(1, 1.2, 0.9); [-.03, .03].forEach(o => { const e = pm(new THREE.SphereGeometry(.02, 6, 4), Mc(0x111111), x + o, Y + .21, z + .055); e.scale.set(1, 1.6, .4); }); },
+  gumball: (x, z) => { pm(new THREE.BoxGeometry(.09, .1, .09), Mc(0xc0392b), x, Y + .05, z); pm(new THREE.SphereGeometry(.07, 12, 10), texMat('gum', 32, 32, (g) => { g.fillStyle = '#eef'; g.fillRect(0, 0, 32, 32); for (let i = 0; i < 40; i++) { g.fillStyle = pick(['#e33', '#3c3', '#33e', '#ee3', '#f8f']); g.fillRect(Math.random() * 30, Math.random() * 30, 3, 3); } }), x, Y + .16, z); },
+  tama: (x, z) => { const e = pm(new THREE.SphereGeometry(.035, 10, 8), Mc(pick([0xff8ac0, 0x8ac0ff, 0xc0ff8a])), x, Y + .035, z, 0.3); e.scale.set(1, 1.25, .5); pm(new THREE.PlaneGeometry(.025, .02), Mc(0x9ab08a), x, Y + .04, z + .02, -0.3); },
+  snowglobe: (x, z) => { pm(new THREE.CylinderGeometry(.05, .06, .04, 10), Mc(0x5a3a1a), x, Y + .02, z); pm(new THREE.SphereGeometry(.055, 12, 10), new THREE.MeshLambertMaterial({ color: 0xcfe8ff, transparent: true, opacity: 0.45 }), x, Y + .09, z); },
+  cactus: (x, z) => { pm(new THREE.CylinderGeometry(.04, .035, .06, 8), Mc(0xc06a3a), x, Y + .03, z); pm(new THREE.CylinderGeometry(.025, .025, .16, 8), Mc(0x4a8a3a), x, Y + .14, z); pm(new THREE.CylinderGeometry(.013, .013, .06, 6), Mc(0x4a8a3a), x + .035, Y + .15, z, 0, 0, 1.2); },
+  trophy: (x, z) => { pm(new THREE.BoxGeometry(.08, .04, .08), Mc(0x2a1a10), x, Y + .02, z); pm(new THREE.CylinderGeometry(.012, .012, .1, 6), Mc(0xd4af37), x, Y + .09, z); pm(new THREE.CylinderGeometry(.05, .02, .07, 10), Mc(0xd4af37), x, Y + .17, z); },
+  stress: (x, z) => pm(new THREE.SphereGeometry(.035, 10, 8), Mc(pick([0xffd200, 0xff6a6a, 0x6ab0ff])), x, Y + .035, z),
+};
+// wall decorations: side = -1 left wall, 1 right wall, 0 back wall
+const LIGHTM = [0xff3030, 0x30ff60, 0x3080ff, 0xffd030].map(c => new THREE.MeshBasicMaterial({ color: c }));
+const WB = {
+  poster: (d, side) => { const k = pick(POSTERS); const m = pm(new THREE.PlaneGeometry(.5, .66), texMat('poster_' + k, 128, 170, posterDraw[k]), d.x + side * 1.452, 1.0, d.z - 0.45, 0, -side * Math.PI / 2); return k; },
+  calendar: (d) => { pm(new THREE.PlaneGeometry(.32, .42), texMat('cal', 64, 84, (g, w, h) => { g.fillStyle = '#fff'; g.fillRect(0, 0, w, h); g.fillStyle = '#2a6ab0'; g.fillRect(0, 0, w, 30); g.fillStyle = '#fff'; g.font = 'bold 10px Arial'; g.textAlign = 'center'; g.fillText('MARCH 1997', w / 2, 20); g.strokeStyle = '#999'; for (let i = 0; i < 5; i++) for (let j = 0; j < 7; j++) g.strokeRect(2 + j * 8.6, 34 + i * 9.5, 8.6, 9.5); g.strokeStyle = '#c00'; g.lineWidth = 1.5; for (let j = 0; j < 2; j++) { g.beginPath(); g.moveTo(2 + j * 8.6, 34); g.lineTo(10.6 + j * 8.6, 43.5); g.stroke(); } }), d.x - 0.85, 1.12, d.z - 1.453); },
+  pennant: (d) => { pm(new THREE.PlaneGeometry(.5, .2), texMat('pennant', 128, 52, (g, w, h) => { g.fillStyle = '#7a1020'; g.beginPath(); g.moveTo(0, 0); g.lineTo(w, h / 2); g.lineTo(0, h); g.fill(); g.fillStyle = '#ffd200'; g.font = 'bold 15px Arial'; g.fillText('GO TEAM!', 8, h / 2 + 5); }, true), d.x + 0.8, 1.27, d.z - 1.452); },
+  lights: (d) => { const cols = LIGHTM; for (let i = 0; i < 15; i++) pm(new THREE.SphereGeometry(.022, 6, 4), cols[i % 4], d.x - 1.4 + i * .2, 1.42 - Math.sin(i * 0.9) * .03, d.z - 1.44); },
+  hoop: (d, side) => { pm(new THREE.BoxGeometry(.02, .22, .32), Mc(0xf4f4f4), d.x + side * 1.44, 1.25, d.z - 0.2); const r = pm(new THREE.TorusGeometry(.07, .008, 6, 14), Mc(0xff6a00), d.x + side * 1.37, 1.17, d.z - 0.2, Math.PI / 2); },
+};
+function buildDeskProps() {
+  if (propGroup) { scene.remove(propGroup); propGroup.traverse(o => o.geometry && o.geometry.dispose()); }
+  propGroup = new THREE.Group(); scene.add(propGroup);
+  for (const n of npcs) {
+    const d = n.desk; n.props = [];
+    // everyone has a desk phone
+    pm(new THREE.BoxGeometry(.18, .06, .2), Mc(0xd8d0bb), d.x + 1.0, Y + .03, d.z - 0.85); pm(new THREE.BoxGeometry(.2, .04, .05), Mc(0xd8d0bb), d.x + 1.0, Y + .08, d.z - 0.9);
+    if (!d.ring) { d.ring = new THREE.Mesh(new THREE.SphereGeometry(.025, 8, 6), new THREE.MeshBasicMaterial({ color: 0xff2020 })); d.ring.position.set(d.x + 1.07, Y + .07, d.z - 0.78); scene.add(d.ring); }
+    d.ring.visible = false;
+    // sticky notes on most monitors
+    if (Math.random() < .6) for (let i = 0; i < 1 + Math.floor(Math.random() * 3); i++) pm(new THREE.PlaneGeometry(.06, .06), Mc(pick([0xfff27a, 0xffb0d0, 0xb0ffb0])), d.x - .2 + i * .14, 1.2 - (i % 2) * .03, d.z - 0.932, 0, 0, rnd(-.2, .2));
+    const slots = shuffle([[-1.05, -1.25], [-0.72, -1.28], [-1.08, -0.82], [-0.62, -0.84], [1.08, -1.28]]);
+    shuffle(DESK_PROPS).slice(0, 3 + Math.floor(Math.random() * 2)).forEach((k, i) => { PB[k](d.x + slots[i][0], d.z + slots[i][1]); n.props.push(k); });
+    const walls = shuffle(['poster', 'poster', 'calendar', 'pennant', 'lights', 'hoop']).slice(0, 2 + Math.floor(Math.random() * 2));
+    let sides = shuffle([-1, 1]);
+    walls.forEach(k => { let side = 0; if (k === 'poster' || k === 'hoop') { if (!sides.length) return; side = sides.pop(); } WB[k](d, side); if (!n.props.includes(k)) n.props.push(k); });
+  }
+  mergeChildren(propGroup);
+}
+
+/* ---------------- random office events ---------------- */
+let balloons = null, pkgMesh = null;
+function clearEvents() {
+  if (balloons) { scene.remove(balloons); balloons = null; }
+  if (pkgMesh) { scene.remove(pkgMesh); pkgMesh = null; }
+  G.bday = null; G.pkg = null; npcs.forEach(n => { n.ringUntil = 0; n.desk.ring && (n.desk.ring.visible = false); });
+}
+function randomEvent() {
+  const act = active(); if (!act.length) return;
+  const evs = ['pizza', 'package', 'phone', 'flicker', 'drill'];
+  if (!G.bday) evs.push('birthday', 'birthday');
+  const ev = pick(evs);
+  if (ev === 'pizza' || ev === 'drill') {
+    const keys = ev === 'pizza' ? ['cooler', 'coffee', 'snacks', 'soda'] : ['assembly'];
+    act.forEach(n => { if (n.state === 'desk' && !n.invite) { n.forceKey = pick(keys); n.nextTrip = G.min + rnd(0, 6); } });
+    toast(ev === 'pizza' ? 'Pizza party!' : 'FIRE DRILL', ev === 'pizza' ? 'Someone ordered 12 pizzas to the break room. The floor empties out. Nobody is watching their desk…' : 'The alarm is DEAFENING. Everyone shuffles to the south wall. Desks are unattended for a few minutes.');
+  } else if (ev === 'package' && !G.pkg) {
+    const spies = activeSpies(), n = spies.length && Math.random() < .55 ? pick(spies) : pick(act);
+    pkgMesh = new THREE.Mesh(new THREE.BoxGeometry(.32, .2, .26), Mc(0xb8864b)); pkgMesh.position.set(n.desk.x - 0.85, Y + .1, n.desk.z - 1.05); pkgMesh.rotation.y = 0.3; scene.add(pkgMesh);
+    G.pkg = { n, opened: false };
+    toast('Mailroom', `A FedEx box just landed on desk #${n.desk.num}. No return address.`);
+  } else if (ev === 'phone') {
+    const away = act.filter(n => n.state !== 'desk'); if (!away.length) return;
+    const n = pick(away); n.ringUntil = G.min + 30;
+    toast('Ring ring', `The phone on desk #${n.desk.num} is ringing. ${n.first} isn't there.`);
+  } else if (ev === 'flicker') {
+    G.flickerUntil = performance.now() + 3500;
+    const spies = activeSpies();
+    if (spies.length) { const s = Math.random() < .6 ? pick(spies) : pick(act); note(s, `During the power flicker, someone hurried away from the server room. It looked like ${s.first}.`, true); }
+    toast('Power flicker', 'The lights stutter and the CRTs all go "thunk". In the dark you think you see someone dart away from the server room.');
+  } else if (ev === 'birthday') {
+    const n = pick(act); G.bday = n;
+    balloons = new THREE.Group();
+    [0xff3a5a, 0x3a8aff, 0xffd23a].forEach((c, i) => { const b = new THREE.Mesh(new THREE.SphereGeometry(.16, 12, 10), new THREE.MeshLambertMaterial({ color: c })); b.scale.y = 1.2; b.position.set(n.desk.x - 1.2 + i * .2, 2.05 + (i % 2) * .15, n.desk.z - 1.2); balloons.add(b); const s = new THREE.Mesh(new THREE.BoxGeometry(.006, .9, .006), Mc(0xeeeeee)); s.position.set(b.position.x, 1.55, b.position.z); balloons.add(s); });
+    scene.add(balloons);
+    toast('Birthday!', `It's ${n.name}'s birthday. There are balloons on desk #${n.desk.num}.`);
+  }
+}
+function openPackage() {
+  const { n } = G.pkg; G.pkg.opened = true; if (pkgMesh) { scene.remove(pkgMesh); pkgMesh = null; }
+  if (n.spy) { const t = pick(['Twenty blank floppy disks, a roll of microfilm, and a note: "THE ORCHID. THURSDAY."', 'A miniature camera hidden inside a hollowed-out Webster\'s dictionary.', 'A bundle of cash in a box of Girl Scout cookies. The cookies are also real.']); note(n, `Mystery package on their desk: ${t}`, true); say(`Package on desk #${n.desk.num}`, `You slit the tape. Inside: ${t}<br><br>You tape it back up. Mostly.`); }
+  else { const t = pick(['A limited-edition Beanie Baby. In mint condition. Well, it WAS mint.', 'A mail-order NordicTrack. Some assembly required.', 'Forty pounds of Columbia House CDs they forgot to cancel.', 'A box of Franklin Planner refills. Thrilling.']); note(n, `Package on their desk: ${t}`); say(`Package on desk #${n.desk.num}`, `You slit the tape. Inside: ${t}<br><br>Opening other people's mail is a federal crime. Margaret will hear about this.`); legalGrr(4, `opening ${n.name}'s mail`); }
+}
+function answerPhone(n) {
+  n.ringUntil = 0; n.desk.ring.visible = false;
+  if (n.spy && Math.random() < .7) { const t = pick(['A man\'s voice: "Is the package ready? Uncle grows impatient." Click.', 'Someone says "Orchid. Thursday. The usual place." and hangs up.', 'A voice says a string of numbers, then: "Repeat that back." You hang up.']); note(n, `Answered their desk phone: ${t}`, true); say(`Desk #${n.desk.num} phone`, t); }
+  else say(`Desk #${n.desk.num} phone`, pick(['"Hi, this is Dr. Feldman\'s office confirming a root canal at 3." You promise to pass it on.', '"Congratulations! You\'ve won a timeshare presentation in Branson, Missouri!"', '"Honey? Did you remember the dry cleaning?" You hang up very quietly.', '"This is the library. Your copy of The Bridges of Madison County is 14 weeks overdue."']));
+}
+
 /* ---------------- legal ---------------- */
 function legalGrr(amount, reason) {
   const L2 = G.legal, before = L2.anger;
@@ -1433,7 +1675,8 @@ function walkAlong(o, dt) {
   const p = o.path[0]; if (!p) return false;
   const dx = p.x - o.pos.x, dz = p.z - o.pos.z, d = Math.hypot(dx, dz), sp = 1.25 * dt;
   if (d <= sp) { o.pos.x = p.x; o.pos.z = p.z; o.path.shift(); return true; }
-  o.pos.x += dx / d * sp; o.pos.z += dz / d * sp;
+  const nx = o.pos.x + dx / d * sp, nz = o.pos.z + dz / d * sp;
+  if (!(Math.hypot(nx - player.x, nz - player.z) < 0.62 && Math.hypot(nx - player.x, nz - player.z) < Math.hypot(o.pos.x - player.x, o.pos.z - player.z))) { o.pos.x = nx; o.pos.z = nz; }
   o.mesh.rotation.y = lerpAngle(o.mesh.rotation.y, Math.atan2(dx, dz), dt * 7);
   o.walkT += dt * 1.25 * 6.3; o.walkAmp += (1 - o.walkAmp) * Math.min(1, dt * 6);
   return true;
@@ -1679,6 +1922,8 @@ function frame(now) {
     if (movePlayer(dt)) bob += dt * 9;
     for (const n of npcs) updateNPC(n, dt);
     updateLegal(dt);
+    if (!G.seated) for (const o of [...npcs, ...legalStaff]) { if (o.status !== 'active') continue; const dx = player.x - o.pos.x, dz = player.z - o.pos.z, d = Math.hypot(dx, dz); if (d < 0.56 && d > 1e-4) { const push = (0.56 - d) * 0.6, nx = player.x + dx / d * push, nz = player.z + dz / d * push; if (!blockedStatic(nx, nz, 0.3)) { player.x = nx; player.z = nz; } } }
+    for (const n of npcs) if (n.desk.ring) n.desk.ring.visible = n.ringUntil > G.min && (now % 700) < 350;
     if (Math.floor(now / 500) !== Math.floor((now - dt * 1000) / 500)) updateHUD();
   } else for (const n of npcs) if (n.talking && n.status === 'active') faceToward(n, player.x, player.z, dt);
   // faces: blink + lip flap
@@ -1695,8 +1940,9 @@ function frame(now) {
   // labels
   for (const n of [...npcs, ...legalStaff]) if (n.status === 'active') n.tag.visible = Math.hypot(n.pos.x - player.x, n.pos.z - player.z) < 5;
   // camera
-  camera.position.set(player.x, G.seated ? 1.18 : 1.62 + Math.sin(bob) * 0.025, player.z);
-  camera.rotation.set(pitch, yaw, 0, 'YXZ');
+  hemi.intensity = now < (G.flickerUntil || 0) ? (Math.random() < .5 ? 0.12 : 0.85) : 0.95;
+  if (G.cut) updateCut(now);
+  else { camera.position.set(player.x, G.seated ? 1.18 : 1.62 + Math.sin(bob) * 0.025, player.z); camera.rotation.set(pitch, yaw, 0, 'YXZ'); }
   // target prompt
   current = (!G.ui && !G.paused && !G.seated) ? findTarget() : null;
   if (G.seated && !G.ui && !G.paused) { promptEl.innerHTML = `<kbd>${isTouch ? 'USE' : 'E'}</kbd>Desk · ${isTouch ? 'move' : 'WASD'} to stand up`; promptEl.hidden = false; }
