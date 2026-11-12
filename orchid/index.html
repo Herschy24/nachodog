@@ -17,6 +17,7 @@
   --crt:"VT323","Courier New",monospace;
   color-scheme:light;
 }
+[hidden]{display:none!important}
 html,body{height:100%;margin:0;overflow:hidden;background:#d9dccf;color:var(--ink);font:13px/1.35 var(--ui)}
 #app{position:fixed;inset:0;}
 canvas#c{display:block;width:100%;height:100%;touch-action:none;cursor:crosshair}
@@ -1252,7 +1253,7 @@ canvas.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse' && d
 addEventListener('pointerup', e => { if (drag && drag.id === e.pointerId) drag = null; });
 addEventListener('pointermove', e => {
   if (G.ui) return;
-  if (document.pointerLockElement === canvas) { yaw -= e.movementX * 0.0023; pitch -= e.movementY * 0.0023; }
+  if (document.pointerLockElement === canvas) { if (Math.abs(e.movementX) > 200 || Math.abs(e.movementY) > 200) return; yaw -= e.movementX * 0.0023; pitch -= e.movementY * 0.0023; }
   else if (drag && drag.id === e.pointerId) { yaw -= (e.clientX - drag.x) * 0.005; pitch -= (e.clientY - drag.y) * 0.005; drag.x = e.clientX; drag.y = e.clientY; }
   pitch = clamp(pitch, -1.2, 1.2);
 });
