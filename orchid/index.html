@@ -113,6 +113,7 @@ button.b95.love{color:#8a1060}
     <div class="meter bad" title="Secrets leaked to the MSS"><span>Leaks</span><div class="bar sunk"><div class="fill" id="m-leak"></div></div></div>
     <div class="meter bad" title="How close you are to a front-page scandal"><span>Scandal</span><div class="bar sunk"><div class="fill" id="m-scan"></div></div></div>
     <div class="meter" title="Staff morale"><span>Morale</span><div class="bar sunk"><div class="fill" id="m-mor"></div></div></div>
+    <div class="meter bad" title="How furious Legal is with you"><span>Legal</span><div class="bar sunk"><div class="fill" id="m-legal"></div></div></div>
     <div class="meter bad" title="SEC attention on your trades"><span>SEC</span><div class="bar sunk"><div class="fill" id="m-sec"></div></div></div>
     <div id="ticker" class="sunk">ORCH $24.00</div>
     <div id="pl" class="sunk" hidden></div>
@@ -146,7 +147,7 @@ button.b95.love{color:#8a1060}
           <h2>CONFIDENTIAL MEMORANDUM</h2>
           <div class="hdr"><b>TO:</b><span>You, Chief Executive Officer</span><b>FROM:</b><span>Board of Directors</span><b>DATE:</b><span>Monday, March 3, 1997</span><b>RE:</b><span>Project ORCHID</span></div>
           <p>Our security consultant believes <b>three people on this floor</b> are passing ORCHID chip designs to China's Ministry of State Security. We don't know who. Anyone could be one of them, so watch what people <i>do</i>.</p>
-          <p>Catch all three before 5:00 PM Friday, or before ORCHID leaks. Accuse the wrong person and Legal will be very upset. Keep the stock up.</p>
+          <p>Catch all three before 5:00 PM Friday, or before ORCHID leaks. Keep the stock up. And stay on the right side of Margaret Thornbury in Legal. She has buried better CEOs than you.</p>
           <p>And for God's sake, keep your personal life out of the papers.</p>
         </div>
         <div class="keys">
@@ -372,6 +373,30 @@ function mergeChildren(parent, skip) {
 }
 function mergeRig(obj) { for (const ch of obj.children.slice()) if (!ch.isMesh && !ch.isSprite) mergeRig(ch); mergeChildren(obj); }
 // all the furniture, walls, panels etc. become one mesh per material
+// Legal department: frosted glass suite south of the CEO office, door at z -3..-1.5 on x=10
+mats.frost = new THREE.MeshLambertMaterial({ color: 0xdde8ea, transparent: true, opacity: 0.62 });
+box(10, 1.2, -4.5, 0.08, 2.4, 3, mats.frost); box(10, 1.2, 0, 0.08, 2.4, 3, mats.frost); box(13, 1.2, 1.5, 6, 2.4, 0.08, mats.frost);
+box(10, 2.42, -2.25, 0.1, 0.06, 7.5, mats.deskDark, false); box(13, 2.42, 1.5, 6, 0.06, 0.1, mats.deskDark, false);
+const legalRug = new THREE.Mesh(new THREE.PlaneGeometry(5.8, 7.3), M(0x2d4a3a)); legalRug.rotation.x = -Math.PI / 2; legalRug.position.set(13, 0.012, -2.25); scene.add(legalRug);
+const booksTex = canvasTex(128, 256, (g, w, h) => {
+  g.fillStyle = '#4a2e1c'; g.fillRect(0, 0, w, h);
+  for (let r = 0; r < 5; r++) { let x = 4; const y = 8 + r * 50; while (x < w - 6) { const bw = 5 + Math.random() * 7; g.fillStyle = pick(['#6b1f1f', '#1f3b6b', '#2a4a2a', '#5a4a1a', '#3a1a3a', '#7a6a4a']); g.fillRect(x, y + Math.random() * 6, bw, 40); g.fillStyle = '#c9a85a'; g.fillRect(x + 1, y + 12, bw - 2, 2); x += bw + 1; } g.fillStyle = '#2e1c10'; g.fillRect(0, y + 44, w, 5); }
+});
+for (const z of [-4.6, -2.25, 0.1]) { box(15.75, 1.1, z, 0.45, 2.2, 2.2, M(0x4a2e1c)); const bf = new THREE.Mesh(new THREE.PlaneGeometry(2.1, 2.1), new THREE.MeshLambertMaterial({ map: booksTex })); bf.rotation.y = -Math.PI / 2; bf.position.set(15.52, 1.1, z); scene.add(bf); }
+// General Counsel's desk (she faces the door, -x)
+box(14.3, 0.76, -3.8, 0.9, 0.06, 1.9, mats.deskDark); box(14.3, 0.37, -4.7, 0.86, 0.74, 0.06, mats.deskDark, false); box(14.3, 0.37, -2.9, 0.86, 0.74, 0.06, mats.deskDark, false);
+colliders.push({ minX: 13.85, maxX: 14.75, minZ: -4.75, maxZ: -2.85 });
+box(14.35, 0.98, -4.35, 0.4, 0.36, 0.4, mats.beige, false);
+box(14.1, 0.82, -3.4, 0.3, 0.06, 0.4, mats.white, false); box(14.1, 0.88, -3.35, 0.28, 0.06, 0.38, M(0xe8d9a0), false);
+box(15.25, 0.45, -3.8, 0.5, 0.08, 0.5, mats.chair, false); box(15.5, 0.8, -3.8, 0.06, 0.65, 0.5, mats.chair, false);
+// paralegal desk against the south glass
+box(12.4, 0.74, 0.95, 1.8, 0.06, 0.7, mats.desk); box(12.4, 1.0, 1.05, 0.5, 0.42, 0.42, mats.beige, false);
+box(11.6, 0.6, 0.95, 0.04, 1.2, 0.6, mats.white, false); // stack of binders
+box(12.4, 0.45, 0.2, 0.5, 0.08, 0.5, mats.chair, false); box(12.4, 0.75, -0.05, 0.5, 0.55, 0.06, mats.chair, false);
+box(10.6, 0.65, -5.5, 0.6, 1.3, 0.6, mats.grey); box(11.3, 0.65, -5.5, 0.6, 1.3, 0.6, mats.grey);
+const legalSign = makeLabel('LEGAL', 'Office of the General Counsel'); legalSign.position.set(9.9, 2.35, -2.25); scene.add(legalSign);
+const legalPlaque = makeLabel('M. THORNBURY, ESQ.', 'General Counsel', 256, 72); legalPlaque.scale.set(0.9, 0.25, 1); legalPlaque.position.set(13.85, 1.15, -3.8); scene.add(legalPlaque);
+
 mergeChildren(scene, new Set(leds));
 
 /* ---------------- people ---------------- */
@@ -400,6 +425,7 @@ function drawFace(f, mode) {
   const c = document.createElement('canvas'); c.width = FW; c.height = FH; const g = c.getContext('2d');
   const cx = FW / 2, ey = fy(1.45), ex = 64, my = fy(1.87);
   g.lineCap = 'round'; g.lineJoin = 'round';
+  if (mode.angry) { const gr = g.createRadialGradient(cx, fy(1.6), 10, cx, fy(1.6), 170); gr.addColorStop(0, 'rgba(210,40,30,.32)'); gr.addColorStop(1, 'rgba(210,40,30,0)'); g.fillStyle = gr; g.fillRect(0, 0, FW, FH); }
   // soft cheek & under-brow shading
   for (const s of [-1, 1]) {
     let gr = g.createRadialGradient(cx + s * 80, fy(1.72), 2, cx + s * 80, fy(1.72), 34);
@@ -442,6 +468,7 @@ function drawFace(f, mode) {
   g.strokeStyle = f.browCol; g.lineWidth = f.brow;
   for (const s of [-1, 1]) {
     const x = cx + s * ex, by = ey - 25 - (mode.talk ? 2 : 0);
+    if (mode.angry) { g.lineWidth = f.brow + 2; g.beginPath(); g.moveTo(x - s * 22, by + 10); g.quadraticCurveTo(x, by - 1, x + s * 24, by - 8); g.stroke(); continue; }
     g.beginPath(); g.moveTo(x - s * 21, by + 4 + f.browTilt * s * 0); g.quadraticCurveTo(x, by - 6 - f.browArch, x + s * 23, by + 2 + f.browTilt); g.stroke();
   }
   // beard (under the mouth)
@@ -460,7 +487,8 @@ function drawFace(f, mode) {
   } else {
     if (f.lipstick) { g.fillStyle = f.lip; g.beginPath(); g.moveTo(cx - mw, my); g.quadraticCurveTo(cx - 10, my - 9, cx, my - 5); g.quadraticCurveTo(cx + 10, my - 9, cx + mw, my); g.quadraticCurveTo(cx, my + 12 + f.smile * 6, cx - mw, my); g.fill(); }
     else { g.fillStyle = f.lip; g.globalAlpha = .55; g.beginPath(); g.moveTo(cx - mw + 3, my + 1); g.quadraticCurveTo(cx, my + 11 + f.smile * 6, cx + mw - 3, my + 1); g.quadraticCurveTo(cx, my + 4, cx - mw + 3, my + 1); g.fill(); g.globalAlpha = 1; }
-    g.strokeStyle = 'rgba(60,20,20,.85)'; g.lineWidth = 3.2; g.beginPath(); g.moveTo(cx - mw, my - f.smile * 3); g.quadraticCurveTo(cx, my + f.smile * 10, cx + mw, my - f.smile * 3); g.stroke();
+    const sm = mode.angry ? -1.2 : f.smile;
+    g.strokeStyle = 'rgba(60,20,20,.85)'; g.lineWidth = 3.2; g.beginPath(); g.moveTo(cx - mw, my - sm * 3 + (mode.angry ? 6 : 0)); g.quadraticCurveTo(cx, my + sm * 10, cx + mw, my - sm * 3 + (mode.angry ? 6 : 0)); g.stroke();
   }
   if (f.facial === 1 || f.facial === 2) { g.fillStyle = f.hairCol; g.beginPath(); g.moveTo(cx - 30, my + 2); g.quadraticCurveTo(cx - 24, my - 18, cx, my - 13); g.quadraticCurveTo(cx + 24, my - 18, cx + 30, my + 2); g.quadraticCurveTo(cx, my - 6, cx - 30, my + 2); g.fill(); }
   if (f.mole) { ell(g, cx + 40, my - 14, 2.6, 2.6); g.fillStyle = '#4a2a1a'; g.fill(); }
@@ -478,7 +506,7 @@ function drawFace(f, mode) {
   const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
 }
 
-function makePerson() {
+function makePerson(opts = {}) {
   const g = new THREE.Group();
   const skinHex = pick(SKIN), hairHex = pick(HAIR);
   const shirtM = M(pick(SHIRT)), skinM = M(skinHex), hairM = M(hairHex), pantsM = M(pick(PANTS));
@@ -526,6 +554,8 @@ function makePerson() {
     wrinkles: grey || Math.random() < .12, blush: Math.random() < .35, mole: Math.random() < .15,
   };
   const tex = { n: drawFace(f, {}), b: drawFace(f, { blink: true }), t: drawFace(f, { talk: true }) };
+  if (opts.angry) { tex.a = drawFace(f, { angry: true }); tex.at = drawFace(f, { angry: true, talk: true }); }
+  if (opts.suit) { const sm = M(opts.suit); g.traverse(o => { if (o.isMesh && o.material === shirtM) o.material = sm; }); }
   const faceMat = new THREE.MeshLambertMaterial({ map: tex.n, transparent: true, depthWrite: false });
   const face = add(new THREE.SphereGeometry(0.1625, 32, 24, Math.PI / 2 - 0.8, 1.6, TH0, 1.55), faceMat, 0, 0, 0, head); face.renderOrder = 1;
 
@@ -631,7 +661,7 @@ const L = {
 };
 
 /* ---------------- game state ---------------- */
-let G, npcs = [], interactables = [];
+let G, npcs = [], interactables = [], legalStaff = [], gc = null, para = null;
 function newGame() {
   npcs.forEach(n => scene.remove(n.mesh, n.tag));
   const roster = shuffle(ROSTER).slice(0, 12);
@@ -655,8 +685,19 @@ function newGame() {
     };
   });
   G = { min: 540, day: 0, leaks: 0, scandal: 0, morale: 70, stock: 24, paused: true, over: false, ui: false, affair: null, daily: {}, lastHour: 9, dayStart: { leaks: 0, stock: 24 }, arrests: 0, wrong: 0,
+    legal: { anger: 0, summoned: false, deadline: 0, log: [], memos: 0, nagAt: 0 },
     cash: 250000, short: 0, avg: 0, sec: 0, hist: [24], lastTick: 540, held: null, rush: null };
   npcs.forEach(n => pose(n, 0));
+  legalStaff.forEach(o => { scene.remove(o.mesh); scene.remove(o.tag); });
+  const mkStaff = (id, name, title, home, rotY, suit) => {
+    const mesh = makePerson({ angry: true, suit }); mesh.position.set(home.x, 0, home.z); mesh.rotation.y = rotY; scene.add(mesh);
+    const tag = makeLabel(name, title); tag.visible = false; scene.add(tag);
+    const o = { id, name, first: name.split(' ')[0], dept: 'Legal', title, mesh, tag, pos: mesh.position, home, rotY, status: 'active', state: 'desk', path: [], sit: 1, walkT: 0, walkAmp: 0, sip: 0, talking: false, angry: false };
+    pose(o, 0); return o;
+  };
+  gc = mkStaff(100, 'Margaret Thornbury', 'General Counsel', { x: 15.0, z: -3.8 }, -Math.PI / 2, 0x2b2b3a);
+  para = mkStaff(101, 'Kyle Bentsen', 'Paralegal', { x: 12.4, z: 0.2 }, 0, null);
+  legalStaff = [gc, para];
   setupInteractables();
   player.x = 0; player.z = 11; yaw = 0; pitch = 0;
   updateHUD();
@@ -675,6 +716,7 @@ const keys = {};
 function blocked(x, z, r, ignore) {
   if (x - r < B.minX || x + r > B.maxX || z - r < B.minZ || z + r > B.maxZ) return true;
   for (const c of colliders) if (x + r > c.minX && x - r < c.maxX && z + r > c.minZ && z - r < c.maxZ) return true;
+  for (const o of legalStaff) { const dx = o.pos.x - x, dz = o.pos.z - z; if (dx * dx + dz * dz < (r + 0.3) ** 2) return true; }
   for (const n of npcs) if (n.status === 'active' && n !== ignore) { const dx = n.pos.x - x, dz = n.pos.z - z; if (dx * dx + dz * dz < (r + 0.3) ** 2) return true; }
   return false;
 }
@@ -705,6 +747,8 @@ function setupInteractables() {
     { name: 'Fax machine', x: -15.3, z: 5, use: useFax },
     { name: 'Server rack', x: -12.8, z: -13.2, use: useServer, r: 2.4 },
     { name: 'Your desk', x: 13, z: -11.5, use: useCeoDesk, r: 2.2 },
+    { get name() { return `Talk to Margaret Thornbury (General Counsel)${G.legal.anger >= 30 ? ' — she looks furious' : ''}`; }, get x() { return gc.pos.x; }, get z() { return gc.pos.z; }, use: () => talkLegal(), r: 2.6 },
+    { name: 'Talk to Kyle Bentsen (Paralegal)', get x() { return para.pos.x; }, get z() { return para.pos.z; }, use: () => talkPara(), r: 2.2 },
     { name: 'Supply closet', x: 0, z: 13.9, use: () => say('Supply closet', 'It smells like toner and bad decisions. Someone has been hoarding the good pens.') },
   ];
   npcs.forEach(n => interactables.push({ desk: n, x: n.desk.x, z: n.desk.z - 1.05, get name() { return `Search desk #${n.desk.num}`; }, use: () => searchDesk(n, false), when: () => n.state !== 'desk' || n.status !== 'active' }));
@@ -855,6 +899,11 @@ function hourTick() {
     if (G.leaks > 45) news.push(['Trade press: a suspiciously similar chip spotted overseas.', -2.2]);
     const [h, d] = pick(news); G.stock = Math.max(0.5, G.stock + d); toast('Newswire', `${h} ORCH ${d > 0 ? '+' : ''}${d.toFixed(2)}`);
   }
+  if (G.legal.summoned && G.min > G.legal.deadline) {
+    G.stock = Math.max(0.5, G.stock - 1.2); G.scandal += 6; G.legal.deadline = G.min + 90;
+    legalGrr(10, 'ignoring a summons from your own General Counsel');
+    toast('Legal', pick(['Margaret copied the entire board on an email titled "CONCERNS". ORCH −1.20', 'Margaret is telling the board you are "unreachable". ORCH −1.20']));
+  } else if (!G.legal.summoned) G.legal.anger = Math.max(0, G.legal.anger - 1.5);
   if (G.short) { const drop = before - G.stock; if (drop > 0) G.sec += drop * G.short / 1000 * 1.1; if (netWorth() < 0) marginCall(); }
   else G.sec = Math.max(0, G.sec - 1);
   G.hist.push(G.stock);
@@ -872,12 +921,15 @@ function endOfDay() {
     <p>ORCH closed at <b>$${G.stock.toFixed(2)}</b> (${ds >= 0 ? '+' : ''}${ds.toFixed(2)})</p>
     <p>Suspected agents still on the floor: <b>${left}</b></p>
     <p>Your net worth: <b>${fmtMoney(netWorth())}</b>${G.short ? ` (short ${G.short.toLocaleString('en-US')} ORCH)` : ''}. SEC attention: ${Math.round(G.sec)}%</p>
+    <p>Legal: ${G.legal.anger < 30 ? 'tolerating you' : G.legal.anger < 60 ? 'drafting memos about you' : 'actively updating her résumé and your obituary'}.</p>
     ${G.affair ? `<p>You drive home thinking about ${G.affair.first}. Your spouse asks how work was. "Fine," you say.</p>` : ''}</div>`;
   if (last) { left ? gameOver(false, 'Friday, 5:00 PM', `The quarter closes with ${left} agent${left > 1 ? 's' : ''} still on payroll. Six months later a Shenzhen fab announces a chip that looks exactly like ORCHID.`) : gameOver(true); return; }
   dialog(`End of ${DAYS[G.day]}`, body, [{ label: `Go home. Come back ${DAYS[G.day + 1]}.`, fn: nextDay }]);
 }
 function nextDay() {
   G.day++; G.min = 540; G.lastHour = 9; G.lastTick = 540; G.rush = null; G.dayStart = { leaks: G.leaks, stock: G.stock };
+  for (const o of legalStaff) { o.state = G.legal.summoned ? 'summon' : 'desk'; o.path = []; o.talking = false; o.pos.set(o.home.x, 0, o.home.z); o.mesh.rotation.y = o.rotY; o.sit = 1; }
+  if (G.legal.summoned) G.legal.deadline = 540 + 90;
   for (const n of active()) { n.state = 'desk'; n.path = []; n.pos.set(n.desk.home.x, 0, n.desk.home.z); n.mesh.rotation.y = Math.PI; n.sit = 1; n.speed = 0; n.walkAmp = 0; n.target = null; n.nextTrip = 540 + rnd(15, 150); }
   player.x = 0; player.z = 11; yaw = 0; pitch = 0;
   toast(DAYS[G.day], pick(['A memo says casual Friday is cancelled. It is not Friday.', 'The coffee machine has been fixed. It has not been fixed.', 'IT announces everyone is getting Windows 95. Groans echo across the floor.', 'Someone brought donuts. They are gone by 9:04.']));
@@ -888,6 +940,7 @@ function checkEnd() {
   if (G.leaks >= 100) gameOver(false, 'ORCHID leaked', 'A trade magazine runs a photo of a Chinese-made prototype that is identical to ORCHID. The board meets without you.');
   else if (G.scandal >= 100) gameOver(false, 'Front page', 'The Wall Street Journal runs your personal life on page one. The board accepts your resignation before you offer it.');
   else if (G.morale <= 0) gameOver(false, 'Walkout', 'The whole floor walks out at 10:15 AM. Someone takes the good stapler.');
+  else if (G.legal.anger >= 100) gameOver(false, 'Legal walked', 'Margaret Thornbury hands the board a binder labeled EVERYTHING. It is four inches thick. You are escorted out by the same security guard you used on everyone else.');
   else if (G.sec >= 100) gameOver(false, 'Indicted', 'Two SEC investigators are waiting in your office with a printout of every short you placed. Your broker has already cut a deal.');
   else if (G.stock <= 4) gameOver(false, 'Delisted', 'ORCH falls below $4. The board brings in a turnaround guy with a ponytail.');
 }
@@ -909,6 +962,7 @@ function updateHUD() {
   const tk = $('#ticker'); const up = G.stock >= 24; tk.textContent = `ORCH $${G.stock.toFixed(2)} ${up ? '▲' : '▼'}`; tk.classList.toggle('down', !up);
   $('#clock').textContent = `${DAYS[G.day].slice(0, 3)} ${fmtTime(G.min)}`;
   $('#m-sec').style.width = clamp(G.sec, 0, 100) + '%';
+  $('#m-legal').style.width = clamp(G.legal.anger, 0, 100) + '%';
   const pl = $('#pl'); pl.hidden = !G.short;
   if (G.short) { const v = pnl(); pl.textContent = `SHORT ${Math.round(G.short / 1000)}K ${v >= 0 ? '+' : ''}${fmtMoney(v)}`; pl.classList.toggle('neg', v < 0); }
   const hb = $('#heldbtn'); hb.hidden = !G.held; if (G.held) hb.textContent = `Holding: ${G.held.n} (Q)`;
@@ -934,7 +988,7 @@ function dialog(title, html, opts, noClose) {
   $('#dlg-x').hidden = !!noClose;
   $('#dlg').hidden = false; setTimeout(() => wrap.querySelector('button')?.focus(), 0);
 }
-function closeDialog() { $('#dlg').hidden = true; G.portraitNpc = null; G.ui = !$('#dossier').hidden; npcs.forEach(n => n.talking = false); }
+function closeDialog() { $('#dlg').hidden = true; G.portraitNpc = null; legalStaff.forEach(o => o.talking = false); G.ui = !$('#dossier').hidden; npcs.forEach(n => n.talking = false); }
 const say = (title, text, more) => dialog(title, `<div class="memo" style="font-size:14px">${text}</div>`, more || [{ label: 'OK' }]);
 function portrait(n) { G.portraitNpc = n; return `<canvas class="portrait sunk pcv" width="${PW}" height="${PH}"></canvas>`; }
 const speak = (n, text) => { n.speakUntil = performance.now() + Math.min(4200, 500 + text.length * 50); };
@@ -948,9 +1002,9 @@ function drawPortrait() {
   n.mesh.userData.head.getWorldPosition(hp);
   const a = n.mesh.rotation.y;
   pcam.position.set(hp.x + Math.sin(a) * 0.82, hp.y + 0.03, hp.z + Math.cos(a) * 0.82); pcam.lookAt(hp.x, hp.y - 0.04, hp.z);
-  const vis = npcs.map(o => o.tag.visible); npcs.forEach(o => o.tag.visible = false);
+  const ppl = [...npcs, ...legalStaff], vis = ppl.map(o => o.tag.visible); ppl.forEach(o => o.tag.visible = false);
   renderer.setRenderTarget(prt); renderer.render(scene, pcam); renderer.readRenderTargetPixels(prt, 0, 0, PW, PH, pbuf); renderer.setRenderTarget(null);
-  npcs.forEach((o, i) => o.tag.visible = vis[i]);
+  ppl.forEach((o, i) => o.tag.visible = vis[i]);
   for (let y = 0; y < PH; y++) pimg.data.set(pbuf.subarray((PH - 1 - y) * PW * 4, (PH - y) * PW * 4), y * PW * 4);
   cv.getContext('2d').putImageData(pimg, 0, 0);
 }
@@ -998,7 +1052,7 @@ function searchDesk(n, present) {
   else if (n.odd && Math.random() < .7) { item = pick(L.deskOdd); note(n, `Desk: ${item}`); }
   else { item = pick(L.deskInno); note(n, `Desk: ${item}`); }
   if (present) {
-    G.morale = clamp(G.morale - 3, 0, 100);
+    const memo = G.legal.memos > 0; if (memo) G.legal.memos--; else { G.morale = clamp(G.morale - 3, 0, 100); legalGrr(6, `rifling through ${n.name}'s desk while they watched`); }
     let react;
     if (n.spy) { n.nervous = G.min + 240; react = pick(['Of course. Go ahead. Nothing in there. Ha. Ha.', 'Is… is this a routine thing? Is everyone getting this?']); note(n, 'Got very nervous when you searched their desk.', true); toast('Note', `${n.first} is sweating. They'll probably lie low for a few hours.`); }
     else react = pick(['Uh… sure? Is this legal?', 'Fine. Don\'t touch the Beanie Babies.', 'Wow. Okay. I\'ll be telling HR about this.']);
@@ -1018,19 +1072,19 @@ function flirt(n) {
   if (!once(n.id + 'flirt')) return reply(n, 'Okay, Romeo. Once a day is plenty.');
   const w = witnesses(n);
   if (!n.romance) {
-    G.scandal += n.dept === 'HR' ? 28 : 18; G.morale = clamp(G.morale - 4, 0, 100);
+    G.scandal += n.dept === 'HR' ? 28 : 18; G.morale = clamp(G.morale - 4, 0, 100); legalGrr(n.dept === 'HR' ? 25 : 15, `hitting on ${n.name}, who has now filed a complaint`);
     note(n, 'Was NOT into it. Filed a complaint.');
     toast('HR', `${n.first} filed a complaint. Legal wants a word.`);
     updateHUD(); checkEnd();
     return reply(n, n.dept === 'HR' ? 'I am literally Human Resources. I am writing this down.' : pick(['That is… wildly inappropriate. I\'m going to HR.', 'Wow. No. Absolutely not.', 'Please step out of my cubicle.']));
   }
   n.affection++;
-  if (w.length) { G.scandal += Math.min(18, w.length * 6); toast('Uh oh', `${w[0].first} ${w.length > 1 ? `and ${w.length - 1} other${w.length > 2 ? 's' : ''}` : ''} saw that.`); }
+  if (w.length) { legalGrr(4, `flirting with ${n.name} in front of witnesses`); G.scandal += Math.min(18, w.length * 6); toast('Uh oh', `${w[0].first} ${w.length > 1 ? `and ${w.length - 1} other${w.length > 2 ? 's' : ''}` : ''} saw that.`); }
   updateHUD(); checkEnd();
   reply(n, pick(['Ha! Stop. …Don\'t stop.', 'Is that a power suit or are you just happy to see me?', 'You know, I\'m usually the last one here at night.', 'People are going to talk. Let them.']));
 }
 function startAffair(n) {
-  G.affair = n; G.scandal += 12;
+  G.affair = n; G.scandal += 12; legalGrr(8, 'whatever just happened in the supply closet');
   fade(`Supply closet, 6:15 PM.<br><br>Twenty minutes later you both walk out separately,<br>straightening your clothes. There is toner on your sleeve.`, () => {
     if (n.spy) { G.leaks += 8; note(n, 'Your briefcase was open when you got back from the supply closet.', true); toast('Strange', 'Your briefcase was unlatched when you got back. You always latch it.'); }
     updateHUD(); checkEnd();
@@ -1055,9 +1109,10 @@ function resolveAct(n, kind) {
   scene.remove(n.mesh); scene.remove(n.tag); n.plate.material.opacity = 0.35;
   if (G.affair === n) G.affair = null;
   if (kind === 'fbi') {
-    if (n.spy) { G.arrests++; G.stock += 3; G.morale = clamp(G.morale + 6, 0, 100); note(n, 'Arrested by the FBI. Confirmed MSS asset.', true); fade(`The agents find a microfilm reader in ${n.first}'s glovebox.<br><br>Confirmed: Ministry of State Security.`); }
-    else { G.wrong++; G.stock -= 4; G.morale = clamp(G.morale - 20, 0, 100); G.scandal += 10; note(n, 'Wrongly arrested. Released. Suing.'); fade(`${n.first} is released after six hours. They were never a spy.<br><br>Their lawyer calls before lunch.`); }
+    if (n.spy) { legalGrr(-12); G.arrests++; G.stock += 3; G.morale = clamp(G.morale + 6, 0, 100); note(n, 'Arrested by the FBI. Confirmed MSS asset.', true); fade(`The agents find a microfilm reader in ${n.first}'s glovebox.<br><br>Confirmed: Ministry of State Security.`); }
+    else { legalGrr(40, `calling the FBI on ${n.name}, who is completely innocent and now has a lawyer`); G.wrong++; G.stock -= 4; G.morale = clamp(G.morale - 20, 0, 100); G.scandal += 10; note(n, 'Wrongly arrested. Released. Suing.'); fade(`${n.first} is released after six hours. They were never a spy.<br><br>Their lawyer calls before lunch.`); }
   } else {
+    legalGrr(n.spy ? 6 : 15, `firing ${n.name} without a single page of documentation`);
     G.morale = clamp(G.morale - (n.spy ? 6 : 15), 0, 100); G.stock += n.spy ? 1 : -1;
     note(n, 'Fired.'); toast('Security', `${n.name} has been escorted out.${n.spy ? ' The leaks seem quieter.' : ''}`);
   }
@@ -1128,6 +1183,113 @@ function useCeoDesk() {
   ]);
 }
 
+/* ---------------- legal ---------------- */
+function legalGrr(amount, reason) {
+  const L2 = G.legal, before = L2.anger;
+  L2.anger = clamp(L2.anger + amount, 0, 100);
+  if (amount > 0 && reason) { L2.log.push(reason); if (L2.log.length > 6) L2.log.shift(); }
+  if (amount >= 10 && L2.anger < 35) toast('Legal', pick(['Margaret from Legal sent you a one-word email: "Why."', 'You hear a door slam in Legal.', 'Kyle the paralegal has started a new binder. It has your name on it.']));
+  if (!L2.summoned && L2.anger >= 35 && before < L2.anger) {
+    L2.summoned = true; L2.deadline = G.min + 90; L2.nagAt = G.min + 30; gc.state = 'summon';
+    toast('LEGAL — URGENT', 'Margaret Thornbury wants you in Legal. Now. (East side, next to your office.)');
+  }
+  updateHUD(); checkEnd();
+}
+function updateLegal(dt) {
+  if (!gc) return;
+  const t = performance.now() / 1000;
+  gc.angry = G.legal.anger >= 30;
+  for (const o of legalStaff) {
+    let moving = false;
+    if (o.talking) { faceToward(o, player.x, player.z, dt); }
+    else if (o === gc && o.state === 'summon') {
+      if (o.sit > 0.06) { /* standing up */ }
+      else if (!o.path.length && Math.hypot(o.pos.x - 11.0, o.pos.z + 2.25) > 0.1) o.path = [{ x: 15.0, z: -2.4 }, { x: 11.0, z: -2.25 }];
+      if (o.path.length) moving = walkAlong(o, dt);
+      else { o.state = 'door'; }
+    } else if (o === gc && o.state === 'door') {
+      faceToward(o, player.x, player.z, dt);
+      if (G.legal.summoned && G.min >= G.legal.nagAt) { G.legal.nagAt = G.min + 30; toast('Legal', pick(['Margaret is standing in the Legal doorway, tapping her foot.', 'Margaret just said your full name. Out loud. Across the floor.', '"I CAN SEE YOU," shouts Margaret from Legal.'])); o.speakUntil = performance.now() + 1500; }
+    } else if (o === gc && o.state === 'return') {
+      if (!o.path.length) o.path = [{ x: 15.0, z: -2.4 }, { x: o.home.x, z: o.home.z }];
+      moving = walkAlong(o, dt);
+      if (!o.path.length) { o.state = 'desk'; o.pos.set(o.home.x, 0, o.home.z); }
+    } else if (o.state === 'desk') o.mesh.rotation.y = lerpAngle(o.mesh.rotation.y, o.rotY, dt * 3);
+    if (!moving) o.walkAmp += (0 - o.walkAmp) * Math.min(1, dt * 8);
+    const home = Math.hypot(o.pos.x - o.home.x, o.pos.z - o.home.z) < 0.2;
+    const wantSit = (o.state === 'desk' && home) || (o.talking && home && o.state === 'desk') ? 1 : 0;
+    o.sit += (wantSit - o.sit) * Math.min(1, dt * 3);
+    pose(o, t);
+    if (o === gc && o.state === 'door' && !o.talking) { // arms crossed, foot tapping
+      const u = o.mesh.userData; u.armL.rotation.set(-1.35, 0, 0.85); u.armR.rotation.set(-1.25, 0, -0.85);
+      u.legR.knee.rotation.x = Math.max(0, Math.sin(t * 9)) * 0.25;
+    }
+    o.tag.position.set(o.pos.x, 2.05 - 0.33 * o.sit, o.pos.z);
+  }
+  if (G.legal.summoned && gc.state !== 'summon' && !G.ui && !G.paused && Math.hypot(player.x - gc.pos.x, player.z - gc.pos.z) < 2.4) talkLegal();
+}
+function walkAlong(o, dt) {
+  const p = o.path[0]; if (!p) return false;
+  const dx = p.x - o.pos.x, dz = p.z - o.pos.z, d = Math.hypot(dx, dz), sp = 1.25 * dt;
+  if (d <= sp) { o.pos.x = p.x; o.pos.z = p.z; o.path.shift(); return true; }
+  o.pos.x += dx / d * sp; o.pos.z += dz / d * sp;
+  o.mesh.rotation.y = lerpAngle(o.mesh.rotation.y, Math.atan2(dx, dz), dt * 7);
+  o.walkT += dt * 1.25 * 6.3; o.walkAmp += (1 - o.walkAmp) * Math.min(1, dt * 6);
+  return true;
+}
+function legalLine() {
+  const a = G.legal.anger, log = G.legal.log.slice(-2);
+  if (!log.length || a < 15) return pick(["Oh. It's you. Did you break anything today? Don't answer that without counsel present.", "I'm billing you for this conversation. Emotionally.", "Whatever you're about to do, the answer is no."]);
+  if (a < 35) return `I heard about ${log[log.length - 1]}. I'm writing it down. I write everything down.`;
+  if (a < 65) return `Sit down. ${log.length > 1 ? `First: ${log[0]}. Then: ${log[1]}.` : `Let's discuss ${log[0]}.`} Do you have ANY idea what a deposition costs? Because I do. To the penny.`;
+  return `${log[log.length - 1].toUpperCase()}?! Nineteen years. Nineteen years I have practiced law and I have NEVER seen a CEO do something so — no. NO. Don't talk. I'm talking.`;
+}
+function talkLegal(msg) {
+  const L2 = G.legal;
+  gc.talking = true;
+  if (L2.summoned) { L2.summoned = false; L2.anger = Math.max(0, L2.anger - 5); gc.state = 'return'; gc.path = []; }
+  const line = msg || legalLine();
+  speak(gc, line);
+  const opts = [
+    { label: "I'm sorry. It won't happen again.", fn: () => {
+      if (!once('legalsorry')) return talkLegal('You said that this morning. I have it in writing. I have EVERYTHING in writing.');
+      L2.anger = Math.max(0, L2.anger - 15); updateHUD(); talkLegal(pick(['…Fine. Noted. Don\'t make me un-note it.', 'Apology accepted. Provisionally. Pending review.']));
+    } },
+    { label: 'Make it go away. ($25,000 settlement)', fn: () => {
+      if (G.cash < 25000) return talkLegal('With what money? I\'ve seen your brokerage statements. Yes, I\'ve seen them.');
+      G.cash -= 25000; L2.anger = Math.max(0, L2.anger - 25); G.scandal = Math.max(0, G.scandal - 10); updateHUD();
+      talkLegal('A settlement. From your personal account. How refreshing. The NDA goes out tonight.');
+    } },
+    { label: 'I need to search a desk. Legally.', fn: () => {
+      if (!once('legalmemo')) return talkLegal('One search memo per day. I am a lawyer, not a vending machine.');
+      L2.memos++; talkLegal('Memo 97-14: "Routine security audit." Your next desk search in front of an employee is covered. Don\'t make me regret this.');
+    } },
+    { label: 'Would an FBI referral hold up on…', fn: () => reviewCase() },
+    { label: 'Leave' },
+  ];
+  dialog('Margaret Thornbury — General Counsel', `<div class="speech">${portrait(gc)}<p>${line}</p></div><div style="font-size:12px;color:#444">Legal mood: ${L2.anger < 30 ? 'tolerating you' : L2.anger < 60 ? 'deeply annoyed' : 'FURIOUS'} · ${Math.round(L2.anger)}%</div>`, opts);
+}
+function reviewCase() {
+  const opts = active().map(n => ({ label: `#${n.desk.num} ${n.name}`, fn: () => {
+    const strong = n.notes.filter(x => x.strong).length;
+    const v = strong >= 4 ? `${n.first}? Copier logs, faxes, behavior… That would hold up. Call them. Quietly.` :
+      strong >= 2 ? `On ${n.first}? It's thin. Circumstantial. Get me more and I'll sign off.` :
+      strong === 1 ? `One odd moment? I can't take one odd moment to the FBI. Neither can you.` :
+      `On ${n.first}? Based on WHAT? Their face? Absolutely not. That's a lawsuit with a bow on it.`;
+    talkLegal(v);
+  } }));
+  opts.push({ label: 'Never mind', fn: () => talkLegal('Then stop wasting billable time.') });
+  dialog('Legal review', `<div class="speech">${portrait(gc)}<p>Who? I'll tell you if your evidence would survive a lawyer. Not whether they're guilty. That's your problem.</p></div>`, opts);
+}
+function talkPara() {
+  para.talking = true;
+  const line = G.legal.anger >= 60 ? pick(["She threw a Black's Law Dictionary at the wall. That's a two-pound book.", "I've never seen her this mad. And I was here for the Netscape thing."]) :
+    G.legal.anger >= 30 ? pick(["She's been muttering your name. Not in a good way.", "Pro tip: apologize before she comes looking for you. It works better."]) :
+    pick(["She can tell you if your evidence would hold up before you call the FBI. Seriously, use that.", "If you need to search someone's desk, get a memo from her first. Saves everybody a headache.", "I've stapled 4,000 pages today. Living the dream."]);
+  speak(para, line);
+  dialog('Kyle Bentsen — Paralegal', `<div class="speech">${portrait(para)}<p>${line}</p></div>`, [{ label: 'Thanks, Kyle' }]);
+}
+
 /* ---------------- vending ---------------- */
 function vend(list, title, desc) {
   const opts = list.map(it => ({ label: `${it.code} — ${it.n} ($${it.p.toFixed(2)})`, fn: () => buy(it) }));
@@ -1145,7 +1307,7 @@ function shake(list, title) {
   const r = Math.random();
   if (r < 0.4) { G.held = pick(list); updateHUD(); toast(title, `Free ${G.held.n}! The machine shudders in shame.`); return; }
   if (r < 0.7) return say(title, 'You rock the machine back and forth. Nothing falls. Your back hurts.');
-  const w = witnesses(null); G.scandal += 3 + Math.min(3, w.length) * 3; G.morale = clamp(G.morale - 1, 0, 100); updateHUD(); checkEnd();
+  const w = witnesses(null); if (w.length) legalGrr(3, 'physically assaulting a vending machine in front of staff'); G.scandal += 3 + Math.min(3, w.length) * 3; G.morale = clamp(G.morale - 1, 0, 100); updateHUD(); checkEnd();
   say(title, w.length ? `The machine tips forward with a BANG. ${w[0].first} watches the CEO wrestle a vending machine. This will be at the water cooler by lunch.` : 'The machine tips forward with a BANG. Luckily, nobody saw.');
 }
 function deadDrop() {
@@ -1212,10 +1374,10 @@ function doShort(q, where) {
   const total = G.short + q;
   if (total * G.stock * 0.5 > netWorth()) return say('Margin desk', `"Boss, you don't have the margin for ${q.toLocaleString('en-US')} more shares. Cover something first."`, [{ label: 'Back', fn: () => openBroker(where) }]);
   G.avg = (G.avg * G.short + G.stock * q) / total; G.short = total;
-  G.sec += 2 + q / 1000 * 0.8;
+  G.sec += 2 + q / 1000 * 0.8; legalGrr(4, 'shorting your own company\'s stock');
   if (where !== 'desk') {
     const w = witnesses(null);
-    if (w.length) { G.sec += Math.min(18, w.length * 6); toast('Overheard', `${w[0].first} heard you tell your broker to "short ORCH". They look confused.`); }
+    if (w.length) { legalGrr(10, 'shouting "short ORCH" into your phone on the open floor'); G.sec += Math.min(18, w.length * 6); toast('Overheard', `${w[0].first} heard you tell your broker to "short ORCH". They look confused.`); }
   }
   updateHUD(); checkEnd(); if (!G.over) openBroker(where);
 }
@@ -1313,20 +1475,22 @@ function frame(now) {
     if (G.min >= 17 * 60 && !G.over) endOfDay();
     if (movePlayer(dt)) bob += dt * 9;
     for (const n of npcs) updateNPC(n, dt);
+    updateLegal(dt);
     if (Math.floor(now / 500) !== Math.floor((now - dt * 1000) / 500)) updateHUD();
   } else for (const n of npcs) if (n.talking && n.status === 'active') faceToward(n, player.x, player.z, dt);
   // faces: blink + lip flap
   const ts = now / 1000;
-  for (const n of npcs) if (n.status === 'active') {
-    const u = n.mesh.userData;
+  for (const n of [...npcs, ...legalStaff]) if (n.status === 'active') {
+    const u = n.mesh.userData, ang = n.angry && u.tex.a;
     if (ts > u.nextBlink) { u.blinkEnd = ts + 0.13; u.nextBlink = ts + rnd(2, 5.5); }
-    const m = ts < u.blinkEnd ? u.tex.b : (now < (n.speakUntil || 0) && Math.sin(ts * 17) > -0.15 ? u.tex.t : u.tex.n);
+    const talkOpen = now < (n.speakUntil || 0) && Math.sin(ts * 17) > -0.15;
+    const m = ts < u.blinkEnd ? u.tex.b : talkOpen ? (ang ? u.tex.at : u.tex.t) : (ang ? u.tex.a : u.tex.n);
     if (u.faceMat.map !== m) u.faceMat.map = m;
   }
   // leds
   if (Math.random() < 0.15) { const l = pick(leds); l.visible = !l.visible; }
   // labels
-  for (const n of npcs) if (n.status === 'active') n.tag.visible = Math.hypot(n.pos.x - player.x, n.pos.z - player.z) < 5;
+  for (const n of [...npcs, ...legalStaff]) if (n.status === 'active') n.tag.visible = Math.hypot(n.pos.x - player.x, n.pos.z - player.z) < 5;
   // camera
   camera.position.set(player.x, 1.62 + Math.sin(bob) * 0.025, player.z);
   camera.rotation.set(pitch, yaw, 0, 'YXZ');
