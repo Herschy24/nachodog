@@ -1,0 +1,1308 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Orchid Microsystems</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=VT323&display=swap">
+<style>
+/* Layout: full-bleed 3D office, Win95 chrome on top (taskbar, dialog windows). One deliberate look, light only. */
+:root{
+  --face:#c0c0c0; --hi:#ffffff; --shadow:#808080; --dark:#0a0a0a;
+  --title-a:#000080; --title-b:#1084d0; --ink:#111111; --paper:#fffef4;
+  --teal:#008080; --red:#b00000; --amber:#c88400; --green:#007a00;
+  --ui:Tahoma,"MS Sans Serif","Segoe UI",Verdana,Geneva,sans-serif;
+  --crt:"VT323","Courier New",monospace;
+  color-scheme:light;
+}
+html,body{height:100%;margin:0;overflow:hidden;background:#d9dccf;color:var(--ink);font:13px/1.35 var(--ui)}
+#app{position:fixed;inset:0;}
+canvas#c{display:block;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.bevel{background:var(--face);border:2px solid;border-color:var(--hi) var(--dark) var(--dark) var(--hi);box-shadow:inset -1px -1px 0 var(--shadow),inset 1px 1px 0 #dfdfdf}
+.sunk{border:2px solid;border-color:var(--shadow) var(--hi) var(--hi) var(--shadow);box-shadow:inset 1px 1px 0 var(--dark)}
+button.b95{font:13px var(--ui);color:var(--ink);background:var(--face);border:2px solid;border-color:var(--hi) var(--dark) var(--dark) var(--hi);box-shadow:inset -1px -1px 0 var(--shadow),inset 1px 1px 0 #dfdfdf;padding:5px 12px;cursor:pointer;text-align:left}
+button.b95:active{border-color:var(--dark) var(--hi) var(--hi) var(--dark);box-shadow:inset 1px 1px 0 var(--shadow)}
+button.b95:focus-visible{outline:1px dotted var(--ink);outline-offset:-5px}
+button.b95.danger{color:var(--red);font-weight:bold}
+button.b95.love{color:#8a1060}
+
+#crosshair{position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:rgba(255,255,255,.85);box-shadow:0 0 0 1px rgba(0,0,0,.5);pointer-events:none}
+#prompt{position:absolute;left:50%;top:calc(50% + 28px);transform:translateX(-50%);padding:4px 10px;background:#ffffe1;border:1px solid var(--dark);font-size:13px;pointer-events:none;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis}
+#prompt kbd{font:bold 12px var(--ui);border:1px solid var(--shadow);background:var(--face);padding:0 4px;margin-right:4px}
+
+#taskbar{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:6px;padding:3px max(4px,env(safe-area-inset-right,0px)) calc(3px + env(safe-area-inset-bottom,0px)) max(4px,env(safe-area-inset-left,0px));background:var(--face);border-top:2px solid var(--hi);box-shadow:0 -1px 0 #dfdfdf;flex-wrap:wrap}
+#startbtn{font-weight:bold;display:flex;align-items:center;gap:6px;padding:3px 8px}
+#startbtn i{display:inline-block;width:14px;height:14px;background:conic-gradient(#d00 0 25%,#0a0 0 50%,#ffd200 0 75%,#00d 0);transform:skewX(-8deg)}
+.meter{display:flex;align-items:center;gap:5px;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+.meter .bar{width:72px;height:12px;background:var(--hi);position:relative;overflow:hidden}
+.meter .fill{position:absolute;inset:0 auto 0 0;background:repeating-linear-gradient(90deg,var(--title-a) 0 6px,transparent 6px 8px)}
+.meter.bad .fill{background:repeating-linear-gradient(90deg,var(--red) 0 6px,transparent 6px 8px)}
+#ticker{font:20px/1 var(--crt);background:#000;color:#33ff66;padding:2px 8px;letter-spacing:.04em;min-width:118px;font-variant-numeric:tabular-nums}
+#ticker.down{color:#ff5555}
+#pl{font:18px/1 var(--crt);background:#000;color:#33ff66;padding:3px 8px;font-variant-numeric:tabular-nums;white-space:nowrap}
+#pl.neg{color:#ff5555}
+#heldbtn{font-size:12px;padding:3px 8px;background:#ffffe1}
+.brk{display:grid;grid-template-columns:auto 1fr;gap:3px 14px;font-variant-numeric:tabular-nums}
+.brk b{font-weight:normal;color:#555}
+.secbar{height:12px;background:var(--hi);position:relative}
+.secbar i{position:absolute;inset:0 auto 0 0;background:repeating-linear-gradient(90deg,var(--red) 0 6px,transparent 6px 8px)}
+#clock{margin-left:auto;padding:3px 10px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.spacer{flex:1}
+
+#toasts{position:absolute;right:max(10px,env(safe-area-inset-right,0px));bottom:calc(48px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:6px;align-items:flex-end;pointer-events:none;max-width:min(340px,80vw)}
+.toast{background:#ffffe1;border:1px solid var(--dark);padding:6px 10px;font-size:12.5px;box-shadow:2px 2px 0 rgba(0,0,0,.35);animation:pop .2s ease-out}
+.toast b{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px}
+@keyframes pop{from{transform:translateY(8px);opacity:0}}
+
+.layer{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,40,40,.35);padding:16px max(16px,env(safe-area-inset-right,0px)) 16px max(16px,env(safe-area-inset-left,0px))}
+.win{width:min(520px,100%);max-height:calc(100% - 60px);display:flex;flex-direction:column}
+.win .tb{display:flex;align-items:center;gap:6px;padding:3px 4px 3px 6px;background:linear-gradient(90deg,var(--title-a),var(--title-b));color:#fff;font-weight:bold;font-size:12.5px}
+.win .tb span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.win .tb button{font:bold 11px var(--ui);width:18px;height:16px;padding:0;text-align:center;line-height:10px}
+.win .body{padding:12px;overflow:auto;display:flex;flex-direction:column;gap:10px;min-height:0}
+.speech{display:flex;gap:10px;align-items:flex-start}
+.portrait{flex:none;width:84px;height:96px;background:var(--teal);display:block}
+.speech p{margin:0;padding:8px 10px;background:var(--paper);flex:1;min-width:0;font-size:13.5px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+@media (max-width:460px){.opts{grid-template-columns:1fr}}
+.memo{background:var(--paper);padding:14px 16px;font:15px/1.45 "Courier New",Courier,monospace;color:#1a1a1a}
+.memo h2{font:bold 15px "Courier New",monospace;margin:0 0 8px;letter-spacing:.1em}
+.memo .hdr{display:grid;grid-template-columns:auto 1fr;gap:0 12px;margin-bottom:10px;border-bottom:1px dashed #777;padding-bottom:8px}
+.memo p{margin:0 0 8px}
+.keys{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:12.5px}
+.keys kbd{font:bold 11px var(--ui);background:var(--face);border:1px solid var(--shadow);padding:1px 5px;white-space:nowrap}
+
+#dossier .win{width:min(720px,100%)}
+.dlist{display:flex;flex-direction:column;gap:6px}
+.drow{display:grid;grid-template-columns:40px 1fr auto;gap:10px;background:var(--paper);padding:8px;align-items:start}
+.drow .num{font:22px/1 var(--crt);color:var(--teal)}
+.drow h4{margin:0;font-size:13px}
+.drow h4 small{font-weight:normal;color:#555;margin-left:6px}
+.drow ul{margin:4px 0 0;padding-left:16px;font-size:12.5px;color:#333}
+.drow ul li.strong{color:var(--red)}
+.drow .gone{color:#777;font-style:italic;font-size:12.5px}
+.stamp{font:bold 11px var(--ui);letter-spacing:.08em;padding:3px 6px;min-width:64px;text-align:center}
+.stamp.s1{color:var(--red)}.stamp.s2{color:var(--green)}
+
+#fade{position:absolute;inset:0;background:#000;color:#eee;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;font:22px/1.4 var(--crt);opacity:0;pointer-events:none;transition:opacity .6s}
+#fade.on{opacity:1;pointer-events:auto}
+
+#touch{position:absolute;inset:0;pointer-events:none}
+#joy{position:absolute;left:calc(18px + env(safe-area-inset-left,0px));bottom:calc(64px + env(safe-area-inset-bottom,0px));width:120px;height:120px;border-radius:50%;background:rgba(0,0,0,.18);border:2px solid rgba(255,255,255,.5);pointer-events:auto;touch-action:none}
+#knob{position:absolute;left:40px;top:40px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.75)}
+#tbtn{position:absolute;right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(84px + env(safe-area-inset-bottom,0px));pointer-events:auto;font-weight:bold;padding:14px 18px}
+@media (prefers-reduced-motion:reduce){.toast{animation:none}#fade{transition:none}}
+</style>
+
+</head>
+<body>
+<div id="app">
+  <canvas id="c" aria-label="3D office"></canvas>
+  <div id="crosshair"></div>
+  <div id="prompt" hidden></div>
+  <div id="toasts" aria-live="polite"></div>
+
+  <div id="taskbar">
+    <button class="b95" id="startbtn"><i></i>Orchid</button>
+    <button class="b95" id="dosbtn">Dossier <small>(N)</small></button>
+    <button class="b95" id="brokerbtn">Broker <small>(B)</small></button>
+    <button class="b95" id="heldbtn" hidden></button>
+    <div class="meter bad" title="Secrets leaked to the MSS"><span>Leaks</span><div class="bar sunk"><div class="fill" id="m-leak"></div></div></div>
+    <div class="meter bad" title="How close you are to a front-page scandal"><span>Scandal</span><div class="bar sunk"><div class="fill" id="m-scan"></div></div></div>
+    <div class="meter" title="Staff morale"><span>Morale</span><div class="bar sunk"><div class="fill" id="m-mor"></div></div></div>
+    <div class="meter bad" title="SEC attention on your trades"><span>SEC</span><div class="bar sunk"><div class="fill" id="m-sec"></div></div></div>
+    <div id="ticker" class="sunk">ORCH $24.00</div>
+    <div id="pl" class="sunk" hidden></div>
+    <div id="clock" class="sunk">Mon 9:00 AM</div>
+  </div>
+
+  <div id="touch" hidden>
+    <div id="joy"><div id="knob"></div></div>
+    <button class="b95" id="tbtn">USE</button>
+  </div>
+
+  <div id="dlg" class="layer" hidden>
+    <div class="win bevel" role="dialog" aria-modal="true">
+      <div class="tb"><span id="dlg-title">Dialog</span><button class="b95" id="dlg-x" aria-label="Close">×</button></div>
+      <div class="body" id="dlg-body"></div>
+    </div>
+  </div>
+
+  <div id="dossier" class="layer" hidden>
+    <div class="win bevel" role="dialog" aria-modal="true">
+      <div class="tb"><span>DOSSIER.TXT — Notepad</span><button class="b95" id="dos-x" aria-label="Close">×</button></div>
+      <div class="body"><div style="font-size:12px;color:#333">Everything you've learned, by desk. Click a stamp to mark your own hunch.</div><div class="dlist" id="dlist"></div></div>
+    </div>
+  </div>
+
+  <div id="intro" class="layer">
+    <div class="win bevel" role="dialog" aria-modal="true">
+      <div class="tb"><span>MEMO_0303.DOC — WordPad</span></div>
+      <div class="body">
+        <div class="memo">
+          <h2>CONFIDENTIAL MEMORANDUM</h2>
+          <div class="hdr"><b>TO:</b><span>You, Chief Executive Officer</span><b>FROM:</b><span>Board of Directors</span><b>DATE:</b><span>Monday, March 3, 1997</span><b>RE:</b><span>Project ORCHID</span></div>
+          <p>Our security consultant believes <b>three people on this floor</b> are passing ORCHID chip designs to China's Ministry of State Security. We don't know who. Anyone could be one of them, so watch what people <i>do</i>.</p>
+          <p>Catch all three before 5:00 PM Friday, or before ORCHID leaks. Accuse the wrong person and Legal will be very upset. Keep the stock up.</p>
+          <p>And for God's sake, keep your personal life out of the papers.</p>
+        </div>
+        <div class="keys">
+          <kbd>Click</kbd><span>Look around with the mouse (Esc to release)</span>
+          <kbd>W A S D</kbd><span>Walk (Shift to hurry)</span>
+          <kbd>E</kbd><span>Talk to people, use the copier, fax, server rack, water cooler…</span>
+          <kbd>N</kbd><span>Open your dossier</span>
+          <kbd>B</kbd><span>Call your broker (yes, you can short your own company)</span>
+          <kbd>Q</kbd><span>Eat or drink whatever you bought from the vending machines</span>
+        </div>
+        <button class="b95" id="startgame" style="align-self:flex-end;font-weight:bold;padding:6px 22px">Clock in</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="fade"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+'use strict';
+const $ = s => document.querySelector(s);
+const rnd = (a, b) => a + Math.random() * (b - a);
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmtMoney = v => (v < 0 ? '-' : '') + '$' + Math.abs(Math.round(v)).toLocaleString('en-US');
+const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
+/* ---------------- renderer ---------------- */
+const canvas = $('#c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xd9dccf);
+scene.fog = new THREE.Fog(0xd9dccf, 16, 42);
+const camera = new THREE.PerspectiveCamera(70, 1, 0.05, 100);
+function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+addEventListener('resize', resize); resize();
+
+scene.add(new THREE.HemisphereLight(0xf6f8ee, 0x58625c, 0.95));
+scene.add(new THREE.AmbientLight(0xffffff, 0.22));
+const sun = new THREE.DirectionalLight(0xfff6e0, 0.35); sun.position.set(-4, 10, -6); scene.add(sun);
+
+function canvasTex(w, h, draw, rep) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  draw(c.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(c);
+  if (rep) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep[0], rep[1]); }
+  t.anisotropy = 4; return t;
+}
+const noise = (g, w, h, base, cols, n, s = 1) => { g.fillStyle = base; g.fillRect(0, 0, w, h); for (let i = 0; i < n; i++) { g.fillStyle = pick(cols); g.fillRect(Math.random() * w, Math.random() * h, s, s); } };
+const T = {
+  carpet: canvasTex(128, 128, (g, w, h) => noise(g, w, h, '#3e5c62', ['#2c464b', '#56787d', '#4a6a5a', '#33505a'], 5000, 2), [18, 16]),
+  ceil: canvasTex(128, 128, (g, w, h) => { noise(g, w, h, '#e9e7dd', ['#d8d5c8', '#f3f1e8'], 1500); g.strokeStyle = '#a9a698'; g.lineWidth = 3; g.strokeRect(0, 0, w, h); }, [16, 14]),
+  fabric: canvasTex(64, 64, (g, w, h) => noise(g, w, h, '#7d8898', ['#6d7787', '#8c97a6', '#76808f'], 1400), [2, 1]),
+  wall: canvasTex(64, 64, (g, w, h) => noise(g, w, h, '#d7cdb4', ['#cdc3a9', '#ddd4bd'], 500), [6, 1]),
+  screen: canvasTex(128, 96, (g, w, h) => {
+    g.fillStyle = '#008080'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#c0c0c0'; g.fillRect(14, 12, 100, 66); g.fillStyle = '#000080'; g.fillRect(14, 12, 100, 9);
+    g.fillStyle = '#fff'; g.fillRect(18, 25, 92, 49);
+    g.fillStyle = '#556'; for (let i = 0; i < 8; i++) g.fillRect(22, 29 + i * 5.5, 30 + Math.random() * 50, 2);
+    g.fillStyle = '#c0c0c0'; g.fillRect(0, h - 9, w, 9);
+  }),
+  blinds: canvasTex(64, 64, (g, w, h) => { g.fillStyle = '#bcd7e8'; g.fillRect(0, 0, w, h); g.fillStyle = 'rgba(255,255,255,.55)'; for (let x = 0; x < w; x += 8) g.fillRect(x, 0, 5, h); }, [20, 1]),
+};
+const M = (c, o = {}) => new THREE.MeshLambertMaterial(Object.assign({ color: c }, o));
+const mats = {
+  carpet: M(0xffffff, { map: T.carpet }), ceil: M(0xffffff, { map: T.ceil }), wall: M(0xffffff, { map: T.wall }),
+  fabric: M(0xffffff, { map: T.fabric }), trim: M(0xcfc4a6), desk: M(0xc9b896), deskDark: M(0x8a7a5e),
+  beige: M(0xd8d0bb), screen: new THREE.MeshBasicMaterial({ map: T.screen }), black: M(0x222326), chair: M(0x2d3440),
+  glass: new THREE.MeshLambertMaterial({ color: 0xbfe0e8, transparent: true, opacity: 0.28 }),
+  light: new THREE.MeshBasicMaterial({ color: 0xf8fbf2 }), blinds: new THREE.MeshBasicMaterial({ map: T.blinds }),
+  plant: M(0x3f7d3a), pot: M(0x9a5a3a), white: M(0xf0f0ea), water: new THREE.MeshLambertMaterial({ color: 0x6fb6e8, transparent: true, opacity: 0.7 }),
+  grey: M(0x9a9c9e), rug: M(0x6b2430), red: new THREE.MeshBasicMaterial({ color: 0xff3020 }), green: new THREE.MeshBasicMaterial({ color: 0x30ff60 }),
+};
+
+/* ---------------- world building ---------------- */
+const colliders = [];
+function box(x, y, z, w, h, d, mat, collide = true) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+  m.position.set(x, y, z); scene.add(m);
+  if (collide) colliders.push({ minX: x - w / 2, maxX: x + w / 2, minZ: z - d / 2, maxZ: z + d / 2 });
+  return m;
+}
+const B = { minX: -16, maxX: 16, minZ: -14, maxZ: 14 };
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(32, 28), mats.carpet); floor.rotation.x = -Math.PI / 2; scene.add(floor);
+const ceil = new THREE.Mesh(new THREE.PlaneGeometry(32, 28), mats.ceil); ceil.rotation.x = Math.PI / 2; ceil.position.y = 3; scene.add(ceil);
+box(0, 1.5, B.minZ - 0.1, 32.4, 3, 0.2, mats.wall); box(0, 1.5, B.maxZ + 0.1, 32.4, 3, 0.2, mats.wall);
+box(B.minX - 0.1, 1.5, 0, 0.2, 3, 28, mats.wall); box(B.maxX + 0.1, 1.5, 0, 0.2, 3, 28, mats.wall);
+// fluorescent panels
+for (let x = -14; x <= 14; x += 4) for (let z = -12; z <= 12; z += 4) {
+  const p = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.6), mats.light); p.rotation.x = Math.PI / 2; p.position.set(x, 2.99, z); scene.add(p);
+}
+// windows with blinds on north wall
+for (let x = -14; x <= 14; x += 4) { const w = new THREE.Mesh(new THREE.PlaneGeometry(3, 1.3), mats.blinds); w.position.set(x, 1.85, B.minZ + 0.01); scene.add(w); }
+// skirting
+box(0, 0.06, B.maxZ - 0.02, 32, 0.12, 0.04, mats.deskDark, false);
+
+function plant(x, z) {
+  box(x, 0.25, z, 0.5, 0.5, 0.5, mats.pot);
+  const s = new THREE.Mesh(new THREE.IcosahedronGeometry(0.55, 0), mats.plant); s.position.set(x, 1.0, z); s.scale.y = 1.3; scene.add(s);
+}
+
+function makeLabel(text, sub, w = 256, h = 72) {
+  const t = canvasTex(w, h, (g) => {
+    g.fillStyle = 'rgba(255,255,225,.95)'; g.fillRect(0, 0, w, h); g.strokeStyle = '#000'; g.lineWidth = 3; g.strokeRect(1, 1, w - 2, h - 2);
+    g.fillStyle = '#111'; g.font = 'bold 26px Tahoma, Verdana, sans-serif'; g.textAlign = 'center'; g.fillText(text, w / 2, sub ? 32 : 46);
+    if (sub) { g.font = '20px Tahoma, Verdana, sans-serif'; g.fillStyle = '#444'; g.fillText(sub, w / 2, 58); }
+  });
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false, transparent: true }));
+  s.scale.set(1.25, 1.25 * h / w, 1); s.renderOrder = 10; return s;
+}
+
+// cubicles: 3 rows x 4 cols, openings face +z
+const ROWS = [-8, -2, 4], COLS = [-4.5, -1.5, 1.5, 4.5];
+const AISLE = [-5, 1, 7];
+const desks = [];
+ROWS.forEach((cz, ri) => COLS.forEach((cx, ci) => {
+  const H = 1.45, t = 0.08;
+  box(cx, H / 2, cz - 1.5, 3, H, t, mats.fabric);
+  box(cx - 1.5, H / 2, cz, t, H, 3, mats.fabric);
+  box(cx + 1.5, H / 2, cz, t, H, 3, mats.fabric);
+  box(cx, H + 0.02, cz - 1.5, 3.04, 0.05, 0.12, mats.trim, false);
+  box(cx - 1.5, H + 0.02, cz, 0.12, 0.05, 3.04, mats.trim, false);
+  box(cx + 1.5, H + 0.02, cz, 0.12, 0.05, 3.04, mats.trim, false);
+  // desk + CRT
+  box(cx, 0.74, cz - 1.05, 2.7, 0.06, 0.8, mats.desk);
+  box(cx - 1.2, 0.36, cz - 1.05, 0.06, 0.72, 0.76, mats.deskDark, false);
+  box(cx + 1.2, 0.36, cz - 1.05, 0.06, 0.72, 0.76, mats.deskDark, false);
+  box(cx, 1.0, cz - 1.15, 0.5, 0.42, 0.42, mats.beige, false);
+  const sc = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.3), mats.screen); sc.position.set(cx, 1.02, cz - 0.935); scene.add(sc);
+  box(cx, 0.785, cz - 0.82, 0.5, 0.03, 0.16, mats.beige, false);
+  box(cx + 0.6, 0.86, cz - 1.15, 0.36, 0.2, 0.28, mats.white, false); // in-tray / papers
+  // chair
+  box(cx, 0.45, cz - 0.2, 0.5, 0.08, 0.5, mats.chair, false);
+  box(cx, 0.75, cz + 0.05, 0.5, 0.55, 0.06, mats.chair, false);
+  const num = 100 + ri * 4 + ci + 1;
+  desks.push({ x: cx, z: cz, row: ri, num, home: { x: cx, z: cz - 0.15 } });
+}));
+
+// CEO office (north-east), glass partition
+box(10, 1.2, -12.5, 0.06, 2.4, 3, mats.glass); box(13, 1.2, -6, 6, 2.4, 0.06, mats.glass);
+box(10, 2.42, -12.5, 0.1, 0.06, 3, mats.deskDark, false); box(13, 2.42, -6, 6, 0.06, 0.1, mats.deskDark, false);
+const rug = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 5), mats.rug); rug.rotation.x = -Math.PI / 2; rug.position.set(13, 0.01, -10.5); scene.add(rug);
+box(13, 0.76, -11.5, 2.6, 0.08, 1.1, mats.deskDark); box(13, 0.38, -11.9, 2.5, 0.72, 0.2, mats.deskDark, false);
+box(13, 1.0, -11.7, 0.5, 0.42, 0.42, mats.beige, false);
+box(13, 0.6, -12.6, 0.7, 1.2, 0.6, mats.black, false);
+plant(15.3, -13.3); plant(10.6, -13.3);
+const ceoSign = makeLabel('CHIEF EXECUTIVE', 'Office of the CEO', 256, 72); ceoSign.position.set(13, 2.3, -5.9); scene.add(ceoSign);
+
+// Server room (north-west) with door gap at z -11..-9.5 on x=-10
+box(-10, 1.5, -12.5, 0.2, 3, 3, mats.wall); box(-10, 1.5, -8.75, 0.2, 3, 1.5, mats.wall); box(-13, 1.5, -8, 6.2, 3, 0.2, mats.wall);
+box(-10, 2.6, -10.25, 0.2, 0.8, 1.5, mats.wall, false);
+const leds = [];
+for (let i = 0; i < 4; i++) {
+  const rx = -15.2 + i * 1.2; box(rx, 1.05, -13.3, 0.9, 2.1, 0.9, mats.black);
+  for (let j = 0; j < 8; j++) { const l = new THREE.Mesh(new THREE.PlaneGeometry(0.05, 0.05), Math.random() < .5 ? mats.green.clone() : mats.red.clone()); l.position.set(rx - 0.3 + (j % 4) * 0.2, 0.6 + Math.floor(j / 4) * 0.8 + Math.random() * 0.4, -12.84); scene.add(l); leds.push(l); }
+}
+const srvSign = makeLabel('SERVER ROOM', 'Authorized staff only'); srvSign.position.set(-9.85, 2.35, -10.25); scene.add(srvSign);
+
+// break area east wall
+box(15.4, 0.5, 6, 0.5, 1.0, 0.5, mats.white); const bottle = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.5, 12), mats.water); bottle.position.set(15.4, 1.25, 6); scene.add(bottle);
+box(15.3, 0.45, 9, 0.8, 0.9, 1.6, mats.deskDark); box(15.3, 1.2, 9, 0.5, 0.6, 0.4, mats.black, false);
+const coffeeLight = new THREE.Mesh(new THREE.PlaneGeometry(0.06, 0.06), mats.red); coffeeLight.position.set(15.04, 1.3, 9); coffeeLight.rotation.y = -Math.PI / 2; scene.add(coffeeLight);
+plant(15.3, 12.8); plant(-15.3, 12.8); plant(-15.3, 1.5); plant(9, 12.8);
+// vending machines (fronts face -x)
+const vendTex = (soda) => canvasTex(128, 256, (g, w, h) => {
+  g.fillStyle = soda ? '#b31b1b' : '#2b2f3a'; g.fillRect(0, 0, w, h);
+  if (soda) {
+    g.fillStyle = '#fff'; g.font = 'bold 34px Impact, Arial Black, sans-serif'; g.save(); g.translate(48, 150); g.rotate(-Math.PI / 2); g.fillText('FIZZ!', 0, 0); g.restore();
+    g.fillStyle = '#ffd200'; g.beginPath(); g.ellipse(48, 200, 26, 26, 0, 0, 7); g.fill(); g.fillStyle = '#b31b1b'; g.font = 'bold 13px Arial'; g.fillText('ICE', 37, 198); g.fillText('COLD', 32, 212);
+    for (let i = 0; i < 6; i++) { g.fillStyle = ['#e33', '#ffd200', '#bde', '#3c3', '#f80', '#eee'][i]; g.fillRect(92, 20 + i * 26, 26, 18); g.strokeStyle = '#000'; g.strokeRect(92, 20 + i * 26, 26, 18); }
+  } else {
+    g.fillStyle = '#9fb7c4'; g.fillRect(8, 10, 84, 200);
+    const cols = ['#c0392b', '#f1c40f', '#8e44ad', '#e67e22', '#27ae60', '#2980b9', '#d35400', '#ecf0f1'];
+    for (let r = 0; r < 6; r++) { g.fillStyle = '#666'; g.fillRect(8, 40 + r * 32, 84, 3); for (let c = 0; c < 4; c++) { g.fillStyle = pick(cols); g.fillRect(12 + c * 20, 18 + r * 32, 15, 20); } }
+    g.fillStyle = 'rgba(255,255,255,.18)'; g.fillRect(14, 10, 12, 200);
+    g.fillStyle = '#111'; g.fillRect(98, 30, 24, 14); g.fillStyle = '#3f3'; g.font = '11px monospace'; g.fillText('.75', 101, 41);
+    g.fillStyle = '#888'; for (let i = 0; i < 12; i++) g.fillRect(99 + (i % 3) * 8, 56 + Math.floor(i / 3) * 10, 6, 7);
+  }
+  g.fillStyle = '#111'; g.fillRect(10, 222, soda ? 70 : 82, 24);
+});
+for (const [z, soda] of [[3.2, false], [11.4, true]]) {
+  box(15.25, 0.95, z, 0.8, 1.9, 1.05, soda ? M(0xb31b1b) : M(0x2b2f3a));
+  const f = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 1.85), new THREE.MeshBasicMaterial({ map: vendTex(soda) }));
+  f.rotation.y = -Math.PI / 2; f.position.set(14.84, 0.95, z); scene.add(f);
+}
+// copier + fax west wall
+box(-15.2, 0.6, 9, 1.0, 1.2, 1.4, mats.grey); box(-15.2, 1.25, 9, 0.9, 0.1, 1.2, mats.beige, false);
+box(-15.3, 0.4, 5, 0.6, 0.8, 1.2, mats.deskDark); box(-15.3, 0.92, 5, 0.45, 0.24, 0.5, mats.beige, false);
+// supply closet door south wall
+box(0, 1.05, B.maxZ - 0.02, 1.1, 2.1, 0.05, mats.deskDark, false);
+const scSign = makeLabel('SUPPLY CLOSET'); scSign.position.set(0, 2.35, B.maxZ - 0.15); scene.add(scSign);
+
+/* ---------------- people ---------------- */
+const ROSTER = [
+  ['Sandra Kowalski', 'Accounting'], ['Dave Mercer', 'Sales'], ['Linda Chen', 'R&D'], ['Raj Patel', 'IT'],
+  ['Tom Briggs', 'Sales'], ['Michelle Okafor', 'Legal'], ['Greg Novak', 'R&D'], ['Wei Zhang', 'QA'],
+  ['Brenda Holt', 'HR'], ['Carlos Ruiz', 'Marketing'], ['Karen Fitzgerald', 'Accounting'], ['Kevin Liu', 'Marketing'],
+  ['Denise Walsh', 'R&D'], ['Mark Haddad', 'Sales'], ['Yuki Tanaka', 'QA'], ['Pete Lindqvist', 'IT'],
+];
+const SKIN = [0xf1c9a5, 0xe0ac7e, 0xc68642, 0x8d5524, 0x6b3e26, 0xf3d4b5, 0xd9a066];
+const HAIR = [0x1b1b1b, 0x3b2314, 0x6a4a2a, 0xb08a4a, 0x8c8c8c, 0x2a1a10, 0xa0522d, 0xc8c8c8, 0xd9b26a];
+const SHIRT = [0x2f4f8f, 0x8f2f3f, 0xe8e4d8, 0x3f6f4f, 0x6f4f8f, 0xc9a04f, 0x4f7f9f, 0xa05a3a, 0x5a5a6a];
+const PANTS = [0x2a2a33, 0x3b3328, 0x4a4a4a, 0x1d2840];
+
+const IRIS = ['#5a3a1e', '#3b2414', '#3f6fa8', '#4f7f4a', '#7a5a2a', '#2a1a10', '#6a7f8f'];
+const LIPSTICK = ['#a3243a', '#8a2a5a', '#b5485a', '#7a2030'];
+const hexs = n => '#' + n.toString(16).padStart(6, '0');
+function shade(hex, f) { const n = parseInt(hex.slice(1), 16); const c = [n >> 16, (n >> 8) & 255, n & 255].map(v => Math.round(clamp(v * f, 0, 255))); return `rgb(${c})`; }
+function mix(h1, h2, t) { const p = h => { const n = parseInt(h.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; }; const a = p(h1), b = p(h2); return `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * t))})`; }
+
+// Face texture lives on a partial sphere: phi = PI/2 +/- 0.8 rad, theta 0.75..2.3 rad, 200px per radian.
+const FW = 320, FH = 310, TH0 = 0.75;
+const fy = th => (th - TH0) * 200;
+function ell(g, x, y, rx, ry) { g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); }
+function drawFace(f, mode) {
+  const c = document.createElement('canvas'); c.width = FW; c.height = FH; const g = c.getContext('2d');
+  const cx = FW / 2, ey = fy(1.45), ex = 64, my = fy(1.87);
+  g.lineCap = 'round'; g.lineJoin = 'round';
+  // soft cheek & under-brow shading
+  for (const s of [-1, 1]) {
+    let gr = g.createRadialGradient(cx + s * 80, fy(1.72), 2, cx + s * 80, fy(1.72), 34);
+    gr.addColorStop(0, f.blush ? 'rgba(215,80,80,.26)' : 'rgba(150,70,60,.10)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, FW, FH);
+    gr = g.createRadialGradient(cx + s * ex, ey - 4, 4, cx + s * ex, ey - 4, 30);
+    gr.addColorStop(0, 'rgba(60,30,20,.16)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, FW, FH);
+  }
+  if (f.freckles) { g.fillStyle = 'rgba(140,80,40,.45)'; for (let i = 0; i < 40; i++) { const s = Math.random() < .5 ? -1 : 1; ell(g, cx + s * rnd(20, 90), fy(1.62) + rnd(-10, 22), 1.6, 1.6); g.fill(); } }
+  if (f.wrinkles) {
+    g.strokeStyle = 'rgba(70,40,30,.28)'; g.lineWidth = 2;
+    for (let i = 0; i < 3; i++) { g.beginPath(); g.moveTo(cx - 44 + i * 4, fy(1.08) + i * 9); g.quadraticCurveTo(cx, fy(1.04) + i * 9, cx + 44 - i * 4, fy(1.08) + i * 9); g.stroke(); }
+    for (const s of [-1, 1]) { for (let i = -1; i <= 1; i++) { g.beginPath(); g.moveTo(cx + s * (ex + 26), ey + i * 6); g.lineTo(cx + s * (ex + 36), ey + i * 9); g.stroke(); } g.beginPath(); g.moveTo(cx + s * 22, fy(1.72)); g.quadraticCurveTo(cx + s * 34, my - 6, cx + s * 30, my + 8); g.stroke(); }
+  }
+  // nose: nostrils + side shadow
+  g.fillStyle = 'rgba(70,30,25,.55)'; for (const s of [-1, 1]) { ell(g, cx + s * 9, fy(1.715), 5, 3); g.fill(); }
+  g.strokeStyle = 'rgba(80,40,30,.25)'; g.lineWidth = 3; g.beginPath(); g.moveTo(cx - 8, fy(1.5)); g.quadraticCurveTo(cx - 12, fy(1.62), cx - 16, fy(1.7)); g.stroke();
+  // eyes
+  for (const s of [-1, 1]) {
+    const x = cx + s * ex, rx = 19 * f.eye, ry = 11.5 * f.eye;
+    if (mode.blink) {
+      g.strokeStyle = 'rgba(35,18,12,.9)'; g.lineWidth = 3.5; g.beginPath(); g.moveTo(x - rx, ey); g.quadraticCurveTo(x, ey + 6, x + rx, ey); g.stroke();
+      if (f.lashes) { g.lineWidth = 2; for (let k = 0; k < 3; k++) { g.beginPath(); g.moveTo(x + s * (6 + k * 5), ey + 4); g.lineTo(x + s * (9 + k * 6), ey + 10); g.stroke(); } }
+      continue;
+    }
+    g.save(); g.beginPath(); g.moveTo(x - rx, ey); g.quadraticCurveTo(x, ey - ry * 1.6, x + rx, ey); g.quadraticCurveTo(x, ey + ry * 1.3, x - rx, ey); g.closePath();
+    g.fillStyle = '#f6f2ea'; g.fill(); g.clip();
+    const lookX = s * -1.5 + f.look;
+    ell(g, x + lookX, ey + 0.5, 9 * f.eye, 9 * f.eye); g.fillStyle = f.iris; g.fill();
+    ell(g, x + lookX, ey + 0.5, 9 * f.eye, 9 * f.eye); g.strokeStyle = 'rgba(0,0,0,.35)'; g.lineWidth = 1.5; g.stroke();
+    ell(g, x + lookX, ey + 0.5, 4.2 * f.eye, 4.2 * f.eye); g.fillStyle = '#0c0806'; g.fill();
+    ell(g, x + lookX + 3, ey - 3, 2.4, 2.4); g.fillStyle = '#fff'; g.fill();
+    g.fillStyle = 'rgba(80,40,30,.18)'; g.fillRect(x - rx, ey - ry * 1.6, rx * 2, ry * 0.7);
+    g.restore();
+    g.strokeStyle = 'rgba(30,15,10,.95)'; g.lineWidth = f.lashes ? 4.5 : 3.2; g.beginPath(); g.moveTo(x - rx - 1, ey + 1); g.quadraticCurveTo(x, ey - ry * 1.6, x + rx + 1, ey + 1); g.stroke();
+    if (f.lashes) { g.lineWidth = 2; for (let k = 0; k < 3; k++) { const px = x + s * (6 + k * 5); g.beginPath(); g.moveTo(px, ey - ry * 0.95 + k * 2); g.lineTo(px + s * 4, ey - ry * 1.35 + k * 2); g.stroke(); } }
+    g.strokeStyle = 'rgba(60,30,20,.35)'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(x - rx + 3, ey + 3); g.quadraticCurveTo(x, ey + ry * 1.05, x + rx - 3, ey + 3); g.stroke();
+  }
+  // brows
+  g.strokeStyle = f.browCol; g.lineWidth = f.brow;
+  for (const s of [-1, 1]) {
+    const x = cx + s * ex, by = ey - 25 - (mode.talk ? 2 : 0);
+    g.beginPath(); g.moveTo(x - s * 21, by + 4 + f.browTilt * s * 0); g.quadraticCurveTo(x, by - 6 - f.browArch, x + s * 23, by + 2 + f.browTilt); g.stroke();
+  }
+  // beard (under the mouth)
+  if (f.facial === 3) {
+    g.fillStyle = f.hairCol; g.globalAlpha = .92; g.beginPath();
+    g.moveTo(cx - 118, fy(1.55)); g.quadraticCurveTo(cx - 110, fy(2.2), cx, fy(2.3)); g.quadraticCurveTo(cx + 110, fy(2.2), cx + 118, fy(1.55));
+    g.lineTo(cx + 92, fy(1.6)); g.quadraticCurveTo(cx + 60, fy(1.95), cx, fy(1.98)); g.quadraticCurveTo(cx - 60, fy(1.95), cx - 92, fy(1.6)); g.closePath(); g.fill(); g.globalAlpha = 1;
+  } else if (f.facial === 4) { g.fillStyle = 'rgba(30,20,15,.22)'; for (let i = 0; i < 900; i++) { const a = rnd(-1, 1), r = rnd(0, 1); g.fillRect(cx + a * 100, fy(1.78) + r * 100 * (1 - Math.abs(a) * .5), 1.5, 1.5); } }
+  if (f.facial === 2) { g.fillStyle = f.hairCol; g.beginPath(); g.moveTo(cx - 20, my + 16); g.quadraticCurveTo(cx, my + 12, cx + 20, my + 16); g.quadraticCurveTo(cx + 16, fy(2.2), cx, fy(2.22)); g.quadraticCurveTo(cx - 16, fy(2.2), cx - 20, my + 16); g.fill(); }
+  // mouth
+  const mw = 25;
+  if (mode.talk) {
+    ell(g, cx, my + 3, 19, 11); g.fillStyle = '#3a1212'; g.fill();
+    g.save(); ell(g, cx, my + 3, 19, 11); g.clip(); g.fillStyle = '#f2efe6'; g.fillRect(cx - 19, my - 9, 38, 7); g.fillStyle = '#b5505a'; ell(g, cx, my + 13, 12, 6); g.fill(); g.restore();
+    g.strokeStyle = f.lip; g.lineWidth = f.lipstick ? 6 : 4.5; ell(g, cx, my + 3, 20, 12); g.stroke();
+  } else {
+    if (f.lipstick) { g.fillStyle = f.lip; g.beginPath(); g.moveTo(cx - mw, my); g.quadraticCurveTo(cx - 10, my - 9, cx, my - 5); g.quadraticCurveTo(cx + 10, my - 9, cx + mw, my); g.quadraticCurveTo(cx, my + 12 + f.smile * 6, cx - mw, my); g.fill(); }
+    else { g.fillStyle = f.lip; g.globalAlpha = .55; g.beginPath(); g.moveTo(cx - mw + 3, my + 1); g.quadraticCurveTo(cx, my + 11 + f.smile * 6, cx + mw - 3, my + 1); g.quadraticCurveTo(cx, my + 4, cx - mw + 3, my + 1); g.fill(); g.globalAlpha = 1; }
+    g.strokeStyle = 'rgba(60,20,20,.85)'; g.lineWidth = 3.2; g.beginPath(); g.moveTo(cx - mw, my - f.smile * 3); g.quadraticCurveTo(cx, my + f.smile * 10, cx + mw, my - f.smile * 3); g.stroke();
+  }
+  if (f.facial === 1 || f.facial === 2) { g.fillStyle = f.hairCol; g.beginPath(); g.moveTo(cx - 30, my + 2); g.quadraticCurveTo(cx - 24, my - 18, cx, my - 13); g.quadraticCurveTo(cx + 24, my - 18, cx + 30, my + 2); g.quadraticCurveTo(cx, my - 6, cx - 30, my + 2); g.fill(); }
+  if (f.mole) { ell(g, cx + 40, my - 14, 2.6, 2.6); g.fillStyle = '#4a2a1a'; g.fill(); }
+  // glasses
+  if (f.glasses) {
+    g.strokeStyle = f.frame; g.lineWidth = f.glasses === 1 ? 3 : 5.5; g.fillStyle = 'rgba(210,225,255,.13)';
+    for (const s of [-1, 1]) {
+      const x = cx + s * ex;
+      g.beginPath(); if (f.glasses === 1) g.arc(x, ey + 2, 25, 0, Math.PI * 2); else { g.moveTo(x - 30, ey - 18); g.lineTo(x + 30, ey - 18); g.quadraticCurveTo(x + 32, ey + 22, x + 18, ey + 24); g.lineTo(x - 18, ey + 24); g.quadraticCurveTo(x - 32, ey + 22, x - 30, ey - 18); g.closePath(); }
+      g.fill(); g.stroke();
+      g.beginPath(); g.moveTo(x + s * (f.glasses === 1 ? 25 : 30), ey - 6); g.lineTo(x + s * 120, ey - 2); g.stroke();
+    }
+    g.beginPath(); g.moveTo(cx - (f.glasses === 1 ? 39 : 34), ey - 2); g.quadraticCurveTo(cx, ey - 12, cx + (f.glasses === 1 ? 39 : 34), ey - 2); g.stroke();
+  }
+  const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return t;
+}
+
+function makePerson() {
+  const g = new THREE.Group();
+  const skinHex = pick(SKIN), hairHex = pick(HAIR);
+  const shirtM = M(pick(SHIRT)), skinM = M(skinHex), hairM = M(hairHex), pantsM = M(pick(PANTS));
+  const add = (geo, m, x, y, z, parent = g) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); parent.add(o); return o; };
+  const shoeM = M(pick([0x1a1410, 0x3a2414, 0x222222, 0xe8e4dc]));
+  const mkLeg = x => {
+    const hip = new THREE.Group(); hip.position.set(x, 0.82, 0); g.add(hip);
+    add(new THREE.BoxGeometry(0.16, 0.44, 0.2), pantsM, 0, -0.21, 0, hip);
+    const knee = new THREE.Group(); knee.position.set(0, -0.42, 0); hip.add(knee);
+    add(new THREE.BoxGeometry(0.15, 0.38, 0.18), pantsM, 0, -0.19, 0, knee);
+    add(new THREE.BoxGeometry(0.16, 0.07, 0.27), shoeM, 0, -0.37, 0.04, knee);
+    return { hip, knee };
+  };
+  const legL = mkLeg(-0.1), legR = mkLeg(0.1);
+  add(new THREE.BoxGeometry(0.46, 0.62, 0.26), shirtM, 0, 1.11, 0);
+  add(new THREE.BoxGeometry(0.2, 0.06, 0.02), M(0xf2efe6), 0, 1.4, 0.13);
+  if (Math.random() < .55) add(new THREE.BoxGeometry(0.07, 0.4, 0.02), M(pick([0x8b0000, 0x1a237e, 0x4a148c, 0xbfa000, 0x2e7d32])), 0, 1.17, 0.14);
+  const mkArm = x => {
+    const sh = new THREE.Group(); sh.position.set(x, 1.38, 0); g.add(sh);
+    add(new THREE.BoxGeometry(0.12, 0.56, 0.14), shirtM, 0, -0.27, 0, sh);
+    add(new THREE.IcosahedronGeometry(0.055, 1), skinM, 0, -0.6, 0, sh);
+    return sh;
+  };
+  const armL = mkArm(-0.3), armR = mkArm(0.3);
+  add(new THREE.CylinderGeometry(0.055, 0.065, 0.12, 10), skinM, 0, 1.46, 0);
+
+  const head = new THREE.Group(); head.position.set(0, 1.63, 0); head.scale.set(0.95, 1.1, 1.02); g.add(head);
+  add(new THREE.SphereGeometry(0.16, 24, 18), skinM, 0, 0, 0, head);
+  // jaw/chin
+  const jaw = add(new THREE.SphereGeometry(0.115, 16, 12), skinM, 0, -0.07, 0.03, head); jaw.scale.set(1, 0.8, 1);
+  // nose & ears
+  const nose = add(new THREE.ConeGeometry(0.026, 0.07, 4), skinM, 0, -0.015, 0.162, head); nose.rotation.x = -0.35; nose.rotation.y = Math.PI / 4; nose.scale.set(1, 1, 0.75);
+  add(new THREE.SphereGeometry(0.02, 8, 6), skinM, 0, -0.045, 0.175, head);
+  for (const s of [-1, 1]) { const e = add(new THREE.SphereGeometry(0.036, 10, 8), skinM, s * 0.155, -0.01, -0.005, head); e.scale.set(0.45, 1, 0.75); }
+
+  const grey = hairHex === 0x8c8c8c || hairHex === 0xc8c8c8;
+  const light = [0xf1c9a5, 0xf3d4b5, 0xe0ac7e].includes(skinHex);
+  const lipstick = Math.random() < .22;
+  const f = {
+    iris: pick(IRIS), eye: rnd(0.9, 1.12), look: rnd(-1.5, 1.5), lashes: Math.random() < .45,
+    brow: rnd(3.5, 8), browArch: rnd(0, 7), browTilt: rnd(-4, 4), browCol: shade(hexs(hairHex), grey ? 0.75 : 0.8), hairCol: hexs(hairHex),
+    lip: lipstick ? pick(LIPSTICK) : mix(hexs(skinHex), '#9a3040', 0.45), lipstick, smile: rnd(-0.3, 1.1),
+    glasses: Math.random() < .32 ? (Math.random() < .5 ? 1 : 2) : 0, frame: pick(['#1a1a1a', '#5a3a1a', '#b08a3a', '#7a2030']),
+    facial: !lipstick && Math.random() < .3 ? pick([1, 2, 3, 4]) : 0, freckles: light && Math.random() < .25,
+    wrinkles: grey || Math.random() < .12, blush: Math.random() < .35, mole: Math.random() < .15,
+  };
+  const tex = { n: drawFace(f, {}), b: drawFace(f, { blink: true }), t: drawFace(f, { talk: true }) };
+  const faceMat = new THREE.MeshLambertMaterial({ map: tex.n, transparent: true, depthWrite: false });
+  const face = add(new THREE.SphereGeometry(0.1625, 32, 24, Math.PI / 2 - 0.8, 1.6, TH0, 1.55), faceMat, 0, 0, 0, head); face.renderOrder = 1;
+
+  // hair
+  const hs = (r, ps, pl, ts, tl) => new THREE.SphereGeometry(r, 22, 14, ps, pl, ts, tl);
+  const cap = () => add(hs(0.172, 0, Math.PI * 2, 0, 1.02), hairM, 0, 0, 0, head);
+  const back = (r, tl, gap = 1.5) => add(hs(r, Math.PI / 2 + gap / 2, Math.PI * 2 - gap, 0, tl), hairM, 0, 0, -0.004, head);
+  const style = Math.floor(Math.random() * 8);
+  if (style === 0) { cap(); back(0.168, 1.75); }
+  else if (style === 1) { cap(); back(0.176, 2.55, 1.35); const sl = add(new THREE.BoxGeometry(0.3, 0.34, 0.07), hairM, 0, -0.27, -0.12, head); }
+  else if (style === 2) { add(hs(0.168, Math.PI / 2 + 0.9, Math.PI * 2 - 1.8, 1.05, 0.75), hairM, 0, 0, 0, head); }
+  else if (style === 3) { cap(); back(0.18, 2.2, 1.3); for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2; const b = add(new THREE.IcosahedronGeometry(0.075, 0), hairM, Math.cos(a) * 0.13, 0.08 + Math.random() * 0.06, Math.sin(a) * 0.12 - 0.02, head); } }
+  else if (style === 4) { cap(); back(0.168, 1.7); const q = add(new THREE.SphereGeometry(0.11, 14, 10), hairM, 0.02, 0.13, 0.07, head); q.scale.set(1.3, 0.55, 0.9); }
+  else if (style === 5) { cap(); back(0.18, 2.15, 1.25); const fr = add(hs(0.176, Math.PI / 2 - 0.7, 1.4, 0.75, 0.32), hairM, 0, 0, 0, head); }
+  else if (style === 6) { cap(); back(0.169, 1.85); add(new THREE.SphereGeometry(0.055, 10, 8), hairM, 0, 0.04, -0.19, head); const p = add(new THREE.CylinderGeometry(0.04, 0.015, 0.22, 8), hairM, 0, -0.08, -0.21, head); p.rotation.x = 0.25; }
+  else { add(new THREE.BoxGeometry(0.31, 0.09, 0.3), hairM, 0, 0.15, -0.005, head); back(0.168, 1.65); }
+
+  g.userData = { legL, legR, armL, armR, head, faceMat, tex, nextBlink: Math.random() * 4, blinkEnd: 0, shirt: shirtM.color.getHexString() };
+  return g;
+}
+
+const TARGETS = {
+  cooler: { fx: 15.4, fz: 6, spots: [[14.45, 6], [14.0, 6.95], [14.0, 5.05], [13.3, 6.2]] },
+  coffee: { fx: 15.3, fz: 9, spots: [[14.45, 9], [14.0, 9.95], [14.0, 8.05], [13.3, 9.2]] },
+  copier: { fx: -15.2, fz: 9, spots: [[-14.2, 9], [-13.8, 10.0], [-13.8, 8.0], [-13.1, 9.2]] },
+  fax: { fx: -15.3, fz: 5, spots: [[-14.4, 5], [-13.9, 6.0], [-13.9, 4.0], [-13.2, 5.2]] },
+  server: { fx: -10.6, fz: -10.25, spots: [[-9.0, -10.25], [-8.6, -11.2], [-8.6, -9.3]] },
+  snacks: { fx: 15.3, fz: 3.2, spots: [[14.3, 3.2], [13.8, 4.1], [13.8, 2.3]] },
+  soda: { fx: 15.3, fz: 11.4, spots: [[14.3, 11.4], [13.8, 12.2], [13.8, 10.5]] },
+};
+const SNACKS = [
+  { code: 'A1', n: 'Cosmic Nougat bar', p: 0.75, kind: 'snack', line: 'Nougat. Caramel. Regret.' },
+  { code: 'A4', n: 'Cheez Triangles 3D', p: 1.00, kind: 'snack', line: 'They are triangles. In three dimensions. Your fingers turn orange.' },
+  { code: 'B2', n: 'Strawberry Toaster Tarts', p: 0.85, kind: 'snack', line: 'Cold toaster tarts. Somehow perfect.' },
+  { code: 'C3', n: 'Pork rinds', p: 0.50, kind: 'snack', line: 'Mostly air and salt. You eat the whole bag.' },
+];
+const SODAS = [
+  { code: '1', n: 'VOLT Citrus Blast', p: 0.75, kind: 'soda', rush: 1.8, dur: 60, line: 'It tastes like a battery dipped in orange juice.' },
+  { code: '2', n: 'Crystal Clear Cola', p: 0.75, kind: 'soda', rush: 1.45, dur: 90, line: 'It is clear. It tastes like cola. Your brain cannot reconcile this.' },
+  { code: '3', n: 'Diet Fizz', p: 0.75, kind: 'soda', rush: 1.25, dur: 45, line: 'One calorie. Zero joy.' },
+];
+
+/* ---------------- dialogue pools ---------------- */
+const L = {
+  workSpy: [
+    'Work is fine. Say, which floor keeps the ORCHID schematics? Just curious.',
+    'I stay late most nights. The server room is so peaceful after six.',
+    'My cousin asked what chip we make. I said nothing, of course. …What chip DO we make, exactly?',
+    'Do you know the password for the R&D share? Asking for security reasons.',
+    "Do we photocopy the full ORCHID spec, or just the summary? For… filing.",
+  ],
+  workInno: [
+    'Drowning in TPS reports. The new cover sheets are killing me.',
+    'The Y2K audit is going to eat my whole fourth quarter.',
+    'Lotus Notes crashed again. Lost a whole memo. Third time this week.',
+    'If ORCHID ships by March I am buying a jet ski. Not kidding.',
+    "Someone keeps microwaving fish in the break room and I will find them.",
+    'My modem got bumped off at 2am downloading a 3MB file. 3 hours wasted.',
+  ],
+  workOdd: [ // innocent but suspicious-sounding
+    "I've been taking work home on floppies. The commute is brutal.",
+    'I stayed late Tuesday. Just me and the copier. Long story.',
+    "Honestly I'd love to see the ORCHID specs. Nobody tells QA anything.",
+  ],
+  wkSpy: [
+    'I took a lot of photos downtown. Of buildings. Mostly government buildings. For a hobby.',
+    'Dropped some film off with a guy. Not the pharmacy. A guy.',
+    'Went to a "trade conference". Very boring. Got paid in cash, though.',
+    'I had dinner with some old friends from the consulate. Lovely people.',
+  ],
+  wkInno: [
+    'Blockbuster was out of every new release, so we watched Twister again.',
+    'Our Tamagotchi died. The kids held a funeral in the backyard.',
+    'Watched the Bulls game. Then watched it again on tape.',
+    'Spent all Saturday trying to get the new Windows 95 install to see my printer.',
+    "Drove to my in-laws. Five hours. The minivan's AC is broken.",
+    'Went rollerblading by the lake. I have bruises in new places.',
+  ],
+  romanceHint: ['…Nice tie, by the way.', 'You should stop by more often.', "You're not like the last CEO. He never smiled.", 'You smell nice. Is that Drakkar Noir?'],
+  deskSpy: [
+    'A disposable camera, 24 of 24 shots used. Tucked under it: prints of R&D whiteboards.',
+    'A floppy disk labeled "ORCHID_v3 – DO NOT COPY". It is a copy.',
+    'A pager whose only messages say "MEET THU" from a number with no area code.',
+    'A Palm Pilot with exactly one contact, saved as "UNCLE (WORK)".',
+    'A stack of photocopied chip diagrams folded into a road atlas of British Columbia.',
+  ],
+  deskInno: [
+    'Beanie Babies. So many Beanie Babies.',
+    'A half-finished crossword and a stapler with MINE written on it in Sharpie.',
+    'A Dilbert calendar. Someone taped your face over the pointy-haired boss.',
+    'A Discman and a pile of mix CDs labeled "SAD 4".',
+    'Empty Snapple bottles, arranged by color.',
+    'A Magic Eye poster. You stare at it for a while. Nothing.',
+  ],
+  deskOdd: [
+    'A disposable camera, every shot used. The prints are of a kid\'s dance recital.',
+    'A floppy labeled "TOP SECRET". It contains a chili recipe.',
+    'A long-distance phone bill. All the calls are to their mother in Ohio.',
+  ],
+  coffee: ['The coffee tastes like a burnt penny.', 'Someone wrote "WHO TOOK MY MUG" on the machine in marker.', 'The pot has been on since 6am. You drink it anyway.', 'Somebody left a Folgers can full of creamer packets. Bless them.'],
+  ceo: ['You put your feet up and close your eyes.'],
+};
+
+/* ---------------- game state ---------------- */
+let G, npcs = [], interactables = [];
+function newGame() {
+  npcs.forEach(n => scene.remove(n.mesh, n.tag));
+  const roster = shuffle(ROSTER).slice(0, 12);
+  if (!roster.some(r => r[1] === 'IT')) roster[0] = ROSTER.find(r => r[1] === 'IT');
+  const spyIdx = new Set(shuffle([...Array(12).keys()]).slice(0, 3));
+  const romIdx = new Set(shuffle([...Array(12).keys()]).slice(0, 4));
+  const deskOrder = shuffle(desks);
+  npcs = roster.map(([name, dept], i) => {
+    const d = deskOrder[i];
+    const mesh = makePerson(); mesh.position.set(d.home.x, 0, d.home.z); mesh.rotation.y = Math.PI; scene.add(mesh);
+    const short = name.split(' ')[0][0] + '. ' + name.split(' ').slice(1).join(' ');
+    const tag = makeLabel(name, dept); tag.position.set(d.home.x, 2.05, d.home.z); tag.visible = false; scene.add(tag);
+    const plate = makeLabel('#' + d.num, short.toUpperCase(), 256, 64); plate.scale.set(0.9, 0.225, 1); plate.position.set(d.x + 1.5, 1.68, d.z + 1.4); scene.add(plate);
+    return {
+      id: i, name, first: name.split(' ')[0], dept, spy: spyIdx.has(i), romance: romIdx.has(i), desk: d, mesh, tag, plate,
+      status: 'active', state: 'desk', path: [], target: null, leaveAt: 0, nextTrip: 540 + rnd(15, 180),
+      sit: 1, speed: 0, heading: Math.PI, walkAmp: 0, maxSpeed: rnd(1.05, 1.45), sip: 0, sipUntil: 0, slotIdx: -1, waitT: 0,
+      affection: 0, nervous: 0, talking: false, searched: false, seenTrip: false, mark: 0,
+      did: {}, notes: [], odd: !spyIdx.has(i) && Math.random() < .35,
+      pos: mesh.position, walkT: 0,
+    };
+  });
+  G = { min: 540, day: 0, leaks: 0, scandal: 0, morale: 70, stock: 24, paused: true, over: false, ui: false, affair: null, daily: {}, lastHour: 9, dayStart: { leaks: 0, stock: 24 }, arrests: 0, wrong: 0,
+    cash: 250000, short: 0, avg: 0, sec: 0, hist: [24], lastTick: 540, held: null, rush: null };
+  npcs.forEach(n => pose(n, 0));
+  setupInteractables();
+  player.x = 0; player.z = 11; yaw = 0; pitch = 0;
+  updateHUD();
+}
+const note = (n, text, strong = false) => { if (!n.notes.some(x => x.text === text)) n.notes.push({ text, strong, when: stamp() }); };
+const stamp = () => DAYS[G.day].slice(0, 3) + ' ' + fmtTime(G.min);
+function fmtTime(m) { let h = Math.floor(m / 60), mm = Math.floor(m % 60); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return `${h}:${String(mm).padStart(2, '0')} ${ap}`; }
+const active = () => npcs.filter(n => n.status === 'active');
+const activeSpies = () => npcs.filter(n => n.status === 'active' && n.spy);
+const once = key => { const k = G.day + ':' + key; if (G.daily[k]) return false; G.daily[k] = 1; return true; };
+
+/* ---------------- player ---------------- */
+const player = { x: 0, z: 11, r: 0.3 };
+let yaw = 0, pitch = 0;
+const keys = {};
+function blocked(x, z, r, ignore) {
+  if (x - r < B.minX || x + r > B.maxX || z - r < B.minZ || z + r > B.maxZ) return true;
+  for (const c of colliders) if (x + r > c.minX && x - r < c.maxX && z + r > c.minZ && z - r < c.maxZ) return true;
+  for (const n of npcs) if (n.status === 'active' && n !== ignore) { const dx = n.pos.x - x, dz = n.pos.z - z; if (dx * dx + dz * dz < (r + 0.3) ** 2) return true; }
+  return false;
+}
+function movePlayer(dt) {
+  let fx = 0, fz = 0;
+  if (keys.KeyW || keys.ArrowUp) fz += 1; if (keys.KeyS || keys.ArrowDown) fz -= 1;
+  if (keys.KeyA || keys.ArrowLeft) fx -= 1; if (keys.KeyD || keys.ArrowRight) fx += 1;
+  fx += joy.x; fz += -joy.y;
+  const len = Math.hypot(fx, fz); if (len < 0.05) return 0;
+  if (len > 1) { fx /= len; fz /= len; }
+  const rush = G.rush && G.min < G.rush.until ? G.rush.mult : 1;
+  const sp = (keys.ShiftLeft || keys.ShiftRight ? 5 : 3) * rush * dt;
+  const sx = Math.sin(yaw), cz = Math.cos(yaw);
+  const dx = (fx * cz - fz * sx) * sp, dz = (-fx * sx - fz * cz) * sp;
+  if (!blocked(player.x + dx, player.z, player.r)) player.x += dx;
+  if (!blocked(player.x, player.z + dz, player.r)) player.z += dz;
+  return 1;
+}
+
+/* ---------------- interactables ---------------- */
+function setupInteractables() {
+  interactables = [
+    { name: 'Water cooler', x: 15.4, z: 6, use: useCooler },
+    { name: 'Coffee machine', x: 15.3, z: 9, use: useCoffee },
+    { name: 'Snack machine', x: 15.25, z: 3.2, use: () => vend(SNACKS, 'Snack machine', 'Coils of snacks behind scratched plexiglass. A sign reads EXACT CHANGE ONLY.') },
+    { name: 'Soda machine', x: 15.25, z: 11.4, use: () => vend(SODAS, 'Soda machine', 'It hums like a jet engine. One button has been taped over with a note: "OUT. FOREVER."') },
+    { name: 'Copier', x: -15.2, z: 9, use: useCopier },
+    { name: 'Fax machine', x: -15.3, z: 5, use: useFax },
+    { name: 'Server rack', x: -12.8, z: -13.2, use: useServer, r: 2.4 },
+    { name: 'Your desk', x: 13, z: -11.5, use: useCeoDesk, r: 2.2 },
+    { name: 'Supply closet', x: 0, z: 13.9, use: () => say('Supply closet', 'It smells like toner and bad decisions. Someone has been hoarding the good pens.') },
+  ];
+  npcs.forEach(n => interactables.push({ desk: n, x: n.desk.x, z: n.desk.z - 1.05, get name() { return `Search desk #${n.desk.num}`; }, use: () => searchDesk(n, false), when: () => n.state !== 'desk' || n.status !== 'active' }));
+}
+function findTarget() {
+  const fx = -Math.sin(yaw), fz = -Math.cos(yaw);
+  let best = null, bd = 1e9;
+  const consider = (o, x, z, r) => {
+    const dx = x - player.x, dz = z - player.z, d = Math.hypot(dx, dz);
+    if (d > r || d < 0.01) return; const dot = (dx * fx + dz * fz) / d; if (dot < 0.55) return;
+    const score = d - dot; if (score < bd) { bd = score; best = o; }
+  };
+  for (const n of npcs) if (n.status === 'active') consider({ npc: n }, n.pos.x, n.pos.z, 2.1);
+  for (const it of interactables) if (!it.when || it.when()) consider({ it }, it.x, it.z, it.r || 2.0);
+  return best;
+}
+
+/* ---------------- NPC AI ---------------- */
+function planTrip(n) {
+  const r = Math.random(); let key;
+  const casual = ['cooler', 'coffee', 'copier', 'fax', 'cooler', 'snacks', 'soda'];
+  if (n.spy) key = r < 0.45 ? 'server' : pick(casual);
+  else if (n.dept === 'IT') key = r < 0.4 ? 'server' : pick(casual);
+  else key = r < 0.05 ? 'server' : pick(casual);
+  const t = TARGETS[key];
+  const taken = npcs.filter(o => o !== n && o.status === 'active' && o.target === key && ['standup', 'go', 'at'].includes(o.state)).map(o => o.slotIdx);
+  let idx = t.spots.findIndex((_, i) => !taken.includes(i)); if (idx < 0) idx = Math.floor(Math.random() * t.spots.length);
+  const [px, pz] = t.spots[idx];
+  const az = AISLE[n.desk.row] + rnd(-0.35, 0.35), sx = (px < 0 ? -1 : 1) * (7.5 + rnd(-0.4, 0.4));
+  n.target = key; n.slotIdx = idx; n.seenTrip = false;
+  n.path = [{ x: n.desk.home.x, z: az }, { x: sx, z: az }, { x: sx, z: pz }, { x: px, z: pz }];
+  n.back = [{ x: sx, z: pz }, { x: sx, z: az }, { x: n.desk.home.x, z: az }, { x: n.desk.home.x, z: n.desk.home.z }];
+  n.heading = n.mesh.rotation.y; n.speed = 0;
+}
+function blockedStatic(x, z, r) {
+  for (const c of colliders) if (x + r > c.minX && x - r < c.maxX && z + r > c.minZ && z - r < c.maxZ) return true;
+  return x - r < B.minX || x + r > B.maxX || z - r < B.minZ || z + r > B.maxZ;
+}
+function steer(n, dt) {
+  let p = n.path[0];
+  while (p && n.path.length > 1 && Math.hypot(p.x - n.pos.x, p.z - n.pos.z) < 0.6) { n.path.shift(); p = n.path[0]; }
+  if (!p) return false;
+  const dx = p.x - n.pos.x, dz = p.z - n.pos.z, d = Math.hypot(dx, dz), last = n.path.length === 1;
+  if (last && d < 0.12) { n.pos.x = p.x; n.pos.z = p.z; n.path.shift(); arrive(n); return false; }
+  const vx0 = dx / d, vz0 = dz / d, px = -vz0, pz = vx0;
+  let vx = vx0, vz = vz0, slow = 1, playerBlock = false;
+  const obs = [{ x: player.x, z: player.z, me: true }];
+  for (const o of npcs) if (o !== n && o.status === 'active') obs.push({ x: o.pos.x, z: o.pos.z });
+  for (const o of obs) {
+    const ox = o.x - n.pos.x, oz = o.z - n.pos.z, od = Math.hypot(ox, oz);
+    if (od > 1.5 || od < 0.001) continue;
+    const ahead = (ox * vx0 + oz * vz0) / od; if (ahead < 0.15) continue;
+    if (last && Math.hypot(o.x - p.x, o.z - p.z) < 0.3 && !o.me) continue;
+    const dir = (ox * px + oz * pz) > 0 ? -1 : 1, w = (1.5 - od) / 1.5 * ahead;
+    vx += px * dir * w * 1.6; vz += pz * dir * w * 1.6;
+    if (od < 0.8 && ahead > 0.55) { slow = Math.min(slow, clamp((od - 0.5) / 0.3, 0, 1)); if (o.me) playerBlock = true; }
+  }
+  const vl = Math.hypot(vx, vz) || 1; vx /= vl; vz /= vl;
+  n.heading = lerpAngle(n.heading, Math.atan2(vx, vz), dt * 5);
+  const want = n.maxSpeed * slow * (last ? clamp(d / 0.9, 0.3, 1) : 1);
+  n.speed += (want - n.speed) * Math.min(1, dt * (want > n.speed ? 2.5 : 7));
+  const mx = Math.sin(n.heading) * n.speed * dt, mz = Math.cos(n.heading) * n.speed * dt;
+  if (!blockedStatic(n.pos.x + mx, n.pos.z, 0.18)) n.pos.x += mx;
+  if (!blockedStatic(n.pos.x, n.pos.z + mz, 0.18)) n.pos.z += mz;
+  n.mesh.rotation.y = n.heading;
+  n.walkT += dt * n.speed * 6.3;
+  n.walkAmp += (Math.min(1, n.speed / 1.1) - n.walkAmp) * Math.min(1, dt * 6);
+  if (playerBlock && n.speed < 0.15) { n.waitT += dt; if (n.waitT > 2.5) { n.waitT = -6; speak(n, 'scuse me'); toast(n.first, pick(['"\'Scuse me, boss."', '"Coming through!"', '"Can I just… squeeze past?"'])); } } else if (n.waitT > 0) n.waitT = 0;
+  return true;
+}
+function arrive(n) {
+  n.speed = 0;
+  if (n.state === 'go') { n.state = 'at'; n.leaveAt = G.min + rnd(15, 45); }
+  else { n.state = 'desk'; n.nextTrip = G.min + rnd(60, 200) * (n.spy ? 0.7 : 1); }
+}
+function pose(n, t) {
+  const u = n.mesh.userData, s = n.sit, w = n.walkAmp * (1 - s), ph = n.walkT;
+  const sw = Math.sin(ph) * 0.55 * w;
+  u.legL.hip.rotation.x = -Math.PI / 2 * s + sw;
+  u.legR.hip.rotation.x = -Math.PI / 2 * s - sw;
+  u.legL.knee.rotation.x = Math.PI / 2 * s + Math.max(0, Math.sin(ph)) * 0.8 * w;
+  u.legR.knee.rotation.x = Math.PI / 2 * s + Math.max(0, -Math.sin(ph)) * 0.8 * w;
+  const typing = s > 0.85 && !n.talking ? Math.sin(t * 13 + n.id * 1.7) * 0.07 : 0;
+  const talkArm = n.talking || (n.speakUntil && performance.now() < n.speakUntil) ? Math.sin(t * 3 + n.id) * 0.12 - 0.15 : 0;
+  u.armL.rotation.x = -1.0 * s + typing - sw * 0.8 + talkArm * (1 - s);
+  u.armR.rotation.x = -1.0 * s - typing + sw * 0.8 + n.sip;
+  u.armL.rotation.z = -0.06; u.armR.rotation.z = 0.06;
+  n.mesh.position.y = -0.33 * s + Math.abs(Math.cos(ph)) * 0.035 * w;
+  n.mesh.rotation.z = n.state === 'at' ? Math.sin(t * 0.7 + n.id) * 0.015 : 0;
+}
+function updateNPC(n, dt) {
+  if (n.status !== 'active') return;
+  const u = n.mesh.userData, t = performance.now() / 1000;
+  let moving = false;
+  if (n.talking) { n.speed = 0; faceToward(n, player.x, player.z, dt); n.heading = n.mesh.rotation.y; }
+  else if (n.state === 'desk') {
+    n.mesh.rotation.y = lerpAngle(n.mesh.rotation.y, Math.PI, dt * 3);
+    if (G.min >= n.nextTrip && G.min < 16.5 * 60) { planTrip(n); n.state = 'standup'; }
+  } else if (n.state === 'standup') { if (n.sit < 0.06) { n.state = 'go'; n.heading = n.mesh.rotation.y; } }
+  else if (n.state === 'go' || n.state === 'back') moving = steer(n, dt);
+  else if (n.state === 'at') {
+    const tg = TARGETS[n.target];
+    const buddy = npcs.find(o => o !== n && o.status === 'active' && o.state === 'at' && Math.hypot(o.pos.x - n.pos.x, o.pos.z - n.pos.z) < 1.8);
+    if (buddy) { faceToward(n, buddy.pos.x, buddy.pos.z, dt * 0.5); if (Math.random() < dt * 0.35 && !(performance.now() < (buddy.speakUntil || 0))) n.speakUntil = performance.now() + rnd(900, 2400); }
+    else faceToward(n, tg.fx, tg.fz, dt * 0.5);
+    if ((n.target === 'cooler' || n.target === 'coffee' || n.target === 'soda') && Math.random() < dt * 0.12) n.sipUntil = t + 1.3;
+    if (n.target === 'server' && !n.seenTrip && Math.hypot(player.x - n.pos.x, player.z - n.pos.z) < 9) {
+      n.seenTrip = true;
+      if (n.dept === 'IT') note(n, `Seen at the server room door (${stamp()}). They're IT, so maybe normal.`);
+      else { note(n, `Seen lurking outside the server room (${stamp()}). Not their department.`, true); toast('Huh.', `${n.name} is hanging around the server room door.`); }
+    }
+    if (G.min >= n.leaveAt) { n.path = n.back; n.state = 'back'; n.heading = n.mesh.rotation.y; n.speed = 0; }
+  }
+  if (!moving) n.walkAmp += (0 - n.walkAmp) * Math.min(1, dt * 8);
+  const wantSit = (n.state === 'desk' && Math.hypot(n.pos.x - n.desk.home.x, n.pos.z - n.desk.home.z) < 0.2) ? 1 : 0;
+  n.sit += (wantSit - n.sit) * Math.min(1, dt * 3);
+  n.sip += ((t < n.sipUntil ? -1.9 : 0) - n.sip) * Math.min(1, dt * 6);
+  // glance at the boss when they walk past
+  const ddx = player.x - n.pos.x, ddz = player.z - n.pos.z, dd = Math.hypot(ddx, ddz);
+  const rel = lerpAngle(0, Math.atan2(ddx, ddz) - n.mesh.rotation.y, 1);
+  const hy = (!n.talking && dd < 3.5 && Math.abs(rel) < 1.7) ? clamp(rel, -0.85, 0.85) : 0;
+  u.head.rotation.y += (hy - u.head.rotation.y) * Math.min(1, dt * 4);
+  pose(n, t);
+  n.tag.position.set(n.pos.x, 2.05 - 0.33 * n.sit, n.pos.z);
+}
+function lerpAngle(a, b, t) { let d = ((b - a + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI; return a + d * Math.min(1, t); }
+function faceToward(n, x, z, dt) { n.mesh.rotation.y = lerpAngle(n.mesh.rotation.y, Math.atan2(x - n.pos.x, z - n.pos.z), dt * 8); }
+
+/* ---------------- time & economy ---------------- */
+function hourTick() {
+  const before = G.stock;
+  let leak = 0;
+  for (const n of activeSpies()) {
+    let r = 1.35 * rnd(0.6, 1.4);
+    if (n.nervous > G.min) r *= 0.4;
+    if (n.state === 'at' && n.target === 'server') r *= 1.8;
+    if (G.affair === n) r *= 2;
+    leak += r;
+  }
+  G.leaks = clamp(G.leaks + leak, 0, 100);
+  G.stock = Math.max(0, G.stock - leak * 0.06 + (G.morale - 50) * 0.004 + rnd(-0.15, 0.15));
+  if (G.affair) {
+    G.scandal = clamp(G.scandal + 0.8, 0, 100);
+    if (Math.random() < 0.12) { G.scandal += 6; toast('Reception', pick(['Your spouse called twice. Gloria at reception is giving you a look.', `Someone saw you and ${G.affair.first} leaving the parking garage together.`, 'There is lipstick on your coffee mug. It is not your shade.'])); }
+  }
+  if (Math.random() < 0.2) {
+    const news = [['Morgan Stanley upgrades ORCH to BUY.', 1.3], ['Rumor: Intel is sniffing around ORCHID.', 1.9], ['Rival 3Com ships a faster modem chip.', -1.4], ['Wired calls ORCHID "vaporware".', -1.1], ['Asian markets jittery overnight.', -0.8], ['CNBC mentions ORCH. Nobody knows why.', 0.7]];
+    if (G.leaks > 45) news.push(['Trade press: a suspiciously similar chip spotted overseas.', -2.2]);
+    const [h, d] = pick(news); G.stock = Math.max(0.5, G.stock + d); toast('Newswire', `${h} ORCH ${d > 0 ? '+' : ''}${d.toFixed(2)}`);
+  }
+  if (G.short) { const drop = before - G.stock; if (drop > 0) G.sec += drop * G.short / 1000 * 1.1; if (netWorth() < 0) marginCall(); }
+  else G.sec = Math.max(0, G.sec - 1);
+  G.hist.push(G.stock);
+  if (G.morale < 30 && Math.random() < 0.3) toast('Morale', 'Somebody wrote "THIS PLACE IS A SINKING SHIP" on the break room whiteboard.');
+  updateHUD(); checkEnd();
+}
+function endOfDay() {
+  G.paused = true;
+  const last = G.day === 4;
+  if (last && G.short) { G.cash += pnl(); G.short = 0; }
+  const dl = Math.round(G.leaks - G.dayStart.leaks), ds = (G.stock - G.dayStart.stock);
+  const left = activeSpies().length;
+  const body = `<div class="memo"><h2>END OF DAY — ${DAYS[G.day].toUpperCase()}</h2>
+    <p>Secrets leaked today: <b>${dl}%</b> (total ${Math.round(G.leaks)}%)</p>
+    <p>ORCH closed at <b>$${G.stock.toFixed(2)}</b> (${ds >= 0 ? '+' : ''}${ds.toFixed(2)})</p>
+    <p>Suspected agents still on the floor: <b>${left}</b></p>
+    <p>Your net worth: <b>${fmtMoney(netWorth())}</b>${G.short ? ` (short ${G.short.toLocaleString('en-US')} ORCH)` : ''}. SEC attention: ${Math.round(G.sec)}%</p>
+    ${G.affair ? `<p>You drive home thinking about ${G.affair.first}. Your spouse asks how work was. "Fine," you say.</p>` : ''}</div>`;
+  if (last) { left ? gameOver(false, 'Friday, 5:00 PM', `The quarter closes with ${left} agent${left > 1 ? 's' : ''} still on payroll. Six months later a Shenzhen fab announces a chip that looks exactly like ORCHID.`) : gameOver(true); return; }
+  dialog(`End of ${DAYS[G.day]}`, body, [{ label: `Go home. Come back ${DAYS[G.day + 1]}.`, fn: nextDay }]);
+}
+function nextDay() {
+  G.day++; G.min = 540; G.lastHour = 9; G.lastTick = 540; G.rush = null; G.dayStart = { leaks: G.leaks, stock: G.stock };
+  for (const n of active()) { n.state = 'desk'; n.path = []; n.pos.set(n.desk.home.x, 0, n.desk.home.z); n.mesh.rotation.y = Math.PI; n.sit = 1; n.speed = 0; n.walkAmp = 0; n.target = null; n.nextTrip = 540 + rnd(15, 150); }
+  player.x = 0; player.z = 11; yaw = 0; pitch = 0;
+  toast(DAYS[G.day], pick(['A memo says casual Friday is cancelled. It is not Friday.', 'The coffee machine has been fixed. It has not been fixed.', 'IT announces everyone is getting Windows 95. Groans echo across the floor.', 'Someone brought donuts. They are gone by 9:04.']));
+  G.paused = false; updateHUD();
+}
+function checkEnd() {
+  if (G.over) return;
+  if (G.leaks >= 100) gameOver(false, 'ORCHID leaked', 'A trade magazine runs a photo of a Chinese-made prototype that is identical to ORCHID. The board meets without you.');
+  else if (G.scandal >= 100) gameOver(false, 'Front page', 'The Wall Street Journal runs your personal life on page one. The board accepts your resignation before you offer it.');
+  else if (G.morale <= 0) gameOver(false, 'Walkout', 'The whole floor walks out at 10:15 AM. Someone takes the good stapler.');
+  else if (G.sec >= 100) gameOver(false, 'Indicted', 'Two SEC investigators are waiting in your office with a printout of every short you placed. Your broker has already cut a deal.');
+  else if (G.stock <= 4) gameOver(false, 'Delisted', 'ORCH falls below $4. The board brings in a turnaround guy with a ponytail.');
+}
+function gameOver(win, head, text) {
+  if (G.short) { G.cash += pnl(); G.short = 0; }
+  G.over = true; G.paused = true;
+  const fortune = `<p>Your personal net worth: <b>${fmtMoney(G.cash)}</b> (you started the week with $250,000).</p>`;
+  const caught = npcs.filter(n => n.spy && n.status !== 'active').length;
+  const reveal = npcs.filter(n => n.spy).map(n => `${n.name} (${n.dept}, desk #${n.desk.num})`).join('<br>');
+  const body = win
+    ? `<div class="memo"><h2>MEMO: CONGRATULATIONS</h2><p>All three agents are in federal custody. ORCHID ships on schedule and ORCH closes at <b>$${G.stock.toFixed(2)}</b>.</p><p>Wrongful accusations: ${G.wrong}. Scandal: ${Math.round(G.scandal)}%.${G.affair ? ` Your spouse still doesn't know about ${G.affair.first}. Yet.` : ''}</p><p>The board would like to discuss your bonus.</p>${fortune}</div>`
+    : `<div class="memo"><h2>${head.toUpperCase()}</h2><p>${text}</p><p>Agents caught: ${caught}/3.</p><p><b>The agents were:</b><br>${reveal}</p>${fortune}</div>`;
+  dialog(win ? 'You win' : 'Game over', body, [{ label: 'Start a new week', fn: () => { newGame(); G.paused = false; } }], true);
+}
+
+/* ---------------- HUD ---------------- */
+function updateHUD() {
+  $('#m-leak').style.width = G.leaks + '%'; $('#m-scan').style.width = clamp(G.scandal, 0, 100) + '%'; $('#m-mor').style.width = clamp(G.morale, 0, 100) + '%';
+  const tk = $('#ticker'); const up = G.stock >= 24; tk.textContent = `ORCH $${G.stock.toFixed(2)} ${up ? '▲' : '▼'}`; tk.classList.toggle('down', !up);
+  $('#clock').textContent = `${DAYS[G.day].slice(0, 3)} ${fmtTime(G.min)}`;
+  $('#m-sec').style.width = clamp(G.sec, 0, 100) + '%';
+  const pl = $('#pl'); pl.hidden = !G.short;
+  if (G.short) { const v = pnl(); pl.textContent = `SHORT ${Math.round(G.short / 1000)}K ${v >= 0 ? '+' : ''}${fmtMoney(v)}`; pl.classList.toggle('neg', v < 0); }
+  const hb = $('#heldbtn'); hb.hidden = !G.held; if (G.held) hb.textContent = `Holding: ${G.held.n} (Q)`;
+}
+function toast(title, text) {
+  const t = document.createElement('div'); t.className = 'toast'; t.innerHTML = `<b>${title}</b>${text}`;
+  const box = $('#toasts'); box.appendChild(t); while (box.children.length > 4) box.firstChild.remove();
+  setTimeout(() => t.remove(), 6500);
+}
+
+/* ---------------- dialog system ---------------- */
+function dialog(title, html, opts, noClose) {
+  if (G.over && !noClose) return;
+  G.ui = true; releaseLock();
+  $('#dlg-title').textContent = title;
+  const body = $('#dlg-body'); body.innerHTML = html;
+  const wrap = document.createElement('div'); wrap.className = 'opts';
+  opts.forEach(o => {
+    const b = document.createElement('button'); b.className = 'b95' + (o.cls ? ' ' + o.cls : ''); b.textContent = o.label;
+    b.onclick = () => { closeDialog(); o.fn && o.fn(); }; wrap.appendChild(b);
+  });
+  body.appendChild(wrap);
+  $('#dlg-x').hidden = !!noClose;
+  $('#dlg').hidden = false; setTimeout(() => wrap.querySelector('button')?.focus(), 0);
+}
+function closeDialog() { $('#dlg').hidden = true; G.portraitNpc = null; G.ui = !$('#dossier').hidden; npcs.forEach(n => n.talking = false); }
+const say = (title, text, more) => dialog(title, `<div class="memo" style="font-size:14px">${text}</div>`, more || [{ label: 'OK' }]);
+function portrait(n) { G.portraitNpc = n; return `<canvas class="portrait sunk pcv" width="${PW}" height="${PH}"></canvas>`; }
+const speak = (n, text) => { n.speakUntil = performance.now() + Math.min(4200, 500 + text.length * 50); };
+const PW = 168, PH = 192;
+const prt = new THREE.WebGLRenderTarget(PW, PH);
+const pcam = new THREE.PerspectiveCamera(28, PW / PH, 0.05, 30);
+const pbuf = new Uint8Array(PW * PH * 4), pimg = new ImageData(PW, PH), hp = new THREE.Vector3();
+function drawPortrait() {
+  const n = G.portraitNpc, cv = document.querySelector('#dlg .pcv');
+  if (!n || !cv || n.status !== 'active') return;
+  n.mesh.userData.head.getWorldPosition(hp);
+  const a = n.mesh.rotation.y;
+  pcam.position.set(hp.x + Math.sin(a) * 0.82, hp.y + 0.03, hp.z + Math.cos(a) * 0.82); pcam.lookAt(hp.x, hp.y - 0.04, hp.z);
+  const vis = npcs.map(o => o.tag.visible); npcs.forEach(o => o.tag.visible = false);
+  renderer.setRenderTarget(prt); renderer.render(scene, pcam); renderer.readRenderTargetPixels(prt, 0, 0, PW, PH, pbuf); renderer.setRenderTarget(null);
+  npcs.forEach((o, i) => o.tag.visible = vis[i]);
+  for (let y = 0; y < PH; y++) pimg.data.set(pbuf.subarray((PH - 1 - y) * PW * 4, (PH - y) * PW * 4), y * PW * 4);
+  cv.getContext('2d').putImageData(pimg, 0, 0);
+}
+function talk(n, line) {
+  n.talking = true;
+  const opts = [
+    { label: 'How\'s work going?', fn: () => chat(n, 'work') },
+    { label: 'Do anything fun this weekend?', fn: () => chat(n, 'weekend') },
+    { label: 'Mind if I look through your desk?', fn: () => searchDesk(n, true) },
+    { label: 'You\'ve earned a raise.', fn: () => raise(n) },
+    { label: 'Flirt', cls: 'love', fn: () => flirt(n) },
+  ];
+  if (G.held) opts.push({ label: `Want my ${G.held.n}?`, fn: () => gift(n) });
+  if (G.affair === n) opts.push({ label: 'We need to end this.', cls: 'love', fn: () => endAffair(n) });
+  else if (n.romance && n.affection >= 2 && !G.affair) opts.push({ label: 'Supply closet. After five?', cls: 'love', fn: () => startAffair(n) });
+  opts.push({ label: 'You\'re fired.', cls: 'danger', fn: () => confirmAct(n, 'fire') });
+  opts.push({ label: 'Call the FBI on them', cls: 'danger', fn: () => confirmAct(n, 'fbi') });
+  opts.push({ label: 'Never mind' });
+  const greet = line || pick([`Oh! Hi, boss.`, `Hey. What's up?`, `${n.dept} is doing great, I swear.`, `Is this about the parking spot?`, `Oh, hello. Did you need something?`]);
+  speak(n, greet);
+  dialog(`${n.name} — ${n.dept}, desk #${n.desk.num}`, `<div class="speech">${portrait(n)}<p>${greet}</p></div>`, opts);
+}
+function reply(n, text) { talk(n, text); }
+function chat(n, topic) {
+  if (!once(n.id + topic)) return reply(n, topic === 'work' ? 'Like I said, it\'s fine. Busy. Very busy.' : 'I already told you about my weekend.');
+  let t;
+  if (topic === 'work') {
+    if (G.affair === n && n.spy && Math.random() < .7) { t = 'Pillow talk aside… where do you keep the ORCHID master disk at night? Just so I know you\'re safe.'; note(n, 'Asked, very casually, where you keep the ORCHID master disk.', true); }
+    else if (n.spy && Math.random() < .65) { t = pick(L.workSpy); note(n, `Said: "${t}"`, true); }
+    else if (n.odd && Math.random() < .6) { t = pick(L.workOdd); note(n, `Said: "${t}"`); }
+    else { t = pick(L.workInno); if (G.affair === n && Math.random() < .5) { const s = activeSpies().filter(x => x !== n); if (s.length) { const v = pick(s); t += ` Between us? ${v.first} has been asking everyone about R&D badges.`; note(v, `${n.first} says they've been asking around about R&D badges.`, true); } } }
+  } else {
+    if (n.spy && Math.random() < .6) { t = pick(L.wkSpy); note(n, `Weekend: "${t}"`, true); }
+    else t = pick(L.wkInno);
+    if (n.romance && Math.random() < .65) { t += ' ' + pick(L.romanceHint); note(n, 'Seems to like you. A lot.'); }
+  }
+  reply(n, t);
+}
+function searchDesk(n, present) {
+  if (n.status !== 'active') return say(`Desk #${n.desk.num}`, 'Cleared out. Just a dent in the carpet where the chair was and a single pushpin.');
+  if (n.searched) return present ? reply(n, 'You already went through my stuff, boss.') : say(`Desk #${n.desk.num}`, 'You already searched this desk. Same Beanie Babies. Same stapler.');
+  n.searched = true;
+  let item;
+  if (n.spy && Math.random() < .8) { item = pick(L.deskSpy); note(n, `Desk: ${item}`, true); }
+  else if (n.odd && Math.random() < .7) { item = pick(L.deskOdd); note(n, `Desk: ${item}`); }
+  else { item = pick(L.deskInno); note(n, `Desk: ${item}`); }
+  if (present) {
+    G.morale = clamp(G.morale - 3, 0, 100);
+    let react;
+    if (n.spy) { n.nervous = G.min + 240; react = pick(['Of course. Go ahead. Nothing in there. Ha. Ha.', 'Is… is this a routine thing? Is everyone getting this?']); note(n, 'Got very nervous when you searched their desk.', true); toast('Note', `${n.first} is sweating. They'll probably lie low for a few hours.`); }
+    else react = pick(['Uh… sure? Is this legal?', 'Fine. Don\'t touch the Beanie Babies.', 'Wow. Okay. I\'ll be telling HR about this.']);
+    speak(n, react);
+    dialog(`Searching desk #${n.desk.num}`, `<div class="speech">${portrait(n)}<p>${react}</p></div><div class="memo" style="font-size:14px">You find: ${item}</div>`, [{ label: 'Keep talking', fn: () => talk(n, 'Anything else?') }, { label: 'Leave' }]);
+    updateHUD(); checkEnd();
+  } else say(`Desk #${n.desk.num} (${n.name})`, `Nobody's around. You quietly open the drawers.<br><br>You find: ${item}`);
+}
+function raise(n) {
+  if (!once(n.id + 'raise')) return reply(n, 'Another raise? Boss, people will talk.');
+  G.morale = clamp(G.morale + 5, 0, 100); G.stock -= 0.3; if (n.romance) n.affection++;
+  updateHUD();
+  reply(n, n.spy ? pick(['Thank you. I will put it to very good use.', 'Generous. My… family will be very pleased.']) : pick(['Are you serious? Thank you!', 'I\'m calling my mom. Thank you!', 'Finally! I can get the Pentium.']));
+}
+function witnesses(n) { return active().filter(o => o !== n && Math.hypot(o.pos.x - player.x, o.pos.z - player.z) < 4.5); }
+function flirt(n) {
+  if (!once(n.id + 'flirt')) return reply(n, 'Okay, Romeo. Once a day is plenty.');
+  const w = witnesses(n);
+  if (!n.romance) {
+    G.scandal += n.dept === 'HR' ? 28 : 18; G.morale = clamp(G.morale - 4, 0, 100);
+    note(n, 'Was NOT into it. Filed a complaint.');
+    toast('HR', `${n.first} filed a complaint. Legal wants a word.`);
+    updateHUD(); checkEnd();
+    return reply(n, n.dept === 'HR' ? 'I am literally Human Resources. I am writing this down.' : pick(['That is… wildly inappropriate. I\'m going to HR.', 'Wow. No. Absolutely not.', 'Please step out of my cubicle.']));
+  }
+  n.affection++;
+  if (w.length) { G.scandal += Math.min(18, w.length * 6); toast('Uh oh', `${w[0].first} ${w.length > 1 ? `and ${w.length - 1} other${w.length > 2 ? 's' : ''}` : ''} saw that.`); }
+  updateHUD(); checkEnd();
+  reply(n, pick(['Ha! Stop. …Don\'t stop.', 'Is that a power suit or are you just happy to see me?', 'You know, I\'m usually the last one here at night.', 'People are going to talk. Let them.']));
+}
+function startAffair(n) {
+  G.affair = n; G.scandal += 12;
+  fade(`Supply closet, 6:15 PM.<br><br>Twenty minutes later you both walk out separately,<br>straightening your clothes. There is toner on your sleeve.`, () => {
+    if (n.spy) { G.leaks += 8; note(n, 'Your briefcase was open when you got back from the supply closet.', true); toast('Strange', 'Your briefcase was unlatched when you got back. You always latch it.'); }
+    updateHUD(); checkEnd();
+  });
+}
+function endAffair(n) {
+  G.affair = null;
+  if (n.spy) return reply(n, 'Fine. It was… informative.');
+  if (Math.random() < .4) { G.scandal += 20; toast('Gossip', `${n.first} told someone. Now everyone knows.`); }
+  G.morale = clamp(G.morale - 3, 0, 100); updateHUD(); checkEnd();
+  reply(n, pick(['Fine. Enjoy your marriage.', 'You\'ll regret this. Maybe not today.', 'Okay. I\'ll be fine. Probably.']));
+}
+function confirmAct(n, kind) {
+  const fbi = kind === 'fbi';
+  dialog(fbi ? 'Call the FBI?' : 'Fire employee?', `<div class="memo" style="font-size:14px">${fbi
+    ? `Two agents in windbreakers will walk <b>${n.name}</b> out in handcuffs. If you're wrong, expect a wrongful-accusation lawsuit and a very bad week.`
+    : `Security will escort <b>${n.name}</b> out with a cardboard box. Nobody will be told why.`}</div>`,
+    [{ label: fbi ? 'Make the call' : 'Fire them', cls: 'danger', fn: () => resolveAct(n, kind) }, { label: 'Cancel', fn: () => talk(n) }]);
+}
+function resolveAct(n, kind) {
+  n.status = kind === 'fbi' ? 'arrested' : 'fired';
+  scene.remove(n.mesh); scene.remove(n.tag); n.plate.material.opacity = 0.35;
+  if (G.affair === n) G.affair = null;
+  if (kind === 'fbi') {
+    if (n.spy) { G.arrests++; G.stock += 3; G.morale = clamp(G.morale + 6, 0, 100); note(n, 'Arrested by the FBI. Confirmed MSS asset.', true); fade(`The agents find a microfilm reader in ${n.first}'s glovebox.<br><br>Confirmed: Ministry of State Security.`); }
+    else { G.wrong++; G.stock -= 4; G.morale = clamp(G.morale - 20, 0, 100); G.scandal += 10; note(n, 'Wrongly arrested. Released. Suing.'); fade(`${n.first} is released after six hours. They were never a spy.<br><br>Their lawyer calls before lunch.`); }
+  } else {
+    G.morale = clamp(G.morale - (n.spy ? 6 : 15), 0, 100); G.stock += n.spy ? 1 : -1;
+    note(n, 'Fired.'); toast('Security', `${n.name} has been escorted out.${n.spy ? ' The leaks seem quieter.' : ''}`);
+  }
+  updateHUD();
+  if (!activeSpies().length) return setTimeout(() => gameOver(true), 1600);
+  checkEnd();
+}
+function fade(html, after) {
+  G.paused = true; G.ui = true; releaseLock();
+  const f = $('#fade'); f.innerHTML = html; f.classList.add('on');
+  setTimeout(() => { f.classList.remove('on'); G.ui = !$('#dlg').hidden || !$('#dossier').hidden; if (!G.over) G.paused = false; after && after(); }, 3200);
+}
+
+/* ---------------- object uses ---------------- */
+function useCooler() {
+  if (!once('gossip' + Math.floor(G.min / 60))) return say('Water cooler', 'Nobody new around. You drink a paper cone of water. It immediately goes soggy.');
+  const spies = activeSpies(), others = active();
+  let line;
+  if (G.affair && Math.random() < .3) { G.scandal += 3; line = `"People are saying things about you and ${G.affair.first}. Not that I listen."`; updateHUD(); }
+  else if (spies.length && Math.random() < .55) {
+    const s = pick(spies);
+    line = pick([`"${s.first} was here 'til 9 last night. Nobody in ${s.dept} works that late."`, `"${s.first} asked me which badge opens R&D. Weird, right?"`, `"${s.first} takes calls at their desk and only says 'yes' and 'not yet'."`]);
+    note(s, `Water cooler gossip: ${line}`, true);
+  } else if (others.length) {
+    const o = pick(others);
+    line = pick([`"I think ${o.first} is interviewing at Netscape. The suit gives it away."`, `"${o.first} has been weird lately. Probably the divorce."`, `"${o.first} took a whole box of pens home. Thief."`, `"${o.first} is DEFINITELY hiding something. They won't let anyone see their screensaver."`]);
+    note(o, `Water cooler gossip: ${line}`);
+  }
+  say('Water cooler', `Someone from Facilities leans in.<br><br>${line || '"Quiet day."'}<br><br><small>Gossip refreshes every hour. Not all of it is true.</small>`);
+}
+function useCoffee() { say('Coffee machine', pick(L.coffee)); }
+function evidenceDesk(key, rate, msg) {
+  const spies = activeSpies(); if (!spies.length) return null;
+  const truth = Math.random() < rate; const s = truth ? pick(spies) : pick(active());
+  return s;
+}
+function useCopier() {
+  if (!once('copier')) return say('Copier', 'PC LOAD LETTER. You already checked the counter today.');
+  const s = evidenceDesk('copier', .7);
+  if (!s) return say('Copier', 'Nothing unusual. Just a jam.');
+  const ini = s.name.split(' ').map(w => w[0]).join('');
+  note(s, `Copier log: 340 after-hours copies under access code "${ini}".`, true);
+  say('Copier', `The counter shows 340 copies made after hours. The access code typed in: <b>${ini}</b>.<br><br><small>Logged to your dossier. The copier is right about 70% of the time.</small>`);
+}
+function useFax() {
+  if (!once('fax')) return say('Fax machine', 'The fax screeches at you. Nothing new today.');
+  if (G.leaks < 8) return say('Fax machine', 'A fax about a pizza party in Accounting. Nothing else.');
+  const s = evidenceDesk('fax', .65);
+  if (!s) return say('Fax machine', 'Just a lunch menu.');
+  note(s, `Misdialed fax from ext. ${s.desk.num} to an overseas number.`, true);
+  say('Fax machine', `A misdialed fax is stuck in the tray. Cover sheet: <b>FROM EXT. ${s.desk.num}</b>, sent to a number starting +86. The pages are blank, as if someone grabbed them fast.`);
+}
+function useServer() {
+  if (!once('server')) return say('Server rack', 'The login log hasn\'t changed since you last checked. The fans hum.');
+  const it = active().find(n => n.dept === 'IT');
+  if (it && Math.random() < .3) { note(it, `Server log shows after-hours login from #${it.desk.num} (marked "routine backup").`); return say('Server rack', `The green-screen terminal shows last night's logins: <b>terminal #${it.desk.num}</b>, 11:42 PM, marked "routine backup".`); }
+  const s = evidenceDesk('server', .75);
+  if (!s) return say('Server rack', 'Clean logs.');
+  note(s, `Server log: after-hours login to the ORCHID share from terminal #${s.desk.num}.`, true);
+  say('Server rack', `The green-screen terminal shows a login to the ORCHID share at 2:13 AM from <b>terminal #${s.desk.num}</b>. 412 files copied.`);
+}
+function useCeoDesk() {
+  dialog('Your desk', `<div class="memo" style="font-size:14px">Leather chair. A framed photo of your family, angled slightly away. A Rolodex nobody has touched since 1994.</div>`, [
+    { label: 'Log into DialTrade (private)', fn: () => openBroker('desk') },
+    { label: 'Nap at your desk (+1 hour)', fn: () => { G.min += 60; } },
+    { label: 'Read the security consultant\'s report', fn: () => say('Report', `"Three suspected assets on the floor. Typical behaviors: after-hours copying, interest in R&D access, contact with foreign numbers, unexplained cash. <b>Do not profile by name, accent or background.</b> Half the people who fit a stereotype are your best engineers. Watch behavior."`) },
+    { label: 'Get up' },
+  ]);
+}
+
+/* ---------------- vending ---------------- */
+function vend(list, title, desc) {
+  const opts = list.map(it => ({ label: `${it.code} — ${it.n} ($${it.p.toFixed(2)})`, fn: () => buy(it) }));
+  opts.push({ label: 'Shake the machine', cls: 'danger', fn: () => shake(list, title) });
+  if (list === SNACKS && activeSpies().length && !G.daily[G.day + ':deaddrop']) opts.push({ label: 'Something is taped behind coil B4…', fn: deadDrop });
+  opts.push({ label: 'Walk away' });
+  dialog(title, `<div class="memo" style="font-size:14px">${desc}${G.held ? `<br><br><small>You're already holding the ${G.held.n}. Buying replaces it.</small>` : ''}</div>`, opts);
+}
+function buy(it) {
+  G.cash -= it.p;
+  if (Math.random() < 0.12) { say('Vending', `The machine takes your money. The ${it.n} spins forward, tips… and hangs there by one corner. Classic.`); return; }
+  G.held = it; updateHUD(); toast('Vending', `Clunk. You got the ${it.n}. Press Q to ${it.kind === 'soda' ? 'drink' : 'eat'} it, or offer it to someone.`);
+}
+function shake(list, title) {
+  const r = Math.random();
+  if (r < 0.4) { G.held = pick(list); updateHUD(); toast(title, `Free ${G.held.n}! The machine shudders in shame.`); return; }
+  if (r < 0.7) return say(title, 'You rock the machine back and forth. Nothing falls. Your back hurts.');
+  const w = witnesses(null); G.scandal += 3 + Math.min(3, w.length) * 3; G.morale = clamp(G.morale - 1, 0, 100); updateHUD(); checkEnd();
+  say(title, w.length ? `The machine tips forward with a BANG. ${w[0].first} watches the CEO wrestle a vending machine. This will be at the water cooler by lunch.` : 'The machine tips forward with a BANG. Luckily, nobody saw.');
+}
+function deadDrop() {
+  G.daily[G.day + ':deaddrop'] = 1;
+  const s = Math.random() < 0.65 ? pick(activeSpies()) : pick(active());
+  note(s, `Dead drop behind coil B4 of the snack machine: a note reading "THU 7PM — EXT. ${s.desk.num}".`, true);
+  say('Behind coil B4', `Taped behind the coil, under a stale Cosmic Nougat: a folded index card.<br><br><b>THU 7PM — EXT. ${s.desk.num}</b><br><br>You put it back exactly where you found it.`);
+}
+function consume() {
+  if (!G.held || G.ui) return;
+  const it = G.held; G.held = null;
+  if (it.kind === 'soda') { G.rush = { mult: it.rush, until: G.min + it.dur }; toast('Sugar rush', `${it.line} You feel like you could jog the whole floor.`); }
+  else toast('Snack', it.line);
+  updateHUD();
+}
+function gift(n) {
+  const it = G.held; G.held = null; G.morale = clamp(G.morale + 2, 0, 100); if (n.romance) n.affection++; updateHUD();
+  let line;
+  if (n.spy && Math.random() < .5) { line = pick(['Thanks. I usually eat at my desk. Late. Very late.', 'From the snack machine? I know that machine… very well. Especially B4.']); note(n, `Said: "${line}"`, true); }
+  else line = pick([`Ooh, ${it.n}! The good stuff.`, 'You noticed I skipped lunch? That\'s… sweet.', 'Is this a bribe? Because I accept.', 'My kid would kill for one of these. I\'m eating it anyway.']);
+  reply(n, line);
+}
+
+/* ---------------- broker ---------------- */
+const pnl = () => G.short * (G.avg - G.stock);
+const netWorth = () => G.cash + pnl();
+function marginCall() { G.cash += pnl(); G.short = 0; G.avg = 0; toast('Margin call', 'Your broker closed your short. The stock went up and you ran out of money.'); updateHUD(); }
+function openBroker(where) {
+  if (G.over) return;
+  const desk = where === 'desk', v = pnl();
+  const intro = desk ? 'DialTrade 2.1 for Windows 95. Your office door is closed. Nobody can see your screen.' : 'You flip open your phone and call your guy at the brokerage. <b>Anyone nearby can hear you.</b>';
+  const body = `<div class="memo" style="font-size:13.5px;display:flex;flex-direction:column;gap:8px">
+    <div>${intro}</div>
+    <canvas id="stockchart" width="460" height="120" style="width:100%;height:auto;background:#000;display:block"></canvas>
+    <div class="brk"><b>ORCH last</b><span>$${G.stock.toFixed(2)}</span>
+      <b>Your cash</b><span>${fmtMoney(G.cash)}</span>
+      <b>Position</b><span>${G.short ? `Short ${G.short.toLocaleString('en-US')} shares @ $${G.avg.toFixed(2)}` : 'None'}</span>
+      <b>Unrealized P/L</b><span style="color:${v < 0 ? 'var(--red)' : 'var(--green)'}">${G.short ? (v >= 0 ? '+' : '') + fmtMoney(v) : '—'}</span>
+      <b>Net worth</b><span>${fmtMoney(netWorth())}</span>
+      <b>SEC attention</b><span><span class="secbar sunk" style="display:block"><i style="width:${clamp(G.sec, 0, 100)}%"></i></span></span></div>
+    <small>Shorting pays when ORCH falls. Every trade, and every dollar you make while your own company sinks, draws SEC attention.</small></div>`;
+  const opts = [1000, 10000, 50000].map(q => ({ label: `Short ${q.toLocaleString('en-US')} shares`, fn: () => doShort(q, where) }));
+  if (G.short) opts.push({ label: `Cover everything (${v >= 0 ? '+' : ''}${fmtMoney(v)})`, fn: () => cover(where) });
+  opts.push({ label: desk ? 'Log off' : 'Hang up' });
+  dialog(desk ? 'DialTrade — ORCH' : 'Calling your broker…', body, opts);
+  drawChart();
+}
+function drawChart() {
+  const c = document.getElementById('stockchart'); if (!c) return;
+  const g = c.getContext('2d'), w = c.width, h = c.height, d = G.hist.slice(-120);
+  const lo = Math.min(...d, G.short ? G.avg : Infinity) - 0.5, hi = Math.max(...d, G.short ? G.avg : -Infinity) + 0.5;
+  const Y = v => h - 14 - (v - lo) / (hi - lo) * (h - 28);
+  g.fillStyle = '#000'; g.fillRect(0, 0, w, h);
+  g.strokeStyle = '#0b3'; g.globalAlpha = .25; g.lineWidth = 1;
+  for (let i = 0; i < 5; i++) { g.beginPath(); g.moveTo(0, 14 + i * (h - 28) / 4); g.lineTo(w, 14 + i * (h - 28) / 4); g.stroke(); }
+  g.globalAlpha = 1;
+  if (G.short) { g.setLineDash([5, 4]); g.strokeStyle = '#ffd200'; g.beginPath(); g.moveTo(0, Y(G.avg)); g.lineTo(w, Y(G.avg)); g.stroke(); g.setLineDash([]); g.fillStyle = '#ffd200'; g.font = '14px VT323, monospace'; g.fillText(`your short @ ${G.avg.toFixed(2)}`, 6, Y(G.avg) - 4); }
+  g.strokeStyle = '#33ff66'; g.lineWidth = 2; g.beginPath();
+  d.forEach((v, i) => { const x = d.length < 2 ? w : i / (d.length - 1) * (w - 50); i ? g.lineTo(x, Y(v)) : g.moveTo(x, Y(v)); }); g.stroke();
+  g.fillStyle = '#33ff66'; g.font = '16px VT323, monospace'; g.fillText('$' + G.stock.toFixed(2), w - 46, Y(G.stock) + 5);
+  g.fillText(`ORCH  hi ${Math.max(...d).toFixed(2)}  lo ${Math.min(...d).toFixed(2)}`, 6, 12);
+}
+function doShort(q, where) {
+  const total = G.short + q;
+  if (total * G.stock * 0.5 > netWorth()) return say('Margin desk', `"Boss, you don't have the margin for ${q.toLocaleString('en-US')} more shares. Cover something first."`, [{ label: 'Back', fn: () => openBroker(where) }]);
+  G.avg = (G.avg * G.short + G.stock * q) / total; G.short = total;
+  G.sec += 2 + q / 1000 * 0.8;
+  if (where !== 'desk') {
+    const w = witnesses(null);
+    if (w.length) { G.sec += Math.min(18, w.length * 6); toast('Overheard', `${w[0].first} heard you tell your broker to "short ORCH". They look confused.`); }
+  }
+  updateHUD(); checkEnd(); if (!G.over) openBroker(where);
+}
+function cover(where) {
+  const v = pnl(); G.cash += v; G.short = 0; G.avg = 0;
+  if (v > 0) G.sec += v / 25000 * 5;
+  toast('Covered', v >= 0 ? `You pocket ${fmtMoney(v)}. Your own shareholders lost that.` : `You lose ${fmtMoney(-v)}. Turns out your company did fine.`);
+  updateHUD(); checkEnd(); if (!G.over) openBroker(where);
+}
+
+/* ---------------- dossier ---------------- */
+const MARKS = [['UNSURE', ''], ['SPY?', 's1'], ['CLEAR', 's2']];
+function openDossier() {
+  G.ui = true; releaseLock();
+  const list = $('#dlist'); list.innerHTML = '';
+  npcs.slice().sort((a, b) => a.desk.num - b.desk.num).forEach(n => {
+    const row = document.createElement('div'); row.className = 'drow sunk';
+    const gone = n.status !== 'active';
+    const notes = n.notes.length ? `<ul>${n.notes.map(x => `<li class="${x.strong ? 'strong' : ''}">${x.text}</li>`).join('')}</ul>` : `<div class="gone">Nothing yet.</div>`;
+    row.innerHTML = `<div class="num">#${n.desk.num}</div><div style="min-width:0"><h4>${n.name}<small>${n.dept}${gone ? ' · ' + n.status.toUpperCase() : ''}${G.affair === n ? ' · ♥' : ''}</small></h4>${notes}</div>`;
+    const b = document.createElement('button'); b.className = 'b95 stamp ' + MARKS[n.mark][1]; b.textContent = MARKS[n.mark][0];
+    b.onclick = () => { n.mark = (n.mark + 1) % 3; b.className = 'b95 stamp ' + MARKS[n.mark][1]; b.textContent = MARKS[n.mark][0]; };
+    row.appendChild(b); list.appendChild(row);
+  });
+  $('#dossier').hidden = false;
+}
+function closeDossier() { $('#dossier').hidden = true; G.ui = !$('#dlg').hidden; }
+
+/* ---------------- input ---------------- */
+const isTouch = matchMedia('(pointer: coarse)').matches;
+function releaseLock() { if (document.pointerLockElement) document.exitPointerLock(); }
+canvas.addEventListener('click', () => { if (!G.ui && !isTouch && canvas.requestPointerLock) { try { const p = canvas.requestPointerLock(); p && p.catch && p.catch(() => {}); } catch (e) {} } });
+let drag = null;
+canvas.addEventListener('pointerdown', e => { if (e.pointerType === 'mouse' && document.pointerLockElement) return; drag = { id: e.pointerId, x: e.clientX, y: e.clientY }; });
+addEventListener('pointerup', e => { if (drag && drag.id === e.pointerId) drag = null; });
+addEventListener('pointermove', e => {
+  if (G.ui) return;
+  if (document.pointerLockElement === canvas) { yaw -= e.movementX * 0.0023; pitch -= e.movementY * 0.0023; }
+  else if (drag && drag.id === e.pointerId) { yaw -= (e.clientX - drag.x) * 0.005; pitch -= (e.clientY - drag.y) * 0.005; drag.x = e.clientX; drag.y = e.clientY; }
+  pitch = clamp(pitch, -1.2, 1.2);
+});
+addEventListener('keydown', e => {
+  if (e.code === 'Escape') { if (!$('#dossier').hidden) closeDossier(); else if (!$('#dlg').hidden && !$('#dlg-x').hidden) closeDialog(); return; }
+  if (G.ui && e.code !== 'KeyN') return;
+  if (e.code === 'KeyN' || e.code === 'Tab') { e.preventDefault(); if (!$('#intro').hidden) return; $('#dossier').hidden ? openDossier() : closeDossier(); return; }
+  if (e.code === 'KeyE') { interact(); return; }
+  if (e.code === 'KeyB') { if (!G.paused) openBroker('phone'); return; }
+  if (e.code === 'KeyQ') { consume(); return; }
+  keys[e.code] = true;
+});
+addEventListener('keyup', e => { keys[e.code] = false; });
+addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
+function interact() {
+  if (G.ui || G.paused || !current) return;
+  if (current.npc) talk(current.npc); else current.it.use();
+}
+$('#brokerbtn').onclick = () => { if (!G.paused && !G.ui) openBroker('phone'); }; $('#heldbtn').onclick = consume;
+$('#dlg-x').onclick = closeDialog; $('#dos-x').onclick = closeDossier; $('#dosbtn').onclick = () => $('#dossier').hidden ? openDossier() : closeDossier();
+$('#startbtn').onclick = () => { if ($('#intro').hidden) dialog('Orchid Microsystems', `<div class="memo" style="font-size:14px">ORCHID 56K-on-a-chip. Est. 1991. Mountain View, CA.<br><br>Day: ${DAYS[G.day]}. Agents caught: ${G.arrests}/3. Wrong calls: ${G.wrong}.</div>`, [{ label: 'Resume' }, { label: 'Quit and start over', cls: 'danger', fn: () => { newGame(); G.paused = false; } }]); };
+$('#startgame').onclick = () => { $('#intro').hidden = true; G.ui = false; G.paused = false; toast('Welcome', 'Walk the floor. Talk to people. Trust nobody completely.'); if (!isTouch) canvas.click(); };
+
+// touch controls
+const joy = { x: 0, y: 0 };
+if (isTouch) {
+  $('#touch').hidden = false;
+  const J = $('#joy'), K = $('#knob'); let jid = null;
+  const setJ = e => { const r = J.getBoundingClientRect(); let dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2); const d = Math.hypot(dx, dy), m = 44; if (d > m) { dx *= m / d; dy *= m / d; } joy.x = dx / m; joy.y = dy / m; K.style.transform = `translate(${dx}px,${dy}px)`; };
+  J.addEventListener('pointerdown', e => { jid = e.pointerId; J.setPointerCapture(jid); setJ(e); });
+  J.addEventListener('pointermove', e => { if (e.pointerId === jid) setJ(e); });
+  const endJ = () => { jid = null; joy.x = joy.y = 0; K.style.transform = ''; };
+  J.addEventListener('pointerup', endJ); J.addEventListener('pointercancel', endJ);
+  $('#tbtn').onclick = interact;
+}
+
+/* ---------------- main loop ---------------- */
+let current = null, last = performance.now(), bob = 0;
+const promptEl = $('#prompt');
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (!G.paused && !G.ui) {
+    const gdt = dt * 2; // 1 real second = 2 game minutes
+    G.min += gdt;
+    if (G.min - G.lastTick >= 10) { G.lastTick = G.min; G.stock = Math.max(0.5, G.stock + rnd(-0.11, 0.11)); G.hist.push(G.stock); if (G.hist.length > 400) G.hist.shift(); if (G.short && netWorth() < 0) marginCall(); }
+    const hr = Math.floor(G.min / 60);
+    while (G.lastHour < hr && !G.over) { G.lastHour++; hourTick(); }
+    if (G.min >= 17 * 60 && !G.over) endOfDay();
+    if (movePlayer(dt)) bob += dt * 9;
+    for (const n of npcs) updateNPC(n, dt);
+    if (Math.floor(now / 500) !== Math.floor((now - dt * 1000) / 500)) updateHUD();
+  } else for (const n of npcs) if (n.talking && n.status === 'active') faceToward(n, player.x, player.z, dt);
+  // faces: blink + lip flap
+  const ts = now / 1000;
+  for (const n of npcs) if (n.status === 'active') {
+    const u = n.mesh.userData;
+    if (ts > u.nextBlink) { u.blinkEnd = ts + 0.13; u.nextBlink = ts + rnd(2, 5.5); }
+    const m = ts < u.blinkEnd ? u.tex.b : (now < (n.speakUntil || 0) && Math.sin(ts * 17) > -0.15 ? u.tex.t : u.tex.n);
+    if (u.faceMat.map !== m) u.faceMat.map = m;
+  }
+  // leds
+  if (Math.random() < 0.15) { const l = pick(leds); l.visible = !l.visible; }
+  // labels
+  for (const n of npcs) if (n.status === 'active') n.tag.visible = Math.hypot(n.pos.x - player.x, n.pos.z - player.z) < 5;
+  // camera
+  camera.position.set(player.x, 1.62 + Math.sin(bob) * 0.025, player.z);
+  camera.rotation.set(pitch, yaw, 0, 'YXZ');
+  // target prompt
+  current = (!G.ui && !G.paused) ? findTarget() : null;
+  if (current) {
+    const label = current.npc ? `Talk to ${current.npc.name} (${current.npc.dept})` : current.it.name;
+    promptEl.innerHTML = `<kbd>${isTouch ? 'USE' : 'E'}</kbd>${label}`; promptEl.hidden = false;
+  } else promptEl.hidden = true;
+  if (G.portraitNpc && !$('#dlg').hidden) drawPortrait();
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+newGame();
+G.ui = true;
+requestAnimationFrame(frame);
+})();
+</script>
+
+</body>
+</html>
