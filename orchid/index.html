@@ -795,6 +795,8 @@ function setupInteractables() {
     { get name() { return `Talk to Margaret Thornbury (General Counsel)${G.legal.anger >= 30 ? ' — she looks furious' : ''}`; }, get x() { return gc.pos.x; }, get z() { return gc.pos.z; }, use: () => talkLegal(), r: 2.6 },
     { name: 'Talk to Kyle Bentsen (Paralegal)', get x() { return para.pos.x; }, get z() { return para.pos.z; }, use: () => talkPara(), r: 2.2 },
     { get name() { return netWorth() > 1000 ? 'Window' : 'Window — the ledge'; }, x: 2, z: -13.7, use: useLedge, r: 2.2 },
+    { name: 'Flush the toilet', x: -15.55, z: -5.1, use: flushToilet, r: 2.3 },
+    { name: 'Flush the toilet', x: -15.55, z: -3.5, use: flushToilet, r: 2.3 },
     { name: 'Restroom stalls', x: -14.6, z: -4.3, use: () => say('Restroom', pick(['You check under the stalls. Just one pair of loafers. Yours.', 'Someone has written "ORCHID 4EVER" on the stall door in pencil.', 'The automatic flush goes off while you are still standing. You flinch.'])), r: 2 },
     { name: 'Sink', x: -13.2, z: -0.5, use: () => say('Restroom', pick(['You wash your hands. The mirror shows a person with a lot of problems.', 'The soap dispenser is empty. It has been empty since 1995.'])), r: 1.8 },
     { name: 'Supply closet', x: 0, z: 13.9, use: () => say('Supply closet', 'It smells like toner and bad decisions. Someone has been hoarding the good pens.') },
@@ -1306,6 +1308,16 @@ function bathScene(n) {
       { label: 'Actually… I just wanted to talk.', fn: () => reply(n, 'In the BATHROOM? You\'re a strange person, boss.') },
     ]);
   }
+}
+
+function flushToilet() {
+  G.flushes = (G.flushes || 0) + 1;
+  const n = G.flushes;
+  const sound = pick(['*clunk*', '*clunk… clunk*', '*a long, sad gurgle*', '*nothing. not even a clunk.*']);
+  const msg = n >= 5 ? 'THE TOILETS. ARE. BROKEN. GO. TO. LEVEL. 7.' : n >= 3 ? 'Toilets are STILL broken. Please, for the love of God, go to Level 7.' : 'Toilets are broken. Go to Level 7.';
+  dialog('Facilities Management', `<div class="memo" style="font-size:14px">You press the handle. ${sound}<br><br>Nothing happens.</div>
+    <div class="speech"><div class="portrait sunk" style="width:48px;height:48px;background:#c0c0c0;display:flex;align-items:center;justify-content:center;font:bold 28px Tahoma,sans-serif;color:#b00000">!</div><p style="font-weight:bold">⚠ ${msg}</p></div>
+    <small>Work order #${4100 + n} filed ${n > 1 ? `(${n} times now)` : ''}. Facilities response time: 6–8 weeks.</small>`, [{ label: 'OK' }, { label: 'Jiggle the handle', fn: () => say('Facilities Management', 'You jiggle the handle. The handle comes off in your hand. You put it back. Level 7 it is.') }]);
 }
 
 /* ---------------- the ledge ---------------- */
