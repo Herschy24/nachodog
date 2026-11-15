@@ -39,6 +39,7 @@ button.b95.love{color:#8a1060}
 #startbtn i{display:inline-block;width:14px;height:14px;background:conic-gradient(#d00 0 25%,#0a0 0 50%,#ffd200 0 75%,#00d 0);transform:skewX(-8deg)}
 .meter{display:flex;align-items:center;gap:5px;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
 .meter .bar{width:72px;height:12px;background:var(--hi);position:relative;overflow:hidden}
+@media (max-width:1440px){.meter .bar{width:50px}}
 .meter .fill{position:absolute;inset:0 auto 0 0;background:repeating-linear-gradient(90deg,var(--title-a) 0 6px,transparent 6px 8px)}
 .meter.bad .fill{background:repeating-linear-gradient(90deg,var(--red) 0 6px,transparent 6px 8px)}
 #ticker{font:20px/1 var(--crt);background:#000;color:#33ff66;padding:2px 8px;letter-spacing:.04em;min-width:118px;font-variant-numeric:tabular-nums}
@@ -96,6 +97,10 @@ button.b95.love{color:#8a1060}
 #touch{position:absolute;inset:0;pointer-events:none}
 #joy{position:absolute;left:calc(18px + env(safe-area-inset-left,0px));bottom:calc(64px + env(safe-area-inset-bottom,0px));width:120px;height:120px;border-radius:50%;background:rgba(0,0,0,.18);border:2px solid rgba(255,255,255,.5);pointer-events:auto;touch-action:none}
 #knob{position:absolute;left:40px;top:40px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.75)}
+#ybtn{position:absolute;right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(150px + env(safe-area-inset-bottom,0px));pointer-events:auto;font-weight:bold;padding:10px 14px}
+#yell{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);z-index:40;pointer-events:none;font:900 clamp(30px,7vw,84px)/1 Impact,'Arial Black',sans-serif;color:#ff2a1a;-webkit-text-stroke:3px #2a0000;text-shadow:0 6px 0 #2a0000;white-space:nowrap;letter-spacing:1px}
+#yell.go{animation:yellgo 1.5s ease-out forwards}
+@keyframes yellgo{0%{transform:translate(-50%,-50%) scale(.3) rotate(-4deg);opacity:0}12%{transform:translate(-50%,-50%) scale(1.15) rotate(2deg);opacity:1}20%{transform:translate(-52%,-50%) scale(1) rotate(-2deg)}28%{transform:translate(-48%,-50%) rotate(2deg)}36%{transform:translate(-50%,-50%) rotate(0)}80%{opacity:1}100%{transform:translate(-50%,-62%) scale(1.05);opacity:0}}
 #tbtn{position:absolute;right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(84px + env(safe-area-inset-bottom,0px));pointer-events:auto;font-weight:bold;padding:14px 18px}
 .toast.cover{pointer-events:auto;cursor:pointer;display:flex;gap:8px;align-items:center;max-width:300px}
 .toast.cover img{width:72px;height:96px;flex:none;border:1px solid var(--dark)}
@@ -182,6 +187,7 @@ button{touch-action:manipulation}
     <button class="b95" id="brokerbtn">Broker <small>(B)</small></button>
     <button class="b95" id="heldbtn" hidden></button>
     <button class="b95" id="coverbtn" hidden>TIMES <small>(T)</small></button>
+    <button class="b95" id="yellbtn" title="Yell at everyone to get back to work">📢 Yell <small>(Y)</small></button>
     <div class="meter bad" title="Secrets leaked to the MSS"><span>Leaks</span><div class="bar sunk"><div class="fill" id="m-leak"></div></div></div>
     <div class="meter bad" title="How close you are to a front-page scandal"><span>Scandal</span><div class="bar sunk"><div class="fill" id="m-scan"></div></div></div>
     <div class="meter" title="Staff morale"><span>Morale</span><div class="bar sunk"><div class="fill" id="m-mor"></div></div></div>
@@ -193,9 +199,11 @@ button{touch-action:manipulation}
     <div id="clock" class="sunk">Mon 9:00 AM</div>
   </div>
 
+  <div id="yell" hidden></div>
   <div id="touch" hidden>
     <div id="joy"><div id="knob"></div></div>
     <button class="b95" id="tbtn">USE</button>
+    <button class="b95" id="ybtn">📢 YELL</button>
   </div>
 
   <div id="dlg" class="layer" hidden>
@@ -227,6 +235,7 @@ button{touch-action:manipulation}
           <kbd>Left stick</kbd><span>Walk (push all the way to hurry)</span>
           <kbd>Drag</kbd><span>Drag anywhere else on the screen to look around</span>
           <kbd>USE</kbd><span>Talk to people and use things (or tap the yellow prompt)</span>
+          <kbd>YELL</kbd><span>Send everyone wandering the floor back to their desks</span>
           <kbd>Taskbar</kbd><span>Dossier, Broker, TIMES and snacks live down here. Swipe it sideways for more.</span>
         </div>
         <div class="keys" id="deskkeys">
@@ -235,6 +244,7 @@ button{touch-action:manipulation}
           <kbd>E</kbd><span>Talk to people, use the copier, fax, server rack, water cooler…</span>
           <kbd>N</kbd><span>Open your dossier (your evidence board)</span>
           <kbd>B</kbd><span>Call your broker (yes, you can short your own company)</span>
+          <kbd>Y</kbd><span>Yell at everyone to get back to their desks</span>
           <kbd>T</kbd><span>Read the latest TIMES cover about you (a new one prints every hour)</span>
           <kbd>Q</kbd><span>Eat or drink whatever you bought from the vending machines</span>
           <kbd>E</kbd><span>at your own desk: sit down, trade, or crawl into the bed hidden under it</span>
@@ -1155,7 +1165,7 @@ function newGame() {
     const plate = makeLabel('#' + d.num, short.toUpperCase(), 256, 64); plate.scale.set(0.62, 0.155, 1); plate.position.set(d.x + 1.5, 1.68, d.z + 1.4); scene.add(plate);
     return {
       id: i, name, first: name.split(' ')[0], dept, spy: spyIdx.has(i), service: svcOf[i] || null, romance: romIdx.has(i), desk: d, mesh, tag, plate,
-      status: 'active', state: 'desk', path: [], target: null, leaveAt: 0, nextTrip: 540 + rnd(15, 180),
+      status: 'active', state: 'desk', path: [], target: null, leaveAt: 0, nextTrip: 540 + rnd(30, 260),
       sit: 1, speed: 0, heading: Math.PI, walkAmp: 0, maxSpeed: rnd(1.05, 1.45), sip: 0, sipUntil: 0, slotIdx: -1, waitT: 0,
       affection: 0, nervous: 0, talking: false, searched: false, seenTrip: false, mark: 0,
       bathYes: bathIdx.has(i), invite: null,
@@ -1299,8 +1309,8 @@ function planTrip(n) {
   let idx = t.spots.findIndex((_, i) => !taken.includes(i)); if (idx < 0) idx = Math.floor(Math.random() * t.spots.length);
   const [px, pz] = t.spots[idx];
   const az = AISLE[n.desk.row] + rnd(-0.35, 0.35), sx = (px < 0 ? -1 : 1) * (7.5 + rnd(-0.4, 0.4));
-  n.target = key; n.slotIdx = idx; n.seenTrip = false;
-  n.path = [{ x: n.desk.home.x, z: az }, { x: sx, z: az }, { x: sx, z: pz }, { x: px, z: pz }];
+  n.target = key; n.slotIdx = idx; n.seenTrip = false; n.calmUntil = 0;
+  n.path = [{ x: n.desk.home.x, z: az }, { x: sx, z: az }, { x: sx, z: pz }, { x: px, z: pz }]; n.trip = n.path.slice();
   n.back = [{ x: sx, z: pz }, { x: sx, z: az }, { x: n.desk.home.x, z: az }, { x: n.desk.home.x, z: n.desk.home.z }];
   n.heading = n.mesh.rotation.y; n.speed = 0;
 }
@@ -1329,7 +1339,7 @@ function steer(n, dt) {
   }
   const vl = Math.hypot(vx, vz) || 1; vx /= vl; vz /= vl;
   n.heading = lerpAngle(n.heading, Math.atan2(vx, vz), dt * 5);
-  const want = n.maxSpeed * slow * (last ? clamp(d / 0.9, 0.3, 1) : 1);
+  const want = n.maxSpeed * (n.hurry ? 1.65 : 1) * slow * (last ? clamp(d / 0.9, 0.3, 1) : 1);
   n.speed += (want - n.speed) * Math.min(1, dt * (want > n.speed ? 2.5 : 7));
   const mx = Math.sin(n.heading) * n.speed * dt, mz = Math.cos(n.heading) * n.speed * dt;
   const npd = Math.hypot(n.pos.x + mx - player.x, n.pos.z + mz - player.z), cpd = Math.hypot(n.pos.x - player.x, n.pos.z - player.z);
@@ -1346,7 +1356,7 @@ function steer(n, dt) {
 function arrive(n) {
   n.speed = 0;
   if (n.state === 'go') { n.state = 'at'; n.leaveAt = n.invite ? Infinity : G.min + rnd(15, 45); if (n.invite) toast(n.invite.place === 'closet' ? 'Supply closet' : 'Restroom', n.invite.place === 'closet' ? `${n.first} is waiting for you in the supply closet (south wall).` : `${n.first} is waiting for you in the restroom (west wall).`); }
-  else { n.state = 'desk'; n.nextTrip = G.min + rnd(60, 200) * (n.spy ? 0.7 : 1); }
+  else { n.state = 'desk'; n.hurry = false; n.nextTrip = G.min + rnd(150, 360) * (n.spy ? 0.75 : 1); }
 }
 function pose(n, t) {
   const u = n.mesh.userData, s = n.sit, w = n.walkAmp * (1 - s), ph = n.walkT;
@@ -1377,7 +1387,7 @@ function updateNPC(n, dt) {
   if (n.talking) { n.speed = 0; faceToward(n, player.x, player.z, dt); n.heading = n.mesh.rotation.y; }
   else if (n.state === 'desk') {
     n.mesh.rotation.y = lerpAngle(n.mesh.rotation.y, Math.PI, dt * 3);
-    if (G.min >= n.nextTrip && G.min < 16.5 * 60) { planTrip(n); n.state = 'standup'; }
+    if (G.min >= n.nextTrip && G.min >= (n.calmUntil || 0) && G.min < 16.5 * 60) { planTrip(n); n.state = 'standup'; }
   } else if (n.state === 'standup') { if (n.sit < 0.06) { n.state = 'go'; n.heading = n.mesh.rotation.y; } }
   else if (n.state === 'go' || n.state === 'back') moving = steer(n, dt);
   else if (n.state === 'at') {
@@ -1467,7 +1477,7 @@ function resetFloor() {
   for (const o of legalStaff) { o.state = G.legal.summoned ? 'summon' : 'desk'; o.path = []; o.talking = false; o.pos.set(o.home.x, 0, o.home.z); o.mesh.rotation.y = o.rotY; o.sit = 1; }
   if (G.legal.summoned) G.legal.deadline = 540 + 90;
   G.seated = false; npcs.forEach(n => { n.invite = null; n.talking = false; }); clearEvents();
-  for (const n of active()) { n.state = 'desk'; n.path = []; n.pos.set(n.desk.home.x, 0, n.desk.home.z); n.mesh.rotation.y = Math.PI; n.sit = 1; n.speed = 0; n.walkAmp = 0; n.target = null; n.nextTrip = 540 + rnd(15, 150); }
+  for (const n of active()) { n.state = 'desk'; n.path = []; n.pos.set(n.desk.home.x, 0, n.desk.home.z); n.mesh.rotation.y = Math.PI; n.sit = 1; n.speed = 0; n.walkAmp = 0; n.target = null; n.hurry = false; n.calmUntil = 0; n.nextTrip = 540 + rnd(30, 240); }
   player.x = 0; player.z = 11; yaw = 0; pitch = 0;
 }
 function nextDay() {
@@ -2764,15 +2774,51 @@ addEventListener('keydown', e => {
   if (e.code === 'KeyB') { if (!G.paused) openBroker('phone'); return; }
   if (e.code === 'KeyQ') { consume(); return; }
   if (e.code === 'KeyT') { if (G.lastCover && !G.paused) showCover(G.lastCover); return; }
+  if (e.code === 'KeyY') { yell(); return; }
   keys[e.code] = true;
 });
 addEventListener('keyup', e => { keys[e.code] = false; });
 addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
+const YELLS = ['GET BACK TO WORK!', 'DESKS. NOW.', 'THIS IS A PLACE OF BUSINESS!', 'WHO SAID BREAK TIME?!', 'ORCHID WON\'T SHIP ITSELF!'];
+const YELL_REACT = ['"Yes sir!"', '"Going, going!"', '"Jeez, okay!"', '"I was just—never mind."', '"Sorry boss!"', '"I\'m on it!"', '"…Fine."'];
+function yell() {
+  if (G.ui || G.paused || G.over || !$('#intro').hidden) return;
+  const now = performance.now();
+  if (now < (G.yellCool || 0)) { toast('You', `Your throat is raw. Give it ${Math.ceil((G.yellCool - now) / 1000)} seconds.`); return; }
+  G.yellCool = now + 15000; G.yells = (G.yells || 0) + 1;
+  shout(); const big = $('#yell'); big.textContent = pick(YELLS); big.hidden = false; big.classList.remove('go'); void big.offsetWidth; big.classList.add('go');
+  clearTimeout(yell.t); yell.t = setTimeout(() => big.hidden = true, 1500);
+  const off = npcs.filter(n => n.status === 'active' && !n.invite && !n.talking && ['standup', 'go', 'at'].includes(n.state));
+  if (!off.length) { G.morale = clamp(G.morale - 1, 0, 100); updateHUD(); toast('Open plan', 'Everyone was already at their desk. Fourteen heads slowly turn to look at you.'); return; }
+  for (const n of off) {
+    if (n.state === 'at') n.path = n.back.slice();
+    else { const done = (n.trip || []).slice(0, Math.max(0, (n.trip || []).length - n.path.length)).reverse(); n.path = [...done, { x: n.desk.home.x, z: n.desk.home.z }]; }
+    if (n.state === 'go' && n.target === 'server' && n.spy) note(n, `Bolted away from the server room the second you yelled (${stamp()}).`);
+    if (n.state === 'at' && n.target === 'server') { note(n, `Caught loitering at the server room when you yelled (${stamp()}). ${n.dept === 'IT' ? 'They\'re IT, so…' : 'Not IT.'}`); }
+    if (n.spy) n.nervous = Math.max(n.nervous || 0, G.min + 90);
+    n.state = 'back'; n.hurry = true; n.speed = Math.max(n.speed, 0.4); n.heading = n.mesh.rotation.y; n.calmUntil = G.min + 240;
+    speak(n, 'yes boss');
+  }
+  G.morale = clamp(G.morale - 2, 0, 100);
+  toast('Open plan', `${off.length} ${off.length === 1 ? 'employee scurries' : 'employees scurry'} back to their desks. ${pick(off).first}: ${pick(YELL_REACT)}`);
+  if (G.yells === 4) legalGrr(5, 'screaming at staff across the open-plan floor');
+  updateHUD();
+}
+function shout() {
+  try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === 'suspended') actx.resume(); } catch (e) { return; }
+  const ctx = actx, t = ctx.currentTime, out = ctx.createGain(); out.gain.setValueAtTime(0, t); out.gain.linearRampToValueAtTime(0.35, t + 0.04); out.gain.setValueAtTime(0.3, t + 0.5); out.gain.linearRampToValueAtTime(0, t + 0.85); out.connect(ctx.destination);
+  for (const [f0, q] of [[700, 6], [1200, 8]]) {
+    const o = ctx.createOscillator(), bp = ctx.createBiquadFilter(); o.type = 'sawtooth';
+    o.frequency.setValueAtTime(150, t); o.frequency.linearRampToValueAtTime(210, t + 0.12); o.frequency.linearRampToValueAtTime(175, t + 0.8);
+    bp.type = 'bandpass'; bp.frequency.value = f0; bp.Q.value = q; o.connect(bp); bp.connect(out); o.start(t); o.stop(t + 0.9);
+  }
+}
 function interact() {
   if (G.seated && !G.ui && !G.paused) return useCeoDesk();
   if (G.ui || G.paused || !current) return;
   if (current.npc) talk(current.npc); else current.it.use();
 }
+$('#yellbtn').onclick = yell; $('#ybtn').onclick = yell;
 $('#coverbtn').onclick = () => { if (G.lastCover && !G.paused && !G.ui) showCover(G.lastCover); };
 $('#prompt').addEventListener('click', () => { if (isTouch) interact(); });
 $('#brokerbtn').onclick = () => { if (!G.paused && !G.ui) openBroker('phone'); }; $('#heldbtn').onclick = consume;
