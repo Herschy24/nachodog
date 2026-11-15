@@ -710,6 +710,7 @@ const TARGETS = {
   fax: { fx: -15.3, fz: 5, spots: [[-14.4, 5], [-13.9, 6.0], [-13.9, 4.0], [-13.2, 5.2]] },
   server: { fx: -10.6, fz: -10.25, spots: [[-9.0, -10.25], [-8.6, -11.2], [-8.6, -9.3]] },
   assembly: { fx: 0, fz: 14, spots: [...Array(22).keys()].map(i => [-5.25 + (i % 11) * 1.05, i < 11 ? 12.5 : 11.6]) },
+  closet: { fx: 0, fz: 14, spots: [[0.35, 12.9]] },
   bathroom: { fx: -13.2, fz: -0.4, spots: [[-13.0, -2.9], [-12.4, -1.9], [-13.6, -1.9]] },
   snacks: { fx: 15.3, fz: 3.2, spots: [[14.3, 3.2], [13.8, 4.1], [13.8, 2.3]] },
   soda: { fx: 15.3, fz: 11.4, spots: [[14.3, 11.4], [13.8, 12.2], [13.8, 10.5]] },
@@ -1014,7 +1015,7 @@ function steer(n, dt) {
 }
 function arrive(n) {
   n.speed = 0;
-  if (n.state === 'go') { n.state = 'at'; n.leaveAt = n.invite ? Infinity : G.min + rnd(15, 45); if (n.invite) toast('Restroom', `${n.first} is waiting for you in the restroom (west wall).`); }
+  if (n.state === 'go') { n.state = 'at'; n.leaveAt = n.invite ? Infinity : G.min + rnd(15, 45); if (n.invite) toast(n.invite.place === 'closet' ? 'Supply closet' : 'Restroom', n.invite.place === 'closet' ? `${n.first} is waiting for you in the supply closet (south wall).` : `${n.first} is waiting for you in the restroom (west wall).`); }
   else { n.state = 'desk'; n.nextTrip = G.min + rnd(60, 200) * (n.spy ? 0.7 : 1); }
 }
 function pose(n, t) {
@@ -1036,7 +1037,10 @@ function updateNPC(n, dt) {
   if (n.status !== 'active') return;
   const u = n.mesh.userData, t = performance.now() / 1000;
   let moving = false;
-  if (n.invite && !n.talking && !G.ui && !G.paused && n.pos.x < -11.15 && inBathroom()) return bathScene(n);
+  if (n.invite && !n.talking && !G.ui && !G.paused) {
+    if (n.invite.place === 'closet') { if (Math.hypot(n.pos.x - 0.35, n.pos.z - 12.9) < 1.8 && Math.hypot(player.x, player.z - 13.2) < 2.8) return closetScene(n); }
+    else if (n.pos.x < -11.15 && inBathroom()) return bathScene(n);
+  }
   if (n.talking) { n.speed = 0; faceToward(n, player.x, player.z, dt); n.heading = n.mesh.rotation.y; }
   else if (n.state === 'desk') {
     n.mesh.rotation.y = lerpAngle(n.mesh.rotation.y, Math.PI, dt * 3);
@@ -1054,8 +1058,8 @@ function updateNPC(n, dt) {
       if (n.dept === 'IT') note(n, `Seen at the server room door (${stamp()}). They're IT, so maybe normal.`);
       else note(n, `Seen near the server room door (${stamp()}). Could be nothing.`);
     }
-    if (n.target === 'bathroom' && n.invite) {
-      if (G.min >= n.invite.until) { n.invite = null; toast('Restroom', `${n.first} waited in the bathroom for an hour and gave up. They look… relieved? Hurt? Both.`); n.leaveAt = G.min; }
+    if (n.invite) {
+      if (G.min >= n.invite.until) { const cl = n.invite.place === 'closet'; n.invite = null; toast(cl ? 'Supply closet' : 'Restroom', `${n.first} waited in the ${cl ? 'supply closet' : 'bathroom'} for ages and gave up. They look… relieved? Hurt? Both.`); n.leaveAt = G.min; }
     }
     if (G.min >= n.leaveAt) { n.path = n.back; n.state = 'back'; n.heading = n.mesh.rotation.y; n.speed = 0; }
   }
@@ -1260,7 +1264,7 @@ function talk(n, line) {
     reply(n, n.spy ? pick(['Thank you. I will celebrate… later. Somewhere private.', 'Birthdays are for people with nothing to hide. …That was a joke.']) : pick(['You remembered! Nobody remembers!', 'Thanks, boss! There\'s cake in the break room. It\'s carrot. Sorry.']));
   }) });
   if (G.affair === n) opts.push({ label: 'We need to end this.', cls: 'love', fn: () => endAffair(n) });
-  else if (n.romance && n.affection >= 2 && !G.affair) opts.push({ label: 'Supply closet. After five?', cls: 'love', fn: () => startAffair(n) });
+  else if (n.romance && n.affection >= 2 && !G.affair && !n.invite) opts.push({ label: 'Supply closet. Right now.', cls: 'love', fn: () => startAffair(n) });
   opts.push({ label: 'You\'re fired.', cls: 'danger', fn: () => confirmAct(n, 'fire') });
   opts.push({ label: 'Call the FBI on them', cls: 'danger', fn: () => confirmAct(n, 'fbi') });
   opts.push({ label: 'Never mind' });
@@ -1345,11 +1349,31 @@ function flirt(n) {
   reply(n, pick(['Ha! Stop. …Don\'t stop.', 'Is that a power suit or are you just happy to see me?', 'You know, I\'m usually the last one here at night.', 'People are going to talk. Let them.']));
 }
 function startAffair(n) {
-  G.affair = n; G.scandal += 12; legalGrr(8, 'whatever just happened in the supply closet');
-  fade(`Supply closet, 6:15 PM.<br><br>Twenty minutes later you both walk out separately,<br>straightening your clothes. There is toner on your sleeve.`, () => {
+  n.invite = { until: G.min + 180, place: 'closet' };
+  n.target = 'closet'; n.slotIdx = -1; n.leaveAt = Infinity;
+  const inCub = n.state === 'desk' || n.state === 'standup';
+  const fromX = inCub ? n.desk.home.x : n.pos.x, sx = fromX < 0 ? -7.5 : 7.5, az = AISLE[n.desk.row];
+  const inBlock = inCub || (Math.abs(n.pos.x) < 6.3 && n.pos.z > -9.6 && n.pos.z < 5.6);
+  const path = [];
+  if (n.pos.x < -11) path.push({ x: -12, z: -3 }, { x: -10.2, z: -3 });
+  if (inBlock) { path.push({ x: fromX, z: az }); if (n.desk.row < 2) path.push({ x: sx, z: az }, { x: sx, z: 8.2 }); }
+  else if (Math.abs(n.pos.x) > 6.3 && n.pos.z < 6.5) path.push({ x: sx, z: n.pos.z }, { x: sx, z: 8.2 });
+  path.push({ x: 0.4, z: 9.2 }, { x: 0.35, z: 12.9 });
+  n.path = path;
+  n.back = n.desk.row < 2 ? [{ x: 0.4, z: 9.2 }, { x: sx, z: 8.2 }, { x: sx, z: az }, { x: n.desk.home.x, z: az }, { x: n.desk.home.x, z: n.desk.home.z }]
+    : [{ x: 0.4, z: 9.2 }, { x: n.desk.home.x, z: az }, { x: n.desk.home.x, z: n.desk.home.z }];
+  n.heading = n.mesh.rotation.y; n.speed = 0; n.state = inCub ? 'standup' : 'go';
+  toast('Supply closet', `${n.first} is heading to the supply closet on the south wall. Meet them there.`);
+  reply(n, pick(['Now? …Okay. Give me two minutes. South wall.', 'Right now? You\'re insane. I\'ll be there in two.', 'I\'ll go first. Count to a hundred, then follow.']));
+}
+function closetScene(n) {
+  n.invite = null; n.leaveAt = G.min + 10;
+  G.affair = n; G.scandal += 12; n.affection += 2; legalGrr(8, 'whatever just happened in the supply closet');
+  loveScene(n, () => {
     if (n.spy) { G.leaks += 8; note(n, 'Your briefcase was open when you got back from the supply closet.', true); toast('Strange', 'Your briefcase was unlatched when you got back. You always latch it.'); }
+    else toast('Supply closet', 'You walk out first, straightening your tie. There is toner on your sleeve.');
     updateHUD(); checkEnd();
-  });
+  }, 'closet');
 }
 function endAffair(n) {
   G.affair = null;
@@ -1422,11 +1446,16 @@ function inviteBathInner(n) {
 }
 /* ---------------- restroom love scene ---------------- */
 const HEART = '<svg viewBox="0 0 32 29" aria-hidden="true"><path d="M16 28C6 20 0 14 0 8 0 3 4 0 8 0c3 0 6 2 8 5 2-3 5-5 8-5 4 0 8 3 8 8 0 6-6 12-16 20z"/></svg>';
-function loveScene(n, after) {
+const LOVE_SPOTS = {
+  bathroom: { n: [-12.25, -2.0], c: [-12.55, -1.42], cam: [-11.3, 1.55, -0.85], camDz: -0.2, look: [-12.4, 1.45, -1.75], exit: [-11.7, -3, Math.PI / 2], label: 'Restroom' },
+  closet: { n: [0.32, 13.2], c: [-0.32, 13.2], cam: [0.9, 1.55, 11.2], camDz: 0.35, look: [0, 1.4, 13.2], exit: [0, 12.2, 0], label: 'Supply closet' },
+};
+function loveScene(n, after, place = 'bathroom') {
+  const sp = LOVE_SPOTS[place];
   G.ui = true; G.paused = true; releaseLock();
   n.talking = false; n.state = 'at'; n.path = []; n.sit = 0; n.walkAmp = 0;
-  n.pos.set(-12.25, 0, -2.0); n.mesh.rotation.set(0, Math.atan2(-0.3, 0.58), 0);
-  ceo.mesh.visible = true; ceo.pos.set(-12.55, 0, -1.42); ceo.mesh.rotation.set(0, Math.atan2(0.3, -0.58), 0);
+  n.pos.set(sp.n[0], 0, sp.n[1]); n.mesh.rotation.set(0, Math.atan2(sp.c[0] - sp.n[0], sp.c[1] - sp.n[1]), 0);
+  ceo.mesh.visible = true; ceo.pos.set(sp.c[0], 0, sp.c[1]); ceo.mesh.rotation.set(0, Math.atan2(sp.n[0] - sp.c[0], sp.n[1] - sp.c[1]), 0);
   const hz = $('#hearts'); hz.innerHTML = '';
   for (let i = 0; i < 18; i++) {
     const h = document.createElement('div'); h.className = 'heart';
@@ -1435,9 +1464,9 @@ function loveScene(n, after) {
     h.innerHTML = HEART; hz.appendChild(h);
   }
   const big = document.createElement('div'); big.className = 'heart big'; big.innerHTML = HEART; hz.appendChild(big);
-  const cap = document.createElement('div'); cap.className = 'lovecap'; cap.textContent = `You & ${n.first}`; hz.appendChild(cap);
+  const cap = document.createElement('div'); cap.className = 'lovecap'; cap.textContent = `${sp.label} · You & ${n.first}`; hz.appendChild(cap);
   hz.hidden = false;
-  G.cut = { n, t0: performance.now(), dur: 5000, after };
+  G.cut = { n, t0: performance.now(), dur: 5000, after, sp };
 }
 let mirrorSelf = null;
 function hookMirror() {
@@ -1461,12 +1490,12 @@ function updateCut(now) {
     o.mesh.rotation.z = Math.sin(t * 1.6 + (o === ceo ? 0 : 1)) * 0.03;
   }
   c.n.tag.visible = false;
-  camera.position.set(-11.3, 1.55, -0.85 - k * 0.2);
-  camera.lookAt(-12.4, 1.45, -1.75);
+  camera.position.set(c.sp.cam[0], c.sp.cam[1], c.sp.cam[2] + k * c.sp.camDz);
+  camera.lookAt(c.sp.look[0], c.sp.look[1], c.sp.look[2]);
   if (k >= 1) {
     G.cut = null; ceo.mesh.visible = false; $('#hearts').hidden = true; $('#hearts').innerHTML = '';
     G.ui = false; G.paused = false; camera.rotation.set(pitch, yaw, 0, 'YXZ');
-    player.x = -11.7; player.z = -3; yaw = Math.PI / 2; pitch = 0;
+    player.x = c.sp.exit[0]; player.z = c.sp.exit[1]; yaw = c.sp.exit[2]; pitch = 0;
     c.after && c.after();
   }
 }
