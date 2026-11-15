@@ -875,6 +875,7 @@ function newGame() {
   setupInteractables();
   player.x = 0; player.z = 11; yaw = 0; pitch = 0;
   updateHUD();
+  snapDay();
 }
 const note = (n, text, strong = false) => { if (!n.notes.some(x => x.text === text)) n.notes.push({ text, strong, when: stamp() }); };
 const stamp = () => DAYS[G.day].slice(0, 3) + ' ' + fmtTime(G.min);
@@ -1124,15 +1125,43 @@ function endOfDay() {
   if (last) { left ? gameOver(false, 'Friday, 5:00 PM', `The quarter closes with ${left} agent${left > 1 ? 's' : ''} still on payroll. Six months later a Shenzhen fab announces a chip that looks exactly like ORCHID.`) : gameOver(true); return; }
   dialog(`End of ${DAYS[G.day]}`, body, [{ label: `Go home. Come back ${DAYS[G.day + 1]}.`, fn: nextDay }]);
 }
-function nextDay() {
-  G.day++; G.min = 540; G.lastHour = 9; G.lastTick = 540; G.rush = null; G.coke = 0; G.grams = 0; G.dayStart = { leaks: G.leaks, stock: G.stock };
+function resetFloor() {
+  G.min = 540; G.lastHour = 9; G.lastTick = 540; G.rush = null; G.coke = 0; G.grams = 0;
   for (const o of legalStaff) { o.state = G.legal.summoned ? 'summon' : 'desk'; o.path = []; o.talking = false; o.pos.set(o.home.x, 0, o.home.z); o.mesh.rotation.y = o.rotY; o.sit = 1; }
   if (G.legal.summoned) G.legal.deadline = 540 + 90;
-  G.seated = false; npcs.forEach(n => n.invite = null); clearEvents();
+  G.seated = false; npcs.forEach(n => { n.invite = null; n.talking = false; }); clearEvents();
   for (const n of active()) { n.state = 'desk'; n.path = []; n.pos.set(n.desk.home.x, 0, n.desk.home.z); n.mesh.rotation.y = Math.PI; n.sit = 1; n.speed = 0; n.walkAmp = 0; n.target = null; n.nextTrip = 540 + rnd(15, 150); }
   player.x = 0; player.z = 11; yaw = 0; pitch = 0;
+}
+function nextDay() {
+  G.day++; G.dayStart = { leaks: G.leaks, stock: G.stock };
+  resetFloor();
   toast(DAYS[G.day], pick(['A memo says casual Friday is cancelled. It is not Friday.', 'The coffee machine has been fixed. It has not been fixed.', 'IT announces everyone is getting Windows 95. Groans echo across the floor.', 'Someone brought donuts. They are gone by 9:04.']));
-  G.paused = false; updateHUD();
+  G.paused = false; updateHUD(); snapDay();
+}
+// snapshot of the game at 9 AM each day, so a loss can be retried from that morning
+let daySnap = null;
+function snapDay() {
+  const skip = (k, v) => (v && typeof v === 'object' && (v.isObject3D || v.mesh)) ? undefined : v;
+  daySnap = { g: JSON.parse(JSON.stringify(G, skip)), affairId: G.affair ? G.affair.id : null,
+    npcs: npcs.map(n => ({ status: n.status, notes: n.notes.slice(), searched: n.searched, found: n.found, affection: n.affection, mark: n.mark, nervous: n.nervous })) };
+}
+function retryDay() {
+  if (!daySnap) { newGame(); G.paused = false; return; }
+  clearEvents();
+  G = JSON.parse(JSON.stringify(daySnap.g));
+  G.affair = daySnap.affairId != null ? npcs.find(n => n.id === daySnap.affairId) : null;
+  G.pkg = null; G.bday = null; G.cut = null; G.portraitNpc = null;
+  npcs.forEach((n, i) => {
+    const o = daySnap.npcs[i], wasGone = n.status !== 'active';
+    Object.assign(n, o, { notes: o.notes.slice() });
+    if (n.status === 'active' && wasGone) { scene.add(n.mesh); scene.add(n.tag); n.plate.material.opacity = 1; }
+  });
+  resetFloor();
+  G.over = false; G.ui = false; G.paused = false;
+  $('#hearts').hidden = true; if (ceo) ceo.mesh.visible = false;
+  updateHUD();
+  toast('Take two', `It's ${DAYS[G.day]} at 9 AM again. You keep everything you knew this morning.`);
 }
 function checkEnd() {
   if (G.over) return;
@@ -1152,7 +1181,8 @@ function gameOver(win, head, text) {
   const body = win
     ? `<div class="memo"><h2>MEMO: CONGRATULATIONS</h2><p>All three agents are in federal custody. ORCHID ships on schedule and ORCH closes at <b>$${G.stock.toFixed(2)}</b>.</p><p>Wrongful accusations: ${G.wrong}. Scandal: ${Math.round(G.scandal)}%.${G.affair ? ` Your spouse still doesn't know about ${G.affair.first}. Yet.` : ''}</p><p>The board would like to discuss your bonus.</p>${fortune}</div>`
     : `<div class="memo"><h2>${head.toUpperCase()}</h2><p>${text}</p><p>Agents caught: ${caught}/3.</p><p><b>The agents were:</b><br>${reveal}</p>${fortune}</div>`;
-  dialog(win ? 'You win' : 'Game over', body, [{ label: 'Start a new week', fn: () => { newGame(); G.paused = false; } }], true);
+  const restart = { label: 'Start over from Monday', fn: () => { newGame(); G.paused = false; } };
+  dialog(win ? 'You win' : 'Game over', body, win ? [{ label: 'Play a new week', fn: restart.fn }] : [{ label: `Retry ${DAYS[G.day]} from 9 AM`, fn: retryDay }, restart], true);
 }
 
 /* ---------------- HUD ---------------- */
@@ -2172,9 +2202,39 @@ $('#coverbtn').onclick = () => { if (G.lastCover && !G.paused && !G.ui) showCove
 $('#prompt').addEventListener('click', () => { if (isTouch) interact(); });
 $('#brokerbtn').onclick = () => { if (!G.paused && !G.ui) openBroker('phone'); }; $('#heldbtn').onclick = consume;
 $('#dlg-x').onclick = closeDialog; $('#dos-x').onclick = closeDossier; $('#dosbtn').onclick = () => $('#dossier').hidden ? openDossier() : closeDossier();
-$('#startbtn').onclick = () => { if ($('#intro').hidden) dialog('Orchid Microsystems', `<div class="memo" style="font-size:14px">ORCHID 56K-on-a-chip. Est. 1991. Mountain View, CA.<br><br>Day: ${DAYS[G.day]}. Agents caught: ${G.arrests}/3. Wrong calls: ${G.wrong}.</div>`, [{ label: 'Resume' }, { label: 'Quit and start over', cls: 'danger', fn: () => { newGame(); G.paused = false; } }]); };
+$('#startbtn').onclick = () => { if ($('#intro').hidden) dialog('Orchid Microsystems', `<div class="memo" style="font-size:14px">ORCHID 56K-on-a-chip. Est. 1991. Mountain View, CA.<br><br>Day: ${DAYS[G.day]}. Agents caught: ${G.arrests}/3. Wrong calls: ${G.wrong}.</div>`, [{ label: 'Resume' }, { label: 'Play the anthem again', fn: playAnthem }, { label: 'Quit and start over', cls: 'danger', fn: () => { newGame(); G.paused = false; } }]); };
 if (isTouch) { $('#touchkeys').hidden = false; $('#deskkeys').hidden = true; }
-$('#startgame').onclick = () => { $('#intro').hidden = true; G.ui = false; G.paused = false; toast('Welcome', 'Walk the floor. Talk to people. Trust nobody completely.'); if (isTouch && innerHeight > innerWidth) toast('Tip', 'Turn your phone sideways for a better view.'); if (!isTouch) canvas.click(); };
+let actx = null;
+function playAnthem() {
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === 'suspended') actx.resume();
+  } catch (e) { return; }
+  const ctx = actx, q = 0.46, t0 = ctx.currentTime + 0.12;
+  const f = n => 440 * Math.pow(2, n / 12); // semitones from A4
+  // O say can you see, by the dawn's early light, what so proudly we hailed at the twilight's last gleaming
+  const F4 = -4, D4 = -7, Bb3 = -11, Bb4 = 1, D5 = 5, C5 = 3, E4 = -5, A4 = 0, G4 = -2;
+  const mel = [[F4, .75], [D4, .25], [Bb3, 1], [D4, 1], [F4, 1], [Bb4, 2], [D5, .75], [C5, .25], [Bb4, 1], [D4, 1], [E4, 1], [F4, 2], [F4, .5], [F4, .5],
+    [D5, 1.5], [C5, .5], [Bb4, 1], [A4, 2], [G4, .5], [A4, .5], [Bb4, 1], [Bb4, 1], [F4, 1], [D4, 1], [Bb3, 2.5]];
+  const bass = [[Bb3 - 12, 3], [Bb3 - 12, 3], [Bb3 - 12, 3], [F4 - 24, 3], [Bb3 - 12, 3], [F4 - 24, 3], [Bb3 - 12, 3], [F4 - 24, 2], [Bb3 - 12, 2.5]];
+  const out = ctx.createGain(); out.gain.value = 0.16; out.connect(ctx.destination);
+  const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2400; lp.connect(out);
+  const voice = (semi, start, dur, type, vol) => {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type; o.frequency.value = f(semi); o.connect(g); g.connect(lp);
+    g.gain.setValueAtTime(0, start); g.gain.linearRampToValueAtTime(vol, start + 0.03); g.gain.setValueAtTime(vol * 0.8, start + dur * 0.6); g.gain.linearRampToValueAtTime(0, start + dur - 0.02);
+    o.start(start); o.stop(start + dur);
+  };
+  let t = t0; for (const [n, d] of mel) { voice(n, t, d * q, 'sawtooth', 0.5); voice(n + 12, t, d * q, 'triangle', 0.18); t += d * q; }
+  let tb = t0 + q; for (const [n, d] of bass) { voice(n, tb, d * q * 0.95, 'triangle', 0.45); tb += d * q; }
+  // snare roll before it starts
+  const len = 0.5, buf = ctx.createBuffer(1, ctx.sampleRate * len, ctx.sampleRate), data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (0.5 + 0.5 * Math.sin(i / ctx.sampleRate * 2 * Math.PI * 28)) * (i / data.length);
+  const sn = ctx.createBufferSource(), sg = ctx.createGain(); sn.buffer = buf; sg.gain.value = 0.35; sn.connect(sg); sg.connect(out); sn.start(Math.max(ctx.currentTime, t0 - 0.45));
+  toast('Over the PA', 'The Star-Spangled Banner crackles through the ceiling speakers. Somebody in Sales salutes.');
+}
+$('#startgame').onclick = () => {
+  playAnthem(); $('#intro').hidden = true; G.ui = false; G.paused = false; toast('Welcome', 'Walk the floor. Talk to people. Trust nobody completely.'); if (isTouch && innerHeight > innerWidth) toast('Tip', 'Turn your phone sideways for a better view.'); if (!isTouch) canvas.click(); };
 
 // touch controls
 const joy = { x: 0, y: 0 };
