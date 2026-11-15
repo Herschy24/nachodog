@@ -141,6 +141,27 @@ button{touch-action:manipulation}
 .rumors summary{cursor:pointer;font-weight:bold}
 .rumors ul{margin:6px 0 0;padding-left:18px}
 .rumors small{color:#777}
+.cwin{width:min(900px,100%)}
+.win .body.cbody{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;align-items:start}
+.cprevbox{display:flex;flex-direction:column;gap:6px;align-items:center}
+#cprev{width:300px;max-width:100%;height:auto;aspect-ratio:300/380;display:block;cursor:grab;touch-action:none;background:#2f6e6e}
+.cview{display:flex;gap:4px}
+.cview button[aria-pressed="true"],.cseg[aria-pressed="true"]{border-color:var(--dark) var(--hi) var(--hi) var(--dark);box-shadow:inset 1px 1px 0 var(--shadow);background:#d8d8d8;font-weight:bold}
+.cctl{display:flex;flex-direction:column;gap:8px;min-width:0}
+.crow{display:grid;grid-template-columns:96px minmax(0,1fr);gap:8px;align-items:center}
+.clabel{font-size:12px;font-weight:bold}
+.cfield input[type=range]{width:100%}
+.cends{display:flex;justify-content:space-between;font-size:10.5px;color:#444;margin-top:-2px}
+.ctext{width:100%;font:13px var(--ui);padding:4px 6px;background:#fff;color:var(--ink)}
+.cswatches{display:flex;flex-wrap:wrap;gap:5px}
+.csw{width:24px;height:24px;border:2px solid;border-color:var(--shadow) var(--hi) var(--hi) var(--shadow);cursor:pointer;padding:0}
+.csw.none{background:repeating-linear-gradient(45deg,#fff 0 4px,#ddd 4px 8px)}
+.csw[aria-pressed="true"]{outline:2px solid var(--title-a);outline-offset:2px}
+.csegs{display:flex;flex-wrap:wrap;gap:4px}
+.cseg{padding:3px 8px;font-size:12px}
+.cfoot{display:flex;gap:8px;padding:8px 12px 12px;align-items:center}
+.cfoot #startceo{font-weight:bold;padding:6px 20px}
+@media (max-width:640px){.win .body.cbody{grid-template-columns:1fr}.crow{grid-template-columns:1fr}#cprev{width:200px}}
 @media (prefers-reduced-motion:reduce){.heart{animation:none;bottom:auto;top:15%}.heart.big{animation:none;transform:translate(-50%,-50%)}}
 @media (prefers-reduced-motion:reduce){.toast{animation:none}#fade{transition:none}}
 </style>
@@ -217,11 +238,25 @@ button{touch-action:manipulation}
           <kbd>Q</kbd><span>Eat or drink whatever you bought from the vending machines</span>
           <kbd>E</kbd><span>at your own desk: sit down, trade, or crawl into the bed hidden under it</span>
         </div>
-        <button class="b95" id="startgame" style="align-self:flex-end;font-weight:bold;padding:6px 22px">Clock in</button>
+        <button class="b95" id="startgame" style="align-self:flex-end;font-weight:bold;padding:6px 22px">Next: create your CEO</button>
       </div>
     </div>
   </div>
 
+  <div id="creator" class="layer" hidden>
+    <div class="win bevel cwin" role="dialog" aria-modal="true" aria-labelledby="ctitle">
+      <div class="tb"><span id="ctitle">CEO_SETUP.EXE — Who's running this company?</span></div>
+      <div class="body cbody">
+        <div class="cprevbox">
+          <canvas id="cprev" class="sunk" width="300" height="380" aria-label="Preview of your CEO"></canvas>
+          <div class="cview"><button class="b95" id="cv-face" aria-pressed="true">Face</button><button class="b95" id="cv-body" aria-pressed="false">Full body</button></div>
+          <small>Drag the picture to turn around.</small>
+        </div>
+        <div class="cctl" id="cctl"></div>
+      </div>
+      <div class="cfoot"><button class="b95" id="crand">Randomize</button><span class="spacer"></span><button class="b95" id="startceo">Start the week</button></div>
+    </div>
+  </div>
   <div id="hearts" hidden></div>
   <div id="fade"></div>
 </div>
@@ -352,6 +387,12 @@ const mats = {
 
 /* ---------------- world building ---------------- */
 const colliders = [];
+mats.metal = new THREE.MeshPhongMaterial({ color: 0x8a8d92, shininess: 60, specular: 0x444444 });
+function chairBase(x, z) {
+  box(x, 0.24, z, 0.05, 0.42, 0.05, mats.metal, false);
+  box(x, 0.06, z, 0.58, 0.04, 0.06, mats.chair, false); box(x, 0.06, z, 0.06, 0.04, 0.58, mats.chair, false);
+  for (const [dx, dz] of [[.28, 0], [-.28, 0], [0, .28], [0, -.28]]) box(x + dx, 0.025, z + dz, 0.05, 0.05, 0.05, mats.black, false);
+}
 function box(x, y, z, w, h, d, mat, collide = true) {
   const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
   m.position.set(x, y, z); scene.add(m);
@@ -424,7 +465,7 @@ ROWS.forEach((cz, ri) => COLS.forEach((cx, ci) => {
   box(cx, 0.785, cz - 0.82, 0.5, 0.03, 0.16, mats.beige, false);
   box(cx + 0.6, 0.86, cz - 1.15, 0.36, 0.2, 0.28, mats.white, false); // in-tray / papers
   // chair
-  box(cx, 0.45, cz - 0.2, 0.5, 0.08, 0.5, mats.chair, false);
+  box(cx, 0.45, cz - 0.2, 0.5, 0.08, 0.5, mats.chair, false); chairBase(cx, cz - 0.2);
   box(cx, 0.75, cz + 0.05, 0.5, 0.55, 0.06, mats.chair, false);
   const num = 100 + ri * 4 + ci + 1;
   desks.push({ x: cx, z: cz, row: ri, num, home: { x: cx, z: cz - 0.15 } });
@@ -540,11 +581,11 @@ box(14.3, 0.76, -3.8, 0.9, 0.06, 1.9, mats.deskDark); box(14.3, 0.37, -4.7, 0.86
 colliders.push({ minX: 13.85, maxX: 14.75, minZ: -4.75, maxZ: -2.85 });
 box(14.35, 0.98, -4.35, 0.4, 0.36, 0.4, mats.beige, false);
 box(14.1, 0.82, -3.4, 0.3, 0.06, 0.4, mats.white, false); box(14.1, 0.88, -3.35, 0.28, 0.06, 0.38, M(0xe8d9a0), false);
-box(15.25, 0.45, -3.8, 0.5, 0.08, 0.5, mats.chair, false); box(15.5, 0.8, -3.8, 0.06, 0.65, 0.5, mats.chair, false);
+box(15.25, 0.45, -3.8, 0.5, 0.08, 0.5, mats.chair, false); chairBase(15.25, -3.8); box(15.5, 0.8, -3.8, 0.06, 0.65, 0.5, mats.chair, false);
 // paralegal desk against the south glass
 box(12.4, 0.74, 0.95, 1.8, 0.06, 0.7, mats.desk); box(12.4, 1.0, 1.05, 0.5, 0.42, 0.42, mats.beige, false);
 box(11.6, 0.6, 0.95, 0.04, 1.2, 0.6, mats.white, false); // stack of binders
-box(12.4, 0.45, 0.2, 0.5, 0.08, 0.5, mats.chair, false); box(12.4, 0.75, -0.05, 0.5, 0.55, 0.06, mats.chair, false);
+box(12.4, 0.45, 0.2, 0.5, 0.08, 0.5, mats.chair, false); chairBase(12.4, 0.2); box(12.4, 0.75, -0.05, 0.5, 0.55, 0.06, mats.chair, false);
 box(10.6, 0.65, -5.5, 0.6, 1.3, 0.6, mats.grey); box(11.3, 0.65, -5.5, 0.6, 1.3, 0.6, mats.grey);
 const legalSign = makeLabel('LEGAL', 'Office of the General Counsel'); legalSign.position.set(9.9, 2.35, -2.25); scene.add(legalSign);
 const legalPlaque = makeLabel('M. THORNBURY, ESQ.', 'General Counsel', 256, 72); legalPlaque.scale.set(0.9, 0.25, 1); legalPlaque.position.set(13.8, 0.9, -3.8); scene.add(legalPlaque);
@@ -640,15 +681,16 @@ function drawFace(f, mode) {
     gr = g.createRadialGradient(cx + s * ex, ey - 4, 4, cx + s * ex, ey - 4, 30);
     gr.addColorStop(0, 'rgba(60,30,20,.16)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, FW, FH);
   }
-  if (f.freckles) { g.fillStyle = 'rgba(140,80,40,.45)'; for (let i = 0; i < 40; i++) { const s = Math.random() < .5 ? -1 : 1; ell(g, cx + s * rnd(20, 90), fy(1.62) + rnd(-10, 22), 1.6, 1.6); g.fill(); } }
+  if (f.freckles) { g.fillStyle = 'rgba(165,95,55,.4)'; for (let i = 0; i < 26; i++) { const s = Math.random() < .5 ? -1 : 1; ell(g, cx + s * rnd(14, 62), fy(1.58) + rnd(-6, 10), 2.1, 2.1); g.fill(); } }
   if (f.wrinkles) {
     g.strokeStyle = 'rgba(70,40,30,.28)'; g.lineWidth = 2;
     for (let i = 0; i < 3; i++) { g.beginPath(); g.moveTo(cx - 44 + i * 4, fy(1.08) + i * 9); g.quadraticCurveTo(cx, fy(1.04) + i * 9, cx + 44 - i * 4, fy(1.08) + i * 9); g.stroke(); }
     for (const s of [-1, 1]) { for (let i = -1; i <= 1; i++) { g.beginPath(); g.moveTo(cx + s * (ex + 26), ey + i * 6); g.lineTo(cx + s * (ex + 36), ey + i * 9); g.stroke(); } g.beginPath(); g.moveTo(cx + s * 22, fy(1.72)); g.quadraticCurveTo(cx + s * 34, my - 6, cx + s * 30, my + 8); g.stroke(); }
   }
   // nose: nostrils + side shadow
-  g.fillStyle = 'rgba(70,30,25,.55)'; for (const s of [-1, 1]) { ell(g, cx + s * 9, fy(1.715), 5, 3); g.fill(); }
-  g.strokeStyle = 'rgba(80,40,30,.25)'; g.lineWidth = 3; g.beginPath(); g.moveTo(cx - 8, fy(1.5)); g.quadraticCurveTo(cx - 12, fy(1.62), cx - 16, fy(1.7)); g.stroke();
+  const nz = f.nose || 1;
+  g.fillStyle = 'rgba(70,30,25,.35)'; for (const s of [-1, 1]) { ell(g, cx + s * 8 * nz, fy(1.72) + (nz - 1) * 5, 3.5 * nz, 2.2); g.fill(); }
+  { const gr = g.createRadialGradient(cx, fy(1.75), 2, cx, fy(1.75), 26 * nz); gr.addColorStop(0, 'rgba(90,40,30,.16)'); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, FW, FH); }
   // eyes
   for (const s of [-1, 1]) {
     const x = cx + s * ex, rx = 19 * f.eye, ry = 11.5 * f.eye;
@@ -691,8 +733,11 @@ function drawFace(f, mode) {
     g.save(); ell(g, cx, my + 3, 19, 11); g.clip(); g.fillStyle = '#f2efe6'; g.fillRect(cx - 19, my - 9, 38, 7); g.fillStyle = '#b5505a'; ell(g, cx, my + 13, 12, 6); g.fill(); g.restore();
     g.strokeStyle = f.lip; g.lineWidth = f.lipstick ? 6 : 4.5; ell(g, cx, my + 3, 20, 12); g.stroke();
   } else {
-    if (f.lipstick) { g.fillStyle = f.lip; g.beginPath(); g.moveTo(cx - mw, my); g.quadraticCurveTo(cx - 10, my - 9, cx, my - 5); g.quadraticCurveTo(cx + 10, my - 9, cx + mw, my); g.quadraticCurveTo(cx, my + 12 + f.smile * 6, cx - mw, my); g.fill(); }
-    else { g.fillStyle = f.lip; g.globalAlpha = .55; g.beginPath(); g.moveTo(cx - mw + 3, my + 1); g.quadraticCurveTo(cx, my + 11 + f.smile * 6, cx + mw - 3, my + 1); g.quadraticCurveTo(cx, my + 4, cx - mw + 3, my + 1); g.fill(); g.globalAlpha = 1; }
+    const lf = f.lipFull || 0.8;
+    g.fillStyle = f.lip; g.globalAlpha = f.lipstick ? 1 : 0.6;
+    g.beginPath(); g.moveTo(cx - mw, my); g.quadraticCurveTo(cx - 13, my - 8 * lf, cx - 4, my - 6 * lf); g.quadraticCurveTo(cx, my - 3.5 * lf, cx + 4, my - 6 * lf); g.quadraticCurveTo(cx + 13, my - 8 * lf, cx + mw, my); g.closePath(); g.fill();
+    g.beginPath(); g.moveTo(cx - mw + 2, my + 1); g.quadraticCurveTo(cx, my + (9 + f.smile * 3) * lf + 3, cx + mw - 2, my + 1); g.closePath(); g.fill();
+    g.globalAlpha = 1; g.fillStyle = 'rgba(255,255,255,.2)'; ell(g, cx, my + 5.5 * lf, 7 * lf, 1.8); g.fill();
     const sm = mode.angry ? -1.2 : f.smile;
     g.strokeStyle = 'rgba(60,20,20,.85)'; g.lineWidth = 3.2; g.beginPath(); g.moveTo(cx - mw, my - sm * 3 + (mode.angry ? 6 : 0)); g.quadraticCurveTo(cx, my + sm * 10, cx + mw, my - sm * 3 + (mode.angry ? 6 : 0)); g.stroke();
   }
@@ -712,12 +757,51 @@ function drawFace(f, mode) {
   const t = new THREE.CanvasTexture(c); t.anisotropy = 4; t.encoding = THREE.sRGBEncoding; return t;
 }
 
+const HAIRSTYLES = ['Short', 'Long', 'Balding', 'Perm', 'Pompadour', 'Bob', 'Ponytail', 'Crew cut', 'Bald', 'Mullet'];
+const FEM = new Set(['Sandra', 'Linda', 'Michelle', 'Brenda', 'Karen', 'Denise', 'Yuki', 'Margaret']);
+const prand = i => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+function randomLook(g) {
+  const fem = g > 0.5;
+  return {
+    gender: g, skin: pick(SKIN), hair: pick(HAIR), style: fem ? pick([1, 5, 6, 3, 0, 1, 5, 9]) : pick([0, 2, 4, 7, 9, 8, 0, 7, 3]),
+    eyes: pick(IRIS), nose: rnd(0.8, 1.3) * (fem ? 0.92 : 1.05), jaw: clamp(g + rnd(-0.2, 0.2), 0, 1),
+    facial: !fem && Math.random() < .35 ? pick([1, 2, 3, 4]) : 0, glasses: Math.random() < .32 ? pick([1, 2]) : 0, frame: pick(['#1a1a1a', '#5a3a1a', '#b08a3a', '#7a2030']),
+    suit: pick(SHIRT), pants: pick(PANTS), tie: Math.random() < (fem ? .2 : .65) ? pick([0x8b0000, 0x1a237e, 0x4a148c, 0xbfa000, 0x2e7d32]) : null,
+    shoes: pick([0x1a1410, 0x3a2414, 0x222222, 0xe8e4dc, 0xe8e4dc]), lipstick: fem && Math.random() < .45, lipColor: pick(LIPSTICK),
+    smile: rnd(-0.3, 1.1), lookDir: rnd(-1.5, 1.5), eyeSize: rnd(.92, 1.1), browTilt: rnd(-3, 3),
+    freckles: Math.random() < .25, wrinkles: Math.random() < .12, blush: Math.random() < .35, mole: Math.random() < .15,
+  };
+}
+function faceFromLook(L) {
+  const g = L.gender, grey = L.hair === 0x8c8c8c || L.hair === 0xc8c8c8, light = [0xf1c9a5, 0xf3d4b5, 0xe0ac7e].includes(L.skin);
+  return {
+    iris: L.eyes, eye: (L.eyeSize || 1) * (1 + g * 0.07), look: L.lookDir || 0, lashes: g > 0.5,
+    brow: 7.5 - 3.8 * g, browArch: 1 + 6 * g, browTilt: L.browTilt || 0, browCol: shade(hexs(L.hair), 0.8), hairCol: hexs(L.hair),
+    lip: L.lipstick ? L.lipColor : mix(hexs(L.skin), '#9a3040', 0.2 + 0.22 * g), lipstick: !!L.lipstick, lipFull: 0.55 + 0.6 * g, smile: L.smile,
+    glasses: L.glasses, frame: L.frame, facial: L.facial, freckles: light && L.freckles, wrinkles: grey || L.wrinkles, blush: L.blush, mole: L.mole, nose: L.nose,
+  };
+}
+// a sculpted head: narrower jaw, slight cheekbones, flatter face front, chin forward
+function headGeo(r, jaw, ...args) {
+  const geo = new THREE.SphereGeometry(r, ...args), p = geo.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+    let x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+    const t = clamp(-y / r, 0, 1), tt = t * t;
+    x *= 1 - jaw * tt; z *= 1 - 0.16 * tt;
+    if (z > 0) { z *= 0.93 + 0.07 * (1 - Math.min(1, Math.abs(x) / r)); z += r * 0.07 * Math.sin(Math.PI * t) * (z / r); }
+    x *= 1 + 0.045 * Math.exp(-((y / r + 0.12) ** 2) / 0.02);
+    p.setXYZ(i, x, y, z);
+  }
+  geo.computeVertexNormals(); return geo;
+}
 function makePerson(opts = {}) {
-  const g = new THREE.Group();
-  const skinHex = pick(SKIN), hairHex = pick(HAIR);
-  const shirtM = M(pick(SHIRT)), skinM = M(skinHex), hairM = M(hairHex), pantsM = M(pick(PANTS));
+  const gen = opts.gender != null ? opts.gender : opts.name ? (FEM.has(opts.name.split(' ')[0]) ? rnd(.72, .95) : rnd(.05, .3)) : Math.random();
+  const L = opts.look ? Object.assign({}, opts.look) : randomLook(gen);
+  if (opts.suit) L.suit = opts.suit;
+  if (L.pants == null) L.pants = L.suit;
+  const g = new THREE.Group(), gd = L.gender;
+  const shirtM = M(L.suit), skinM = M(L.skin), hairM = M(L.hair), pantsM = M(L.pants), shoeM = M(L.shoes);
   const add = (geo, m, x, y, z, parent = g) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); parent.add(o); return o; };
-  const shoeHex = pick([0x1a1410, 0x3a2414, 0x222222, 0xe8e4dc, 0xe8e4dc]); const shoeM = M(shoeHex);
   const mkLeg = x => {
     const hip = new THREE.Group(); hip.position.set(x, 0.82, 0); g.add(hip);
     add(new THREE.BoxGeometry(0.16, 0.44, 0.2), pantsM, 0, -0.21, 0, hip);
@@ -727,62 +811,54 @@ function makePerson(opts = {}) {
     return { hip, knee };
   };
   const legL = mkLeg(-0.1), legR = mkLeg(0.1);
-  add(new THREE.BoxGeometry(0.46, 0.62, 0.26), shirtM, 0, 1.11, 0);
+  const tw = 0.46 - 0.07 * gd, ax = 0.3 - 0.035 * gd;
+  add(new THREE.BoxGeometry(tw, 0.62, 0.26), shirtM, 0, 1.11, 0);
   add(new THREE.BoxGeometry(0.2, 0.06, 0.02), M(0xf2efe6), 0, 1.4, 0.13);
-  const hasTie = Math.random() < .55;
-  if (hasTie) add(new THREE.BoxGeometry(0.07, 0.4, 0.02), M(pick([0x8b0000, 0x1a237e, 0x4a148c, 0xbfa000, 0x2e7d32])), 0, 1.17, 0.14);
+  if (L.tie != null) add(new THREE.BoxGeometry(0.07, 0.4, 0.02), M(L.tie), 0, 1.17, 0.14);
   const mkArm = x => {
     const sh = new THREE.Group(); sh.position.set(x, 1.38, 0); g.add(sh);
-    add(new THREE.BoxGeometry(0.12, 0.56, 0.14), shirtM, 0, -0.27, 0, sh);
+    add(new THREE.BoxGeometry(0.12 - 0.015 * gd, 0.56, 0.14), shirtM, 0, -0.27, 0, sh);
     add(new THREE.IcosahedronGeometry(0.055, 1), skinM, 0, -0.6, 0, sh);
     return sh;
   };
-  const armL = mkArm(-0.3), armR = mkArm(0.3);
-  add(new THREE.CylinderGeometry(0.055, 0.065, 0.12, 10), skinM, 0, 1.46, 0);
+  const armL = mkArm(-ax), armR = mkArm(ax);
+  add(new THREE.CylinderGeometry(0.05 - 0.008 * gd, 0.062 - 0.008 * gd, 0.12, 12), skinM, 0, 1.46, 0);
 
   const head = new THREE.Group(); head.position.set(0, 1.63, 0); head.scale.set(0.95, 1.1, 1.02); g.add(head);
-  add(new THREE.SphereGeometry(0.16, 24, 18), skinM, 0, 0, 0, head);
-  // jaw/chin
-  const jaw = add(new THREE.SphereGeometry(0.115, 16, 12), skinM, 0, -0.07, 0.03, head); jaw.scale.set(1, 0.8, 1);
-  // nose & ears
-  const nose = add(new THREE.ConeGeometry(0.026, 0.07, 4), skinM, 0, -0.015, 0.162, head); nose.rotation.x = -0.35; nose.rotation.y = Math.PI / 4; nose.scale.set(1, 1, 0.75);
-  add(new THREE.SphereGeometry(0.02, 8, 6), skinM, 0, -0.045, 0.175, head);
-  for (const s of [-1, 1]) { const e = add(new THREE.SphereGeometry(0.036, 10, 8), skinM, s * 0.155, -0.01, -0.005, head); e.scale.set(0.45, 1, 0.75); }
+  const jaw = 0.2 + 0.22 * L.jaw;
+  add(headGeo(0.16, jaw, 32, 24), skinM, 0, 0, 0, head);
+  // nose: bridge, tip and two wings
+  const ng = new THREE.Group(); ng.position.set(0, -0.006, 0.147); ng.scale.setScalar(L.nose); head.add(ng);
+  add(new THREE.SphereGeometry(0.012, 10, 8), skinM, 0, 0.012, 0.004, ng).scale.set(0.85, 2.3, 1);
+  add(new THREE.SphereGeometry(0.0145, 12, 10), skinM, 0, -0.013, 0.013, ng).scale.set(1.05, 0.9, 1);
+  for (const s of [-1, 1]) add(new THREE.SphereGeometry(0.0085, 8, 6), skinM, s * 0.012, -0.017, 0.006, ng);
+  for (const s of [-1, 1]) { const e = add(new THREE.SphereGeometry(0.036, 10, 8), skinM, s * 0.153, -0.005, -0.005, head); e.scale.set(0.42, 1, 0.72); }
 
-  const grey = hairHex === 0x8c8c8c || hairHex === 0xc8c8c8;
-  const light = [0xf1c9a5, 0xf3d4b5, 0xe0ac7e].includes(skinHex);
-  const lipstick = Math.random() < .22;
-  const f = {
-    iris: pick(IRIS), eye: rnd(0.9, 1.12), look: rnd(-1.5, 1.5), lashes: Math.random() < .45,
-    brow: rnd(3.5, 8), browArch: rnd(0, 7), browTilt: rnd(-4, 4), browCol: shade(hexs(hairHex), grey ? 0.75 : 0.8), hairCol: hexs(hairHex),
-    lip: lipstick ? pick(LIPSTICK) : mix(hexs(skinHex), '#9a3040', 0.45), lipstick, smile: rnd(-0.3, 1.1),
-    glasses: Math.random() < .32 ? (Math.random() < .5 ? 1 : 2) : 0, frame: pick(['#1a1a1a', '#5a3a1a', '#b08a3a', '#7a2030']),
-    facial: !lipstick && Math.random() < .3 ? pick([1, 2, 3, 4]) : 0, freckles: light && Math.random() < .25,
-    wrinkles: grey || Math.random() < .12, blush: Math.random() < .35, mole: Math.random() < .15,
-  };
+  const f = faceFromLook(L);
   const tex = { n: drawFace(f, {}), b: drawFace(f, { blink: true }), t: drawFace(f, { talk: true }) };
   if (opts.angry) { tex.a = drawFace(f, { angry: true }); tex.at = drawFace(f, { angry: true, talk: true }); }
-  if (opts.suit) { const sm = M(opts.suit); g.traverse(o => { if (o.isMesh && o.material === shirtM) o.material = sm; }); }
   const faceMat = new THREE.MeshLambertMaterial({ map: tex.n, transparent: true, depthWrite: false });
-  const face = add(new THREE.SphereGeometry(0.1625, 32, 24, Math.PI / 2 - 0.8, 1.6, TH0, 1.55), faceMat, 0, 0, 0, head); face.renderOrder = 1;
+  const face = add(headGeo(0.1625, jaw, 32, 24, Math.PI / 2 - 0.8, 1.6, TH0, 1.55), faceMat, 0, 0, 0, head); face.renderOrder = 1;
 
   // hair
-  const hs = (r, ps, pl, ts, tl) => new THREE.SphereGeometry(r, 22, 14, ps, pl, ts, tl);
-  const cap = () => add(hs(0.172, 0, Math.PI * 2, 0, 1.02), hairM, 0, 0, 0, head);
+  const hs = (r, ps, pl, ts, tl) => new THREE.SphereGeometry(r, 24, 16, ps, pl, ts, tl);
+  const cap = (r = 0.172, tl = 1.02) => add(hs(r, 0, Math.PI * 2, 0, tl), hairM, 0, 0, 0, head);
   const back = (r, tl, gap = 1.5) => add(hs(r, Math.PI / 2 + gap / 2, Math.PI * 2 - gap, 0, tl), hairM, 0, 0, -0.004, head);
-  const style = Math.floor(Math.random() * 8);
-  if (style === 0) { cap(); back(0.168, 1.75); }
-  else if (style === 1) { cap(); back(0.176, 2.55, 1.35); const sl = add(new THREE.BoxGeometry(0.3, 0.34, 0.07), hairM, 0, -0.27, -0.12, head); }
-  else if (style === 2) { add(hs(0.168, Math.PI / 2 + 0.9, Math.PI * 2 - 1.8, 1.05, 0.75), hairM, 0, 0, 0, head); }
-  else if (style === 3) { cap(); back(0.18, 2.2, 1.3); for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2; const b = add(new THREE.IcosahedronGeometry(0.075, 0), hairM, Math.cos(a) * 0.13, 0.08 + Math.random() * 0.06, Math.sin(a) * 0.12 - 0.02, head); } }
-  else if (style === 4) { cap(); back(0.168, 1.7); const q = add(new THREE.SphereGeometry(0.11, 14, 10), hairM, 0.02, 0.13, 0.07, head); q.scale.set(1.3, 0.55, 0.9); }
-  else if (style === 5) { cap(); back(0.18, 2.15, 1.25); const fr = add(hs(0.176, Math.PI / 2 - 0.7, 1.4, 0.75, 0.32), hairM, 0, 0, 0, head); }
-  else if (style === 6) { cap(); back(0.169, 1.85); add(new THREE.SphereGeometry(0.055, 10, 8), hairM, 0, 0.04, -0.19, head); const p = add(new THREE.CylinderGeometry(0.04, 0.015, 0.22, 8), hairM, 0, -0.08, -0.21, head); p.rotation.x = 0.25; }
-  else { add(new THREE.BoxGeometry(0.31, 0.09, 0.3), hairM, 0, 0.15, -0.005, head); back(0.168, 1.65); }
-
+  switch (L.style) {
+    case 0: cap(); back(0.168, 1.75); break;
+    case 1: { cap(); back(0.178, 2.5, 1.3); const d = add(new THREE.SphereGeometry(0.16, 18, 12), hairM, 0, -0.2, -0.095, head); d.scale.set(1.08, 1.5, 0.5); break; }
+    case 2: add(hs(0.168, Math.PI / 2 + 0.9, Math.PI * 2 - 1.8, 1.05, 0.75), hairM, 0, 0, 0, head); break;
+    case 3: { cap(0.176); back(0.182, 2.2, 1.3); for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2, top = i % 2; add(new THREE.IcosahedronGeometry(0.058, 1), hairM, Math.cos(a) * (0.12 + top * 0.03), 0.07 + top * 0.06 + prand(i) * 0.03, Math.sin(a) * 0.12 - 0.03, head); } break; }
+    case 4: { cap(); back(0.168, 1.7); const q = add(new THREE.SphereGeometry(0.11, 16, 12), hairM, 0.02, 0.13, 0.07, head); q.scale.set(1.3, 0.55, 0.9); break; }
+    case 5: cap(); back(0.18, 2.15, 1.25); add(hs(0.177, Math.PI / 2 - 0.7, 1.4, 0.72, 0.34), hairM, 0, 0, 0, head); break;
+    case 6: { cap(); back(0.169, 1.85); add(new THREE.SphereGeometry(0.055, 10, 8), hairM, 0, 0.04, -0.19, head); const p = add(new THREE.CylinderGeometry(0.04, 0.015, 0.24, 10), hairM, 0, -0.09, -0.21, head); p.rotation.x = 0.25; break; }
+    case 7: cap(0.166, 1.1); back(0.164, 1.6); break;
+    case 8: break;
+    case 9: { cap(); back(0.17, 1.95, 1.6); const m = add(new THREE.SphereGeometry(0.15, 16, 12), hairM, 0, -0.17, -0.11, head); m.scale.set(0.85, 1.25, 0.45); break; }
+  }
   mergeRig(g);
-  const traits = { hair: HAIRCAT[hairHex] || 'dark', glasses: !!f.glasses, tie: hasTie, shoes: shoeHex === 0xe8e4dc, beard: [1, 2, 3].includes(f.facial) };
-  g.userData = { traits, legL, legR, armL, armR, head, faceMat, tex, nextBlink: Math.random() * 4, blinkEnd: 0, shirt: shirtM.color.getHexString() };
+  const traits = { hair: HAIRCAT[L.hair] || 'dark', glasses: !!L.glasses, tie: L.tie != null, shoes: L.shoes === 0xe8e4dc, beard: [1, 2, 3].includes(L.facial) };
+  g.userData = { traits, look: L, f, legL, legR, armL, armR, head, faceMat, tex, nextBlink: Math.random() * 4, blinkEnd: 0, shirt: shirtM.color.getHexString() };
   return g;
 }
 
@@ -905,7 +981,7 @@ function newGame() {
   const deskOrder = shuffle(desks);
   npcs = roster.map(([name, dept], i) => {
     const d = deskOrder[i];
-    const mesh = makePerson(); mesh.position.set(d.home.x, 0, d.home.z); mesh.rotation.y = Math.PI; scene.add(mesh);
+    const mesh = makePerson({ name }); mesh.position.set(d.home.x, 0, d.home.z); mesh.rotation.y = Math.PI; scene.add(mesh);
     const short = name.split(' ')[0][0] + '. ' + name.split(' ').slice(1).join(' ');
     const tag = makeLabel(name, dept); tag.position.set(d.home.x, 2.05, d.home.z); tag.visible = false; scene.add(tag);
     const plate = makeLabel('#' + d.num, short.toUpperCase(), 256, 64); plate.scale.set(0.62, 0.155, 1); plate.position.set(d.x + 1.5, 1.68, d.z + 1.4); scene.add(plate);
@@ -920,7 +996,7 @@ function newGame() {
     };
   });
   G = { min: 540, day: 0, leaks: 0, scandal: 0, morale: 70, stock: 24, paused: true, over: false, ui: false, affair: null, daily: {}, lastHour: 9, dayStart: { leaks: 0, stock: 24 }, arrests: 0, wrong: 0, said: {}, capture: null, coke: 0,
-    seated: false, covers: 0, lastCover: null, ceo: { hair: pick(['#3b2314', '#1b1b1b', '#8c8c8c', '#6a4a2a']), skin: pick(['#f1c9a5', '#e0ac7e', '#c68642', '#8d5524']), glasses: Math.random() < .4 },
+    seated: false, covers: 0, lastCover: null, ceo: ceoCoverInfo(),
     known: { MSS: {}, SVR: {}, AMAN: {} }, evidence: [], rumors: [],
     legal: { anger: 0, summoned: false, deadline: 0, log: [], memos: 0, nagAt: 0 },
     cash: 250000, short: 0, avg: 0, sec: 0, hist: [24], lastTick: 540, held: null, rush: null };
@@ -937,7 +1013,7 @@ function newGame() {
   npcs.forEach(n => { n.bathYes = n === lover || bathSpies.includes(n); });
   legalStaff.forEach(o => { scene.remove(o.mesh); scene.remove(o.tag); });
   const mkStaff = (id, name, title, home, rotY, suit) => {
-    const mesh = makePerson({ angry: true, suit }); mesh.position.set(home.x, 0, home.z); mesh.rotation.y = rotY; scene.add(mesh);
+    const mesh = makePerson({ angry: true, suit, name }); mesh.position.set(home.x, 0, home.z); mesh.rotation.y = rotY; scene.add(mesh);
     const tag = makeLabel(name, title); tag.visible = false; scene.add(tag);
     const o = { id, name, first: name.split(' ')[0], dept: 'Legal', title, mesh, tag, pos: mesh.position, home, rotY, status: 'active', state: 'desk', path: [], sit: 1, walkT: 0, walkAmp: 0, sip: 0, talking: false, angry: false };
     pose(o, 0); return o;
@@ -946,15 +1022,14 @@ function newGame() {
   para = mkStaff(101, 'Kyle Bentsen', 'Paralegal', { x: 12.4, z: 0.2 }, 0, null);
   legalStaff = [gc, para];
   extras.forEach(o => { scene.remove(o.mesh); scene.remove(o.tag); });
-  { const mesh = makePerson({ suit: 0x4a3f2e }); mesh.position.set(-8, 0, 13.3); mesh.rotation.y = Math.PI; scene.add(mesh);
+  { const mesh = makePerson({ suit: 0x4a3f2e, name: 'Vinnie' }); mesh.position.set(-8, 0, 13.3); mesh.rotation.y = Math.PI; scene.add(mesh);
     const h = mesh.userData.head, shades = M(0x0a0a0a);
     for (const sx of [-0.055, 0.055]) { const l = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.035, 0.02), shades); l.position.set(sx, 0.02, 0.165); h.add(l); }
     const br = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.008, 0.01), shades); br.position.set(0, 0.03, 0.17); h.add(br);
     const tag = makeLabel('Vinnie', '"Courier"'); tag.visible = false; scene.add(tag);
     dealer = { id: 102, name: 'Vinnie', first: 'Vinnie', dept: 'Courier', mesh, tag, pos: mesh.position, status: 'active', state: 'idle', sit: 0, walkT: 0, walkAmp: 0, sip: 0, talking: false };
     pose(dealer, 0); extras = [dealer]; }
-  if (ceo) scene.remove(ceo.mesh);
-  { const mesh = makePerson({ suit: 0x1d2433 }); mesh.visible = false; scene.add(mesh); ceo = { id: 999, mesh, pos: mesh.position, sit: 0, walkT: 0, walkAmp: 0, sip: 0, talking: false, state: 'cut' }; }
+  rebuildCeo();
   buildDeskProps(); clearEvents(); G.cut = null; $('#hearts').hidden = true;
   setupInteractables();
   player.x = 0; player.z = 11; yaw = 0; pitch = 0;
@@ -1642,10 +1717,10 @@ function makeCover() {
   g.fillStyle = sk; g.fillRect(cx - 24, 290, 48, 46);
   g.beginPath(); g.ellipse(cx - 72, hy + 6, 12, 22, 0, 0, 7); g.ellipse(cx + 72, hy + 6, 12, 22, 0, 0, 7); g.fill();
   g.beginPath(); g.ellipse(cx, hy, 74, 92, 0, 0, 7); g.fill();
-  const f = { iris: '#3b2414', eye: 1.05, look: 0, lashes: false, brow: 7, browArch: 3, browTilt: 0, browCol: hair, hairCol: hair, lip: '#9a5040', lipstick: false, smile: good ? 1.1 : -0.6, glasses: G.ceo.glasses ? 2 : 0, frame: '#1a1a1a', facial: 0, freckles: false, wrinkles: !good, blush: good, mole: false };
+  const f = Object.assign({}, faceFromLook(CEO_LOOK), { look: 0, smile: good ? 1.1 : -0.6, wrinkles: !good, blush: good });
   const face = drawFace(f, good ? {} : { angry: true }).image;
   g.drawImage(face, cx - 82, hy - 78, 164, 159);
-  g.fillStyle = hair; g.beginPath(); g.ellipse(cx, hy - 66, 78, 36, 0, Math.PI, 0); g.fill(); g.fillRect(cx - 78, hy - 70, 14, 50); g.fillRect(cx + 64, hy - 70, 14, 50);
+  if (!G.ceo.bald) { g.fillStyle = hair; g.beginPath(); g.ellipse(cx, hy - 66, 78, 36, 0, Math.PI, 0); g.fill(); g.fillRect(cx - 78, hy - 70, 14, 50); g.fillRect(cx + 64, hy - 70, 14, 50); }
   if (!good) { g.fillStyle = 'rgba(120,160,255,.6)'; g.beginPath(); g.ellipse(cx + 66, hy - 30, 6, 10, 0, 0, 7); g.fill(); }
   g.fillStyle = '#ffffff'; g.font = 'bold 96px Georgia, "Times New Roman", serif'; g.textAlign = 'center';
   g.lineWidth = 6; g.strokeStyle = 'rgba(0,0,0,.35)'; g.strokeText('TIMES', cx, 104); g.fillText('TIMES', cx, 104);
@@ -1656,6 +1731,7 @@ function makeCover() {
     ? [['THE SPYCATCHER', 'How one CEO is saving American silicon'], ['VISIONARY', 'Inside the mind behind ORCHID'], ['CEO OF THE YEAR?', 'Wall Street can\'t stop buying ORCH'], ['UNSTOPPABLE', 'Rivals fear the corner office'], ['THE NEW TITAN', 'Move over, Gates']]
     : [['ASLEEP AT THE WHEEL', 'Secrets pour out while the CEO naps'], ['THE MOLE\'S BEST FRIEND', 'How ORCHID walked out the front door'], ['WORST CEO IN AMERICA?', 'Employees, investors and lawyers weigh in'], ['IN OVER THEIR HEAD', 'The stock, the scandal, the silence'], ['HOW DID THIS HAPPEN?', 'A once-great company in free fall']];
   const [hd, sub] = pick(heads);
+  g.textAlign = 'center'; g.font = 'bold 15px Georgia, serif'; g.lineWidth = 4; g.strokeStyle = 'rgba(0,0,0,.6)'; g.strokeText((G.ceo.name || '').toUpperCase(), cx, 418); g.fillStyle = '#fff'; g.fillText((G.ceo.name || '').toUpperCase(), cx, 418);
   g.fillStyle = good ? '#111' : '#ffd84a'; g.fillRect(0, 432, W, 48);
   g.fillStyle = good ? '#ffd84a' : '#111'; g.font = `bold ${hd.length > 16 ? 26 : 32}px Georgia, serif`; g.fillText(hd, cx, 462);
   g.font = 'italic 13px Georgia, serif'; g.fillStyle = good ? '#fff' : '#222'; g.fillText(sub, cx, 476);
@@ -2281,6 +2357,118 @@ function openDossier() {
   $('#dossier').hidden = false;
 }
 
+/* ---------------- CEO character creator ---------------- */
+const CEO_DEFAULT = { name: 'Pat Sterling', gender: 0.2, skin: 0xe0ac7e, jaw: 0.25, nose: 1, eyes: '#3b2414', style: 4, hair: 0x3b2314, facial: 0, glasses: 0, frame: '#1a1a1a',
+  suit: 0x1d2433, tie: 0xb3122a, lipstick: 0, lipColor: '#a3243a', shoes: 0x1a1410, smile: 0.8, lookDir: 0, eyeSize: 1, browTilt: 0, freckles: false, wrinkles: false, blush: false, mole: false };
+let CEO_LOOK = Object.assign({}, CEO_DEFAULT);
+try { const saved = JSON.parse(localStorage.getItem('orchid.ceo') || 'null'); if (saved) Object.assign(CEO_LOOK, saved); } catch (e) {}
+const ceoCoverInfo = () => ({ hair: hexs(CEO_LOOK.hair), skin: hexs(CEO_LOOK.skin), glasses: !!CEO_LOOK.glasses, bald: CEO_LOOK.style === 8, name: CEO_LOOK.name || 'The CEO' });
+function disposeObj(o) { o.traverse(c => { if (c.geometry) c.geometry.dispose(); }); }
+function rebuildCeo() {
+  if (ceo) { scene.remove(ceo.mesh); disposeObj(ceo.mesh); }
+  const mesh = makePerson({ look: Object.assign({}, CEO_LOOK, { pants: CEO_LOOK.suit }) }); mesh.visible = false; scene.add(mesh);
+  ceo = { id: 999, mesh, pos: mesh.position, sit: 0, walkT: 0, walkAmp: 0, sip: 0, talking: false, state: 'cut' };
+  finishMaterials(scene);
+}
+const CC = [
+  { k: 'name', type: 'text', label: 'Name' },
+  { k: 'gender', type: 'range', label: 'Gender', min: 0, max: 1, step: 0.01, ends: ['Masculine', 'Feminine'] },
+  { k: 'skin', type: 'sw', label: 'Skin', opts: [0xf3d4b5, 0xf1c9a5, 0xe0ac7e, 0xd9a066, 0xc68642, 0x8d5524, 0x6b3e26, 0x4a2a1a] },
+  { k: 'jaw', type: 'range', label: 'Jaw', min: 0, max: 1, step: 0.01, ends: ['Square', 'Narrow'] },
+  { k: 'nose', type: 'range', label: 'Nose size', min: 0.65, max: 1.55, step: 0.01, ends: ['Button', 'Grand'] },
+  { k: 'eyes', type: 'sw', label: 'Eyes', opts: IRIS },
+  { k: 'style', type: 'seg', label: 'Hairstyle', opts: HAIRSTYLES },
+  { k: 'hair', type: 'sw', label: 'Hair colour', opts: [0x1b1b1b, 0x2a1a10, 0x3b2314, 0x6a4a2a, 0xa0522d, 0xb08a4a, 0xd9b26a, 0xe9e0c0, 0x8c8c8c, 0xc8c8c8] },
+  { k: 'facial', type: 'seg', label: 'Facial hair', opts: ['None', 'Mustache', 'Goatee', 'Beard', 'Stubble'] },
+  { k: 'glasses', type: 'seg', label: 'Glasses', opts: ['None', 'Round', 'Square'] },
+  { k: 'suit', type: 'sw', label: 'Suit', opts: [0x1d2433, 0x2b2b30, 0x111111, 0x4a4f58, 0x6b5a45, 0x5a1f2a, 0xb3122a, 0x1f4f5a, 0xe8e4d8] },
+  { k: 'tie', type: 'sw', label: 'Tie', opts: [null, 0xb3122a, 0x1a237e, 0xbfa000, 0x2e7d32, 0x4a148c, 0xff6a00, 0x111111] },
+  { k: 'lipstick', type: 'seg', label: 'Lipstick', opts: ['No', 'Yes'] },
+];
+const cs = new THREE.Scene(); cs.background = new THREE.Color(0x2f6e6e).convertSRGBToLinear();
+cs.add(new THREE.HemisphereLight(lc(0xffffff), lc(0x3a4a55), 0.95));
+{ const k = new THREE.DirectionalLight(lc(0xfff1e0), 1.25); k.position.set(1.5, 3, 2.5); cs.add(k); const r = new THREE.DirectionalLight(lc(0xb0d0ff), 0.55); r.position.set(-2, 2, -1.5); cs.add(r); }
+{ const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.62, 0.62, 0.04, 40), M(0x1d4848)); disc.position.y = -0.02; cs.add(disc); }
+const CPW = 300, CPH = 380;
+const ccam = new THREE.PerspectiveCamera(22, CPW / CPH, 0.05, 20);
+const crt = new THREE.WebGLRenderTarget(CPW, CPH); crt.texture.encoding = THREE.sRGBEncoding;
+const cbuf = new Uint8Array(CPW * CPH * 4), cimg = new ImageData(CPW, CPH);
+let cMesh = null, cRot = 0.35, cView = 'face', cDirty = true, cMode = 'start', cDrag = null;
+function rebuildPreview() {
+  if (cMesh) { cs.remove(cMesh); disposeObj(cMesh); }
+  cMesh = makePerson({ look: Object.assign({}, CEO_LOOK, { pants: CEO_LOOK.suit }) }); cs.add(cMesh); finishMaterials(cs);
+  pose({ mesh: cMesh, sit: 0, walkAmp: 0, walkT: 0, sip: 0, talking: false, state: 'cut', id: 998 }, 0);
+}
+function renderPreview(now) {
+  if (cDirty) { cDirty = false; rebuildPreview(); }
+  const ts = now / 1000, u = cMesh.userData;
+  cMesh.rotation.y = cRot + (cDrag ? 0 : Math.sin(ts * 0.6) * 0.25);
+  if (ts > u.nextBlink) { u.blinkEnd = ts + 0.13; u.nextBlink = ts + rnd(2, 5); }
+  u.faceMat.map = ts < u.blinkEnd ? u.tex.b : u.tex.n;
+  if (cView === 'face') { ccam.fov = 20; ccam.position.set(0, 1.62, 1.3); ccam.lookAt(0, 1.6, 0); }
+  else { ccam.fov = 30; ccam.position.set(0, 1.05, 3.7); ccam.lookAt(0, 0.95, 0); }
+  ccam.updateProjectionMatrix();
+  renderer.setRenderTarget(crt); renderer.render(cs, ccam); renderer.readRenderTargetPixels(crt, 0, 0, CPW, CPH, cbuf); renderer.setRenderTarget(null);
+  for (let y = 0; y < CPH; y++) cimg.data.set(cbuf.subarray((CPH - 1 - y) * CPW * 4, (CPH - y) * CPW * 4), y * CPW * 4);
+  $('#cprev').getContext('2d').putImageData(cimg, 0, 0);
+}
+function buildCreatorControls() {
+  const root = $('#cctl'); root.innerHTML = '';
+  for (const c of CC) {
+    const row = document.createElement('div'); row.className = 'crow';
+    const id = 'c-' + c.k;
+    row.innerHTML = `<label class="clabel" for="${id}">${c.label}</label>`;
+    const box = document.createElement('div'); box.className = 'cfield';
+    if (c.type === 'text') {
+      const inp = document.createElement('input'); inp.type = 'text'; inp.id = id; inp.maxLength = 24; inp.className = 'sunk ctext'; inp.value = CEO_LOOK.name || '';
+      inp.oninput = () => { CEO_LOOK.name = inp.value; }; box.appendChild(inp);
+    } else if (c.type === 'range') {
+      const inp = document.createElement('input'); inp.type = 'range'; inp.id = id; inp.min = c.min; inp.max = c.max; inp.step = c.step; inp.value = CEO_LOOK[c.k];
+      inp.oninput = () => { CEO_LOOK[c.k] = +inp.value; if (c.k === 'gender') { CEO_LOOK.jaw = +inp.value; $('#c-jaw').value = CEO_LOOK.jaw; } cDirty = true; };
+      const ends = document.createElement('div'); ends.className = 'cends'; ends.innerHTML = `<span>${c.ends[0]}</span><span>${c.ends[1]}</span>`;
+      box.append(inp, ends);
+    } else {
+      const grp = document.createElement('div'); grp.className = c.type === 'sw' ? 'cswatches' : 'csegs'; grp.setAttribute('role', 'radiogroup'); grp.setAttribute('aria-label', c.label); grp.id = id;
+      c.opts.forEach((o, i) => {
+        const b = document.createElement('button'); b.type = 'button';
+        const val = c.type === 'sw' ? o : i;
+        const cur = c.k === 'lipstick' ? (CEO_LOOK.lipstick ? 1 : 0) : CEO_LOOK[c.k];
+        b.setAttribute('aria-pressed', String(cur === val));
+        if (c.type === 'sw') { b.className = 'csw' + (o === null ? ' none' : ''); if (o !== null) b.style.background = typeof o === 'string' ? o : hexs(o); b.setAttribute('aria-label', o === null ? 'None' : (typeof o === 'string' ? o : hexs(o))); }
+        else { b.className = 'b95 cseg'; b.textContent = o; }
+        b.onclick = () => { CEO_LOOK[c.k] = c.k === 'lipstick' ? !!i : val; grp.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); cDirty = true; };
+        grp.appendChild(b);
+      });
+      box.appendChild(grp);
+    }
+    row.appendChild(box); root.appendChild(row);
+  }
+}
+function openCreator(mode) {
+  cMode = mode; G.ui = true; G.paused = true; releaseLock();
+  buildCreatorControls(); cDirty = true;
+  $('#startceo').textContent = mode === 'start' ? 'Start the week' : 'Back to work';
+  $('#creator').hidden = false;
+}
+function closeCreator() {
+  if (!(CEO_LOOK.name || '').trim()) CEO_LOOK.name = 'Pat Sterling';
+  try { localStorage.setItem('orchid.ceo', JSON.stringify(CEO_LOOK)); } catch (e) {}
+  $('#creator').hidden = true;
+  rebuildCeo(); G.ceo = ceoCoverInfo();
+  if (cMode === 'start') beginGame(); else { G.ui = false; G.paused = false; toast('New look', `Looking sharp, ${CEO_LOOK.name}.`); }
+}
+$('#startceo').onclick = closeCreator;
+$('#crand').onclick = () => {
+  const g = Math.random(), r = randomLook(g < .5 ? rnd(0, .3) : rnd(.7, 1));
+  Object.assign(CEO_LOOK, { gender: r.gender, skin: pick(CC[2].opts), jaw: r.jaw, nose: r.nose, eyes: r.eyes, style: r.style, hair: pick(CC[7].opts), facial: r.facial, glasses: r.glasses, suit: pick(CC[10].opts), tie: pick(CC[11].opts), lipstick: r.lipstick });
+  buildCreatorControls(); cDirty = true;
+};
+$('#cv-face').onclick = () => { cView = 'face'; $('#cv-face').setAttribute('aria-pressed', 'true'); $('#cv-body').setAttribute('aria-pressed', 'false'); };
+$('#cv-body').onclick = () => { cView = 'body'; $('#cv-body').setAttribute('aria-pressed', 'true'); $('#cv-face').setAttribute('aria-pressed', 'false'); };
+$('#cprev').addEventListener('pointerdown', e => { cDrag = { x: e.clientX }; $('#cprev').setPointerCapture(e.pointerId); });
+$('#cprev').addEventListener('pointermove', e => { if (cDrag) { cRot += (e.clientX - cDrag.x) * 0.012; cDrag.x = e.clientX; } });
+$('#cprev').addEventListener('pointerup', () => { cDrag = null; });
+
 /* ---------------- input ---------------- */
 const isTouch = matchMedia('(pointer: coarse)').matches;
 function releaseLock() { if (document.pointerLockElement) document.exitPointerLock(); }
@@ -2295,6 +2483,7 @@ addEventListener('pointermove', e => {
   pitch = clamp(pitch, -1.2, 1.2);
 });
 addEventListener('keydown', e => {
+  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
   if (e.code === 'Escape') { if (!$('#dossier').hidden) closeDossier(); else if (!$('#dlg').hidden && !$('#dlg-x').hidden) closeDialog(); return; }
   if (G.ui && e.code !== 'KeyN') return;
   if (e.code === 'KeyN' || e.code === 'Tab') { e.preventDefault(); if (!$('#intro').hidden) return; $('#dossier').hidden ? openDossier() : closeDossier(); return; }
@@ -2315,7 +2504,7 @@ $('#coverbtn').onclick = () => { if (G.lastCover && !G.paused && !G.ui) showCove
 $('#prompt').addEventListener('click', () => { if (isTouch) interact(); });
 $('#brokerbtn').onclick = () => { if (!G.paused && !G.ui) openBroker('phone'); }; $('#heldbtn').onclick = consume;
 $('#dlg-x').onclick = closeDialog; $('#dos-x').onclick = closeDossier; $('#dosbtn').onclick = () => $('#dossier').hidden ? openDossier() : closeDossier();
-$('#startbtn').onclick = () => { if ($('#intro').hidden) dialog('Orchid Microsystems', `<div class="memo" style="font-size:14px">ORCHID 56K-on-a-chip. Est. 1991. Mountain View, CA.<br><br>Day: ${DAYS[G.day]}. Agents caught: ${G.arrests}/3. Wrong calls: ${G.wrong}.</div>`, [{ label: 'Resume' }, { label: 'Play the anthem again', fn: playAnthem }, { label: 'Quit and start over', cls: 'danger', fn: () => { newGame(); G.paused = false; } }]); };
+$('#startbtn').onclick = () => { if ($('#intro').hidden) dialog('Orchid Microsystems', `<div class="memo" style="font-size:14px">ORCHID 56K-on-a-chip. Est. 1991. Mountain View, CA.<br><br>Day: ${DAYS[G.day]}. Agents caught: ${G.arrests}/3. Wrong calls: ${G.wrong}.</div>`, [{ label: 'Resume' }, { label: 'Change your look', fn: () => openCreator('edit') }, { label: 'Play the anthem again', fn: playAnthem }, { label: 'Quit and start over', cls: 'danger', fn: () => { newGame(); G.paused = false; } }]); };
 if (isTouch) { $('#touchkeys').hidden = false; $('#deskkeys').hidden = true; }
 let actx = null;
 function playAnthem() {
@@ -2346,8 +2535,10 @@ function playAnthem() {
   const sn = ctx.createBufferSource(), sg = ctx.createGain(); sn.buffer = buf; sg.gain.value = 0.35; sn.connect(sg); sg.connect(out); sn.start(Math.max(ctx.currentTime, t0 - 0.45));
   toast('Over the PA', 'The Star-Spangled Banner crackles through the ceiling speakers. Somebody in Sales salutes.');
 }
-$('#startgame').onclick = () => {
-  playAnthem(); $('#intro').hidden = true; G.ui = false; G.paused = false; toast('Welcome', 'Walk the floor. Talk to people. Trust nobody completely.'); if (isTouch && innerHeight > innerWidth) toast('Tip', 'Turn your phone sideways for a better view.'); if (!isTouch) canvas.click(); };
+function beginGame() {
+  playAnthem(); $('#intro').hidden = true; G.ui = false; G.paused = false; toast('Welcome', 'Walk the floor. Talk to people. Trust nobody completely.'); if (isTouch && innerHeight > innerWidth) toast('Tip', 'Turn your phone sideways for a better view.'); if (!isTouch) canvas.click();
+}
+$('#startgame').onclick = () => { $('#intro').hidden = true; openCreator('start'); };
 
 // touch controls
 const joy = { x: 0, y: 0 };
@@ -2420,6 +2611,7 @@ function frame(now) {
     promptEl.innerHTML = `<kbd>${isTouch ? 'USE' : 'E'}</kbd>${label}`; promptEl.hidden = false;
   } else promptEl.hidden = true;
   if (G.portraitNpc && !$('#dlg').hidden && (++pFrame % 4 === 1)) drawPortrait();
+  if (!$('#creator').hidden) renderPreview(now);
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
 }
