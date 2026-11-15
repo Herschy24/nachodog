@@ -137,6 +137,7 @@ button{touch-action:manipulation}
 .board .chip{background:#ffe9a8;border-color:#b08a20}
 .chip.fit{background:#ffd9d9;border-color:var(--red);color:var(--red);font-weight:bold}
 .fitline{margin-top:2px}
+.caseln{font-size:12px;margin-top:4px}
 .rumors{background:var(--paper);padding:6px 10px;font-size:12.5px}
 .rumors summary{cursor:pointer;font-weight:bold}
 .rumors ul{margin:6px 0 0;padding-left:18px}
@@ -207,7 +208,7 @@ button{touch-action:manipulation}
   <div id="dossier" class="layer" hidden>
     <div class="win bevel" role="dialog" aria-modal="true">
       <div class="tb"><span>DOSSIER.TXT — Notepad</span><button class="b95" id="dos-x" aria-label="Close">×</button></div>
-      <div class="body"><div style="font-size:12px;color:#333"><b>How to solve it:</b> every clue says which service's spy it describes. Whoever matches all the MSS clues works for the MSS, and so on. Each person below shows which profiles they still fit and how many independent sources back it. The FBI needs 3 different sources pointing at the same person. Click a stamp to mark your hunch.</div><div class="dlist" id="dlist"></div></div>
+      <div class="body"><div style="font-size:12px;color:#333"><b>How to solve it:</b> every clue says which service's spy it describes. Whoever matches all the MSS clues works for the MSS, and so on. To arrest someone the FBI needs three things: <b>who they work for</b> (a direct link, or two descriptions that fit), <b>what they're stealing</b> and <b>why</b>. Click a stamp to mark your hunch.</div><div class="dlist" id="dlist"></div></div>
     </div>
   </div>
 
@@ -218,7 +219,7 @@ button{touch-action:manipulation}
         <div class="memo">
           <h2>CONFIDENTIAL MEMORANDUM</h2>
           <div class="hdr"><b>TO:</b><span>You, Chief Executive Officer</span><b>FROM:</b><span>Board of Directors</span><b>DATE:</b><span>Monday, March 3, 1997</span><b>RE:</b><span>Project ORCHID</span></div>
-          <p>Our security consultant believes <b>three people on this floor</b> are passing ORCHID chip designs to three different foreign services: one to <b>China's MSS</b>, one to <b>Russia's SVR</b>, and one to <b>IDF Military Intelligence</b>. We don't know who. Every clue says <b>which service's spy</b> it's about and describes them (hair, glasses, where they sit…), but never names them. Whoever matches the MSS clues works for the MSS, and so on. Cross off suspects like a game of Clue, then tell the FBI <b>who</b> and <b>who they work for</b>. The FBI won't move without <b>three independent sources</b> pointing at the same person.</p>
+          <p>Our security consultant believes <b>three people on this floor</b> are passing ORCHID chip designs to three different foreign services: one to <b>China's MSS</b>, one to <b>Russia's SVR</b>, and one to <b>IDF Military Intelligence</b>. We don't know who. Every clue says <b>which service's spy</b> it's about and describes them (hair, glasses, where they sit…), but never names them. Whoever matches the MSS clues works for the MSS, and so on. Cross off suspects like a game of Clue, then tell the FBI <b>who</b> and <b>who they work for</b>. To make an arrest you need to prove three things: <b>who they work for</b>, <b>what they're stealing</b> and <b>why</b>.</p>
           <p>Catch all three before 5:00 PM Friday, or before ORCHID leaks. Keep the stock up. And stay on the right side of Margaret Thornbury in Legal. She has buried better CEOs than you.</p>
           <p>And for God's sake, keep your personal life out of the papers.</p>
         </div>
@@ -587,6 +588,7 @@ box(12.4, 0.74, 0.95, 1.8, 0.06, 0.7, mats.desk); box(12.4, 1.0, 1.05, 0.5, 0.42
 box(11.6, 0.6, 0.95, 0.04, 1.2, 0.6, mats.white, false); // stack of binders
 box(12.4, 0.45, 0.2, 0.5, 0.08, 0.5, mats.chair, false); chairBase(12.4, 0.2); box(12.4, 0.75, -0.05, 0.5, 0.55, 0.06, mats.chair, false);
 box(10.6, 0.65, -5.5, 0.6, 1.3, 0.6, mats.grey); box(11.3, 0.65, -5.5, 0.6, 1.3, 0.6, mats.grey);
+const pfSign = makeLabel('PERSONNEL FILES', 'Confidential'); pfSign.scale.set(0.8, 0.22, 1); pfSign.position.set(10.95, 1.5, -5.5); scene.add(pfSign);
 const legalSign = makeLabel('LEGAL', 'Office of the General Counsel'); legalSign.position.set(9.9, 2.35, -2.25); scene.add(legalSign);
 const legalPlaque = makeLabel('M. THORNBURY, ESQ.', 'General Counsel', 256, 72); legalPlaque.scale.set(0.9, 0.25, 1); legalPlaque.position.set(13.8, 0.9, -3.8); scene.add(legalPlaque);
 
@@ -1007,7 +1009,9 @@ function newGame() {
   const uniq = npcs.filter(n => npcs.filter(o => tkey(o) === tkey(n)).length === 1);
   const chosen = shuffle(uniq.length >= 3 ? uniq : npcs).slice(0, 3), order = shuffle(['MSS', 'SVR', 'AMAN']);
   npcs.forEach(n => { n.spy = false; n.service = null; });
-  chosen.forEach((n, k) => { n.spy = true; n.service = order[k]; n.clueQ = shuffle(TRAIT_KEYS); });
+  const its = shuffle(ITEMS), mos = shuffle(MOTIVES);
+  chosen.forEach((n, k) => { n.spy = true; n.service = order[k]; n.item = its[k]; n.motive = mos[k]; n.clueQ = shuffle(TRAIT_KEYS); });
+  npcs.forEach(n => { n.decoy = !n.spy && Math.random() < .45 ? pick(MOTIVES) : null; });
   npcs.forEach(n => { n.odd = !n.spy && Math.random() < .35; });
   const roms = npcs.filter(n => n.romance), lover = pick(roms.length ? roms : npcs), bathSpies = shuffle(chosen).slice(0, 2);
   npcs.forEach(n => { n.bathYes = n === lover || bathSpies.includes(n); });
@@ -1092,7 +1096,8 @@ function setupInteractables() {
     { name: 'Restroom stalls', x: -14.6, z: -4.3, use: () => say('Restroom', pick(['You check under the stalls. Just one pair of loafers. Yours.', 'Someone has written "ORCHID 4EVER" on the stall door in pencil.', 'The automatic flush goes off while you are still standing. You flinch.'])), r: 2 },
     { name: 'Sink', x: -13.2, z: -0.5, use: () => say('Restroom', pick(['You wash your hands. The mirror shows a person with a lot of problems.', 'The soap dispenser is empty. It has been empty since 1995.'])), r: 1.8 },
     { name: 'Talk to Vinnie (loitering by the stairwell)', get x() { return dealer.pos.x; }, get z() { return dealer.pos.z; }, use: () => talkDealer(), r: 2.4 },
-    { name: 'Dig through the shredder bin', x: -15.35, z: 7.0, r: 2.0, use: () => checkOnce('shred', 'Shredder', () => { const c = spyClue('Shredder bin'); return c ? `You spend twenty minutes taping strips back together. It's an ${c.svc.short} contact sheet. One line survives: "...our friend, the one who <b>${c.desc}</b>..."` : 'Just shredded lunch menus.'; }) },
+    { name: 'Read the personnel files', x: 10.95, z: -5.5, r: 1.9, use: readPersonnel },
+    { name: 'Dig through the shredder bin', x: -15.35, z: 7.0, r: 2.0, use: () => checkOnce('shred', 'Shredder', () => { const c = spyClue('Shredder bin', null, 'item'); return c ? `You spend twenty minutes taping strips back together. It's an ${c.svc.short} shopping list. One line is circled twice: <b>${c.val}</b>.` : 'Just shredded lunch menus.'; }) },
     { name: 'Press redial on the payphone', x: -4, z: 13.8, r: 2.0, use: () => checkOnce('payphone', 'Payphone', () => { const c = spyClue('Payphone redial'); return c ? `You drop in a quarter and hit redial. An ${c.svc.short} handler answers: "You're early. Is this the one who <b>${c.desc}</b>?" You hang up fast.` : 'Redial reaches a pizza place. You order a large.'; }) },
     { name: 'Supply closet', x: 0, z: 13.9, use: () => say('Supply closet', 'It smells like toner and bad decisions. Someone has been hoarding the good pens.') },
   ];
@@ -1466,7 +1471,7 @@ function searchDesk(n, present) {
   if (n.searched) return present ? reply(n, `You already went through my stuff, boss. You found: ${n.found}`) : say(`Desk #${n.desk.num}`, `You found: ${n.found}${CHECKED}`);
   n.searched = true;
   let item;
-  if (n.spy && Math.random() < .7) { item = `${pick(svc(n).desk)} <b>That's ${svc(n).short} tradecraft.</b>`; note(n, `Desk: ${item}`, true); G.evidence.push({ svc: n.service, src: 'Desk search', who: n.id, text: `Search of desk #${n.desk.num} (${n.name}): ${svc(n).short} tradecraft.`, when: stamp() }); toast(`Evidence · ${svc(n).short}`, `${n.name}'s desk has ${svc(n).short} tradecraft in it.`); }
+  if (n.spy && Math.random() < .7) { item = `${pick(svc(n).desk)} <b>That's ${svc(n).short} tradecraft.</b>`; note(n, `Desk: ${item}`, true); G.evidence.push({ svc: n.service, kind: 'link', src: 'Desk search', who: n.id, text: `Search of desk #${n.desk.num} (${n.name}): ${svc(n).short} tradecraft.`, when: stamp() }); toast(`Evidence · ${svc(n).short}`, `${n.name}'s desk has ${svc(n).short} tradecraft in it.`); }
   else if (n.spy) { item = pick(L.deskSpy); note(n, `Desk: ${item}`, true); }
   else if (n.odd && Math.random() < .7) { item = pick(L.deskOdd); note(n, `Desk: ${item}`); }
   else { item = pick(L.deskInno); note(n, `Desk: ${item}`); }
@@ -1553,10 +1558,10 @@ function useCeoDesk() {
   const opts = [];
   if (!G.seated) opts.push({ label: 'Sit down', fn: sitDown });
   opts.push({ label: 'Log into DialTrade (private)', fn: () => openBroker('desk') });
-  opts.push({ label: 'Call your FBI contact (once a day)', fn: () => checkOnce('fbi', 'FBI liaison', () => { const c = spyClue('FBI liaison'); return c ? `Special Agent Dana Ruiz picks up on the first ring.<br><br>"Our ${c.svc.short} intercepts mention someone on your floor who <b>${c.desc}</b>. That's all I can give you today."` : '"Your floor is clean. Nice work."'; }) });
+  opts.push({ label: 'Call your FBI contact (once a day)', fn: () => checkOnce('fbi', 'FBI liaison', () => { const c = spyClue('FBI liaison', null, 'motive'); return c ? `Special Agent Dana Ruiz picks up on the first ring.<br><br>"Our ${c.svc.short} intercepts say their asset on your floor is in it for <b>${c.val}</b>. That's all I can give you today."` : '"Your floor is clean. Nice work."'; }) });
   if (G.lastCover) opts.push({ label: 'Read the latest TIMES', fn: () => showCover(G.lastCover) });
   opts.push({ label: 'Crawl into the bed under your desk (2 hours)', cls: 'love', fn: underDeskNap });
-  opts.push({ label: 'Read the security consultant\'s report', fn: () => say('Report', `"Three suspected assets on the floor, one each for China\'s MSS, Russia\'s SVR and IDF Military Intelligence. Each has a handler who calls, faxes and mails. Witnesses will only ever give you descriptions, so build a profile for each service and eliminate. Typical behaviors: after-hours copying, interest in R&D access, contact with foreign numbers, unexplained cash. <b>Do not profile by name, accent or background.</b> Half the people who fit a stereotype are your best engineers. Watch behavior."`) });
+  opts.push({ label: 'Read the security consultant\'s report', fn: () => say('Report', `"Three suspected assets on the floor, one each for China\'s MSS, Russia\'s SVR and IDF Military Intelligence. Each has a handler who calls, faxes and mails. Witnesses will only ever give you descriptions, so build a profile for each service and eliminate. Copier logs, shredded paper and misdelivered mail show what each service is stealing. Personnel files, Vinnie and the FBI liaison can tell you why. Typical behaviors: after-hours copying, interest in R&D access, contact with foreign numbers, unexplained cash. <b>Do not profile by name, accent or background.</b> Half the people who fit a stereotype are your best engineers. Watch behavior."`) });
   if (G.seated) opts.push({ label: 'Stand up', fn: standUp });
   opts.push({ label: G.seated ? 'Stay seated' : 'Walk away' });
   dialog('Your desk', `<div class="memo" style="font-size:14px">Leather chair. A framed photo of your family, angled slightly away. A Rolodex nobody has touched since 1994. Under the desk, behind a panel only you know about: a mattress, a pillow, and an alarm clock.</div>`, opts);
@@ -1658,6 +1663,11 @@ function updateCut(now) {
     c.after && c.after();
   }
 }
+function bathEvidence(n) {
+  if (G.evidence.some(e => e.src === 'Restroom approach' && e.who === n.id)) return;
+  G.evidence.push({ svc: n.service, kind: 'link', src: 'Restroom approach', who: n.id, text: `Restroom: ${n.name} pitched you for friends in ${svc(n).city} (${svc(n).short}).`, when: stamp() });
+  G.evidence.push({ who: n.id, kind: 'item', val: n.item, src: 'Restroom approach', text: `Restroom: ${n.name} wants ${n.item}.`, when: stamp() });
+}
 function bathScene(n) {
   n.invite = null; n.leaveAt = G.min + 10;
   G.scandal += 8; legalGrr(8, 'a twelve-minute "meeting" in the restroom');
@@ -1666,15 +1676,15 @@ function bathScene(n) {
   loveScene(n, () => {
     updateHUD(); checkEnd(); if (G.over) return;
     if (n.spy) {
-      const line = `Afterwards, they straighten their collar, check under the stalls, run the tap, and lean in. "Some friends of mine in ${svc(n).city} admire ORCHID very much. They would pay. Generously. And your short position would do very well when the news breaks."`;
+      const line = `Afterwards, they straighten their collar, check under the stalls, run the tap, and lean in. "Some friends of mine in ${svc(n).city} admire ORCHID very much. Specifically, ${n.item}. They would pay. Generously. And your short position would do very well when the news breaks."`;
       n.talking = true; speak(n, line);
       dialog(`Restroom — ${n.name}`, `<div class="speech">${portrait(n)}<p>${line}</p></div>`, [
-        { label: 'Take the envelope ($150,000)', cls: 'danger', fn: () => {
+        { label: 'Take the envelope ($150,000)', cls: 'danger', fn: () => { bathEvidence(n);
           G.cash += 150000; G.leaks = clamp(G.leaks + 18, 0, 100); G.sec += 12; note(n, 'Seduced you in the restroom, then handed you $150,000 for ORCHID access. You took it.', true);
           fade('The envelope is thick. Very thick.<br><br>You flush, for no reason. It doesn\'t work. Level 7.'); updateHUD(); checkEnd();
         } },
-        { label: 'Play along. Learn more.', fn: () => { G.evidence.push({ svc: n.service, src: 'Restroom approach', who: n.id, text: `Restroom: ${n.name} offered to buy ORCHID for friends in ${svc(n).city}.`, when: stamp() }); note(n, 'Honeytrap in the restroom, then tried to buy ORCHID. Works for "friends overseas".', true); n.nervous = G.min + 600; reply(n, 'Good. We\'ll be in touch. Wash your hands, boss. Appearances.'); } },
-        { label: 'Get out of my bathroom.', fn: () => { G.evidence.push({ svc: n.service, src: 'Restroom approach', who: n.id, text: `Restroom: ${n.name} offered to buy ORCHID for friends in ${svc(n).city}.`, when: stamp() }); note(n, 'Seduced you in the restroom, then tried to bribe you for ORCHID. You refused.', true); reply(n, 'A pity. Forget we spoke. I certainly will.'); } },
+        { label: 'Play along. Learn more.', fn: () => { bathEvidence(n); note(n, 'Honeytrap in the restroom, then tried to buy ORCHID. Works for "friends overseas".', true); n.nervous = G.min + 600; reply(n, 'Good. We\'ll be in touch. Wash your hands, boss. Appearances.'); } },
+        { label: 'Get out of my bathroom.', fn: () => { bathEvidence(n); note(n, 'Seduced you in the restroom, then tried to bribe you for ORCHID. You refused.', true); reply(n, 'A pity. Forget we spoke. I certainly will.'); } },
       ]);
     } else toast('Restroom', `The hand dryer ran for a very long time. You leave first; ${n.first} leaves four minutes later. Gloria from reception notices both.`);
   });
@@ -2083,10 +2093,10 @@ function dealerInfo() {
   const k = G.day + ':vinnie';
   if (G.said[k]) return talkDealer(G.said[k] + ASKED);
   if (G.cash < 1000) return talkDealer('Information costs a grand, boss. I got overheads.');
-  const c = spyClue('Vinnie the courier');
+  const c = spyClue('Vinnie the courier', null, 'motive');
   if (!c) return talkDealer('Nothing to tell. Your floor\'s clean now. Bad for business, honestly.');
   G.cash -= 1000; updateHUD();
-  const line = `I deliver to all kinds of people. One of my regulars picks up envelopes for the ${c.svc.short}. Never got a name. But they ${c.desc}.`;
+  const line = `I deliver to all kinds of people. One of my regulars picks up envelopes for the ${c.svc.short}. Never got a name. But I know why they do it: ${c.val}.`;
   G.said[k] = line; talkDealer(line);
 }
 
@@ -2197,15 +2207,23 @@ const TRAIT_DESC = {
 const TRAIT_SHORT = { hair: v => `${v} hair`, glasses: v => v ? 'glasses' : 'no glasses', tie: v => v ? 'tie' : 'no tie', shoes: v => v ? 'sneakers' : 'dark shoes', beard: v => v ? 'beard/mustache' : 'clean-shaven', row: v => ['window row', 'middle row', 'break row'][v], side: v => `${v} side`, dept: v => v };
 const TRAIT_KEYS = Object.keys(TRAIT_DESC);
 const traitsOf = n => ({ ...n.mesh.userData.traits, row: n.desk.row, side: n.desk.x < 0 ? 'west' : 'east', dept: n.dept });
-function spyClue(source, spy) {
+function spyClue(source, spy, kind = 'trait') {
   const pool = activeSpies(); if (!pool.length) return null;
+  if (kind !== 'trait') {
+    const need = pool.filter(p => !G.evidence.some(e => e.kind === kind && e.svc === p.service));
+    const s = spy || pick(need.length && Math.random() < .75 ? need : pool);
+    const val = kind === 'item' ? s.item : s.motive, desc = kind === 'item' ? `is stealing ${val}` : `is in it for ${val}`;
+    G.evidence.push({ svc: s.service, kind, val, src: source, text: `${source}: the ${SVC[s.service].short} asset ${desc}.`, when: stamp() });
+    toast(`Evidence · ${SVC[s.service].short}`, `The ${SVC[s.service].short} asset ${desc}. Logged in your dossier.`);
+    return { s, kind, val, desc, svc: SVC[s.service] };
+  }
   const s = spy || pick(pool), known = G.known[s.service];
   // usually reveal the most useful unknown trait (the one that rules out the most people)
   const unknown = TRAIT_KEYS.filter(k => !(k in known)), fits = k => active().filter(o => Object.keys(known).every(q => o.tr[q] === known[q]) && o.tr[k] === s.tr[k]).length;
   let k = unknown.length ? (Math.random() < .7 ? unknown.sort((a, b) => fits(a) - fits(b) || Math.random() - .5)[0] : pick(unknown)) : pick(TRAIT_KEYS);
   const v = s.tr[k], desc = TRAIT_DESC[k](v), fresh = !(k in known);
   known[k] = v;
-  G.evidence.push({ svc: s.service, src: source, k, v, text: `${source}: the ${SVC[s.service].short} asset ${desc}.`, when: stamp() });
+  G.evidence.push({ svc: s.service, kind: 'trait', src: source, k, v, text: `${source}: the ${SVC[s.service].short} asset ${desc}.`, when: stamp() });
   toast(`Evidence · ${SVC[s.service].short}`, `The ${SVC[s.service].short} asset ${desc}.${fresh ? '' : ' (You knew that already.)'} Logged in your dossier.`);
   return { s, k, v, desc, svc: SVC[s.service] };
 }
@@ -2226,8 +2244,8 @@ function useCooler() { checkOnce('cooler' + Math.floor(G.min / 60), 'Water coole
   return (`Someone from Facilities leans in.<br><br>${line}<br><br><small>Gossip goes in your dossier as a rumor. About a quarter of it is wrong.</small>`);
 }); }
 function useCopier() { checkOnce('copier', 'Copier', () => {
-  const c = spyClue('Copier, after hours'); if (!c) return ('Nothing unusual. Just a jam.');
-  return (`The counter shows 340 after-hours copies of ORCHID schematics, sent with a ${c.svc.short}-style cover sheet. The night cleaner saw who made them, but not their face. All she remembers: they <b>${c.desc}</b>.`);
+  const c = spyClue('Copier, after hours', null, 'item'); if (!c) return ('Nothing unusual. Just a jam.');
+  return (`The counter shows 340 after-hours copies. The last job is still in the output tray under a ${c.svc.short}-style cover sheet: page one of <b>${c.val}</b>.<br><br>Now you know what the ${c.svc.short} asset is after. Not who.`);
 }); }
 function useFax() { checkOnce('fax', 'Fax machine', () => {
   if (G.leaks < 6) return ('A fax about a pizza party in Accounting. Nothing else.');
@@ -2247,8 +2265,8 @@ function openPackage() {
   const { n } = G.pkg; G.pkg.opened = true; if (pkgMesh) { scene.remove(pkgMesh); pkgMesh = null; }
   legalGrr(4, `opening ${n.name}'s mail`);
   if (activeSpies().length && Math.random() < .6) {
-    const c = spyClue('Misdelivered package'); const t = pick(SVC[c.s.service].pkg);
-    say(`Package on desk #${n.desk.num}`, `It was misdelivered: the label is for "our friend on the floor." Inside: ${t}<br><br>The packing slip says: <b>"For the one who ${c.desc}."</b><br><br>You tape it back up. Mostly.`);
+    const c = spyClue('Misdelivered package', null, 'item'); const t = pick(SVC[c.s.service].pkg);
+    say(`Package on desk #${n.desk.num}`, `It was misdelivered: the label is for "our friend on the floor." Inside: ${t}<br><br>The packing slip says: <b>"Blank media, for ${c.val}."</b><br><br>You tape it back up. Mostly.`);
   } else say(`Package on desk #${n.desk.num}`, `You slit the tape. Inside: ${pick(['A limited-edition Beanie Baby. In mint condition. Well, it WAS mint.', 'A mail-order NordicTrack. Some assembly required.', 'Forty pounds of Columbia House CDs they forgot to cancel.', 'A box of Franklin Planner refills. Thrilling.'])}<br><br>Opening other people's mail is a federal crime. Margaret will hear about this.`);
 }
 function answerPhone(n) {
@@ -2274,45 +2292,89 @@ function askOddInner(n) {
 }
 function reviewCase() {
   const opts = active().map(n => ({ label: `#${n.desk.num} ${n.name}`, fn: () => {
-    const fits = Object.keys(SVC).filter(k => npcs.some(o => o.spy && o.service === k && o.status === 'active') && Object.keys(G.known[k]).length && matchesKnown(n, k));
+    const live = Object.keys(SVC).filter(k => npcs.some(o => o.spy && o.service === k && o.status === 'active'));
+    const fits = live.filter(k => { const c = caseCheck(n, k); return !c.contra && (c.nT || c.linked); });
     let v;
     if (!fits.length) v = `${n.first} doesn't match any of the evidence profiles. Accuse them and I'll be drafting your apology letter.`;
     else {
-      const k = fits.sort((a, b) => Object.keys(G.known[b]).length - Object.keys(G.known[a]).length)[0], cnt = Object.keys(G.known[k]).length;
-      const rivals = active().filter(o => o !== n && matchesKnown(o, k)).length;
-      const ns = caseFile(n, k).srcs.length;
-      v = rivals === 0 && cnt >= 2 && ns >= NEED_SOURCES ? `${n.first} is the only person on this floor who fits everything we have on the ${SVC[k].short} asset, from ${ns} separate sources. That would hold up. Name the right service when you call.`
-        : rivals === 0 && cnt >= 2 ? `${n.first} is the only one who fits the ${SVC[k].short} profile, but you only have ${ns} source${ns === 1 ? '' : 's'}. The FBI wants ${NEED_SOURCES}. Keep digging.`
-        : `${n.first} fits the ${SVC[k].short} evidence, but so do ${rivals} other${rivals === 1 ? '' : 's'}. Thin. Get me more before you call anyone.`;
+      const k = fits.sort((a, b) => caseCheck(n, b).nT - caseCheck(n, a).nT)[0], c = caseCheck(n, k), short = SVC[k].short;
+      const rivals = active().filter(o => o !== n && !caseCheck(o, k).contra && matchesKnown(o, k)).length, missing = [];
+      if (!c.who) missing.push(`a firmer link to the ${short}`); if (!c.items.length) missing.push('proof of what they\'re stealing'); if (!c.motives.length) missing.push('a motive');
+      v = missing.length ? `${n.first} could be the ${short} asset${rivals && !c.linked ? `, but so could ${rivals} other${rivals === 1 ? '' : 's'}` : ''}. Before you call anyone I want ${missing.join(', ')}.`
+        : rivals && !c.linked ? `The case on ${n.first} is complete, but ${rivals} other${rivals === 1 ? '' : 's'} also fit the ${short} profile. If you're wrong, it's a lawsuit.`
+        : `${n.first} for the ${short}: stealing ${c.items[0]}, motive ${c.motives[0]}. That holds up. Call it in.`;
     }
     talkLegal(v);
   } }));
   opts.push({ label: 'Never mind', fn: () => talkLegal('Then stop wasting billable time.') });
-  dialog('Legal review', `<div class="speech">${portrait(gc)}<p>Who? I'll tell you whether they fit the evidence. Not whether they're guilty. That's your problem.</p></div>`, opts);
+  dialog('Legal review', `<div class="speech">${portrait(gc)}<p>Who? I'll tell you whether your case would hold up. Not whether they're guilty. That's your problem.</p></div>`, opts);
 }
-const NEED_SOURCES = 3;
-function caseFile(n, sk) {
-  const mine = G.evidence.filter(e => e.svc === sk);
-  const backs = mine.filter(e => e.who != null ? e.who === n.id : (e.k && n.tr[e.k] === e.v));
-  const contra = mine.some(e => (e.who != null && e.who !== n.id) || (e.k && n.tr[e.k] !== e.v));
-  return { srcs: [...new Set(backs.map(e => e.src))], contra };
+/* ---------------- the case: who for, what, why ---------------- */
+const ITEMS = ['the ORCHID chip schematics', 'the ORCHID test results', 'the fab yield data', 'the firmware source code', 'the customer list', 'the encryption keys'];
+const MOTIVES = ['gambling debts', 'ideology', 'blackmail', 'revenge for a missed promotion', 'a pile of medical bills', 'the thrill of it'];
+const MOTIVE_FILE = {
+  'gambling debts': 'a wage garnishment order from a Reno casino',
+  'ideology': 'a write-up for handing out political pamphlets in the break room',
+  'blackmail': 'an anonymous letter to HR hinting at a secret they are desperate to keep',
+  'revenge for a missed promotion': 'a furious grievance after being passed over for promotion in 1996',
+  'a pile of medical bills': 'a hardship loan request to cover a family member\'s medical bills',
+  'the thrill of it': 'an onboarding psych evaluation: "craves risk, easily bored, likes secrets"',
+};
+const cap1 = t => t.replace(/^the /, '').replace(/^./, c => c.toUpperCase());
+function caseCheck(n, sk) {
+  const E = G.evidence;
+  const traits = E.filter(e => e.kind === 'trait' && e.svc === sk);
+  const linked = E.some(e => e.kind === 'link' && e.who === n.id && e.svc === sk);
+  const contra = traits.some(e => n.tr[e.k] !== e.v) || E.some(e => e.kind === 'link' && e.svc === sk && e.who !== n.id);
+  const nT = new Set(traits.map(e => e.k)).size;
+  const items = [...new Set(E.filter(e => e.kind === 'item' && (e.svc === sk || e.who === n.id)).map(e => e.val))];
+  const motives = [...new Set(E.filter(e => e.kind === 'motive' && (e.svc === sk || e.who === n.id)).map(e => e.val))];
+  return { who: !contra && (linked || nT >= 2), contra, linked, nT, items, motives };
+}
+function caseLine(n, k) {
+  const c = caseCheck(n, k), ok = '<b style="color:var(--green)">✔</b>', no = '<b style="color:var(--red)">✘</b>';
+  const who = c.contra ? `${no} your evidence clears them` : c.who ? `${ok} ${c.linked ? 'direct link' : `fits the profile (${c.nT} clues)`}` : `${no} ${c.nT}/2 profile clues`;
+  return `<li><b>${SVC[k].label}</b><br>Affiliation: ${who}<br>Stealing: ${c.items.length ? `${ok} ${c.items.join(' / ')}` : `${no} unknown`}<br>Motive: ${c.motives.length ? `${ok} ${c.motives.join(' / ')}` : `${no} unknown`}</li>`;
+}
+function fbiStep1(n) {
+  dialog('Call the FBI — 1 of 3', `<div class="memo" style="font-size:13px">Special Agent Ruiz will only arrest <b>${n.name}</b> if your file shows <b>who they work for</b>, <b>what they're stealing</b> and <b>why</b>. Your file:<ul style="margin:6px 0 0;padding-left:18px;display:grid;gap:6px">${Object.keys(SVC).map(k => caseLine(n, k)).join('')}</ul><br>Who does ${n.first} work for?</div>`,
+    [...Object.keys(SVC).map(k => ({ label: SVC[k].label, fn: () => fbiStep2(n, k) })), { label: 'Cancel', fn: () => talk(n) }]);
+}
+function fbiStep2(n, sk) {
+  dialog('Call the FBI — 2 of 3', `<div class="memo" style="font-size:14px">${n.first} works for <b>${SVC[sk].label}</b>. What are they stealing?</div>`,
+    [...ITEMS.map(it => ({ label: cap1(it), fn: () => fbiStep3(n, sk, it) })), { label: 'Back', fn: () => fbiStep1(n) }]);
+}
+function fbiStep3(n, sk, it) {
+  dialog('Call the FBI — 3 of 3', `<div class="memo" style="font-size:14px">${n.first}, for <b>${SVC[sk].label}</b>, stealing <b>${it}</b>. Why?</div>`,
+    [...MOTIVES.map(mo => ({ label: cap1(mo), cls: 'danger', fn: () => resolveAct(n, 'fbi', sk, { it, mo }) })), { label: 'Back', fn: () => fbiStep2(n, sk) }]);
+}
+function readPersonnel() {
+  checkOnce('personnel', 'Personnel files', () => {
+    const near = Math.hypot(player.x - gc.pos.x, player.z - gc.pos.z) < 5.5;
+    if (near && Math.random() < .5) legalGrr(4, 'rifling through confidential personnel files in MY office');
+    const spies = activeSpies().filter(s => !G.evidence.some(e => e.kind === 'motive' && e.who === s.id));
+    const decoys = active().filter(o => !o.spy && o.decoy && !G.evidence.some(e => e.kind === 'motive' && e.who === o.id));
+    const n = spies.length && Math.random() < .5 ? pick(spies) : decoys.length ? pick(decoys) : null;
+    if (!n) return 'Nothing interesting. Mostly W-4 forms and a complaint about the thermostat.';
+    const val = n.spy ? n.motive : n.decoy;
+    G.evidence.push({ who: n.id, kind: 'motive', val, src: 'Personnel files', text: `Personnel file: ${n.name} — ${val}.`, when: stamp() });
+    toast('Evidence · motive', `${n.name}: ${val}. Logged in your dossier.`);
+    return `You pull the folder for <b>${n.name}</b> (${n.dept}). Clipped inside: ${MOTIVE_FILE[val]}.<br><br>Possible motive: <b>${val}</b>. On its own, that proves nothing. Plenty of people have problems.${near ? '<br><br><small>Margaret looks up from her desk.</small>' : ''}`;
+  });
 }
 function confirmAct(n, kind) {
-  if (kind === 'fbi') {
-    const rows = Object.keys(SVC).map(k => { const f = caseFile(n, k); return `<li><b>${SVC[k].label}:</b> ${f.contra ? '<span style="color:var(--red)">your evidence contradicts this</span>' : `${f.srcs.length}/${NEED_SOURCES} sources${f.srcs.length ? ` (${f.srcs.join(', ')})` : ''}`}</li>`; }).join('');
-    return dialog('Call the FBI?', `<div class="memo" style="font-size:13.5px">Special Agent Ruiz needs <b>who</b>, <b>who for</b>, and at least <b>${NEED_SOURCES} independent sources</b> that point at that person.<br><br>Your file on <b>${n.name}</b>:<ul style="margin:6px 0 0;padding-left:18px">${rows}</ul></div>`,
-      [...Object.keys(SVC).map(k => ({ label: `${n.first} works for ${SVC[k].label}`, cls: 'danger', fn: () => resolveAct(n, 'fbi', k) })), { label: 'Cancel', fn: () => talk(n) }]);
-  }
-  if (kind === 'fbi') return dialog('Call the FBI?', `<div class="memo" style="font-size:14px">The FBI needs <b>who</b> and <b>who for</b>. Name the service <b>${n.name}</b> works for.<br><br>Wrong person: a wrongful-arrest lawsuit. Right person, wrong service: they walk, and they know you're onto them.</div>`,
-    [...Object.keys(SVC).map(k => ({ label: `${n.first} works for ${SVC[k].label}`, cls: 'danger', fn: () => resolveAct(n, 'fbi', k) })), { label: 'Cancel', fn: () => talk(n) }]);
+  if (kind === 'fbi') return fbiStep1(n);
   dialog('Fire employee?', `<div class="memo" style="font-size:14px">Security will escort <b>${n.name}</b> out with a cardboard box. Nobody will be told why.</div>`,
     [{ label: 'Fire them', cls: 'danger', fn: () => resolveAct(n, kind) }, { label: 'Cancel', fn: () => talk(n) }]);
 }
-function resolveAct(n, kind, sk) {
+function resolveAct(n, kind, sk, acc) {
   if (kind === 'fbi') {
-    const f = caseFile(n, sk);
-    if (f.contra) { legalGrr(3, `calling the FBI with a file that contradicts itself`); return say('FBI', `Special Agent Ruiz reads your file back to you.<br><br>"Your own evidence says the ${SVC[sk].short} asset doesn't look like ${n.first}. I'm not arresting someone your file clears. Call me when it adds up."`); }
-    if (f.srcs.length < NEED_SOURCES) { legalGrr(2, 'wasting the FBI\'s time'); return say('FBI', `Special Agent Ruiz sighs.<br><br>"${f.srcs.length === 0 ? 'You have nothing on them.' : f.srcs.length === 1 ? 'One source is gossip.' : 'Two sources is a hunch.'} I need ${NEED_SOURCES} independent sources that point at ${n.first} for the ${SVC[sk].short}. Different places, not the same copier twice."<br><br><small>You have ${f.srcs.length}/${NEED_SOURCES}${f.srcs.length ? ': ' + f.srcs.join(', ') : ''}.</small>`); }
+    const c = caseCheck(n, sk), short = SVC[sk].short, miss = [];
+    if (c.contra) { legalGrr(3, 'calling the FBI with a file that contradicts itself'); return say('FBI', `Special Agent Ruiz reads your file back to you.<br><br>"Your own evidence says the ${short} asset doesn't look like ${n.first}. I'm not arresting someone your file clears."`); }
+    if (!c.who) miss.push(`Nothing ties ${n.first} to the ${short}. I need a direct link, or at least two descriptions of the ${short} asset that fit them.`);
+    if (!c.items.includes(acc.it)) miss.push(c.items.length ? `Your file says they're after ${c.items.join(' or ')}, not ${acc.it}.` : 'You haven\'t shown what they\'re stealing.');
+    if (!c.motives.includes(acc.mo)) miss.push(c.motives.length ? `Your file says the motive is ${c.motives.join(' or ')}, not ${acc.mo}.` : 'You have nothing on motive. Juries want a why.');
+    if (miss.length) { legalGrr(2, 'wasting the FBI\'s time'); return say('FBI', `Special Agent Ruiz sighs.<br><br>"That won't hold up."<ul style="margin:8px 0 0;padding-left:18px">${miss.map(m => `<li>${m}</li>`).join('')}</ul>`); }
   }
   if (kind === 'fbi' && n.spy && sk !== n.service) {
     n.nervous = G.min + 600; G.stock = Math.max(0.5, G.stock - 1); legalGrr(15, `telling the FBI that ${n.name} worked for ${SVC[sk].label}. They didn't.`);
@@ -2324,7 +2386,7 @@ function resolveAct(n, kind, sk) {
   scene.remove(n.mesh); scene.remove(n.tag); n.plate.material.opacity = 0.35;
   if (G.affair === n) G.affair = null;
   if (kind === 'fbi') {
-    if (n.spy) { legalGrr(-12); G.arrests++; G.stock += 3; G.morale = clamp(G.morale + 6, 0, 100); note(n, `Arrested by the FBI. Confirmed asset of ${svc(n).agency}.`, true); fade(`The agents find a microfilm reader in ${n.first}'s glovebox.<br><br>Confirmed: ${svc(n).agency}.`); toast('FBI', `${n.name} worked for ${svc(n).agency}. ${3 - G.arrests} to go.`); }
+    if (n.spy) { legalGrr(-12); G.arrests++; G.stock += 3; G.morale = clamp(G.morale + 6, 0, 100); note(n, `Arrested by the FBI. Confirmed asset of ${svc(n).agency}.`, true); fade(`The agents find a microfilm reader in ${n.first}'s glovebox.<br><br>Confirmed: ${svc(n).agency}.<br>Stealing ${n.item}, for ${n.motive}.`); toast('FBI', `${n.name} worked for ${svc(n).agency}. ${3 - G.arrests} to go.`); }
     else { legalGrr(40, `calling the FBI on ${n.name}, who is completely innocent and now has a lawyer`); G.wrong++; G.stock -= 4; G.morale = clamp(G.morale - 20, 0, 100); G.scandal += 10; note(n, 'Wrongly arrested. Released. Suing.'); fade(`${n.first} is released after six hours. They were never a spy.<br><br>Their lawyer calls before lunch.`); }
   } else {
     legalGrr(n.spy ? 6 : 15, `firing ${n.name} without a single page of documentation`);
@@ -2347,7 +2409,9 @@ function openDossier() {
     const kn = G.known[k], keys = Object.keys(kn);
     const fits = caught ? null : active().filter(n => matchesKnown(n, k)).length;
     return `<div class="col sunk"><h4>${SVC[k].label}</h4>${caught ? `<div class="stamp s2">CAUGHT: ${caught.name}</div>` :
-      (keys.length ? `<div>${keys.map(t => chip(TRAIT_SHORT[t](kn[t]))).join('')}</div><small>${fits} ${fits === 1 ? 'person fits' : 'people fit'} this so far</small>` : '<small>No evidence yet.</small>')}</div>`;
+      `${keys.length ? `<div>${keys.map(t => chip(TRAIT_SHORT[t](kn[t]))).join('')}</div><small>${fits} ${fits === 1 ? 'person fits' : 'people fit'} the description</small>` : '<small>No description yet.</small>'}
+       <div class="caseln"><b>Stealing:</b> ${(() => { const v = [...new Set(G.evidence.filter(e => e.kind === 'item' && e.svc === k).map(e => e.val))]; return v.length ? v.join(' / ') : '?'; })()}</div>
+       <div class="caseln"><b>Motive:</b> ${(() => { const v = [...new Set(G.evidence.filter(e => e.kind === 'motive' && e.svc === k).map(e => e.val))]; return v.length ? v.join(' / ') : '?'; })()}</div>`}</div>`;
   }).join('');
   list.appendChild(board);
   if (G.rumors.length) { const r = document.createElement('details'); r.className = 'rumors'; r.innerHTML = `<summary>Rumors (${G.rumors.length}) — unreliable</summary><ul>${G.rumors.slice(-12).reverse().map(x => `<li>${x.text} <small>${x.when}</small></li>`).join('')}</ul>`; list.appendChild(r); }
@@ -2357,7 +2421,8 @@ function openDossier() {
     const gone = n.status !== 'active';
     const traits = TRAIT_KEYS.filter(k => k !== 'dept').map(k => chip(TRAIT_SHORT[k](n.tr[k]))).join('');
     const fitsS = gone ? [] : Object.keys(SVC).filter(k => Object.keys(G.known[k]).length && !npcs.some(o => o.spy && o.service === k && o.status !== 'active') && matchesKnown(n, k));
-    const fitHtml = fitsS.length ? `<div class="fitline">Fits: ${fitsS.map(k => `<span class="chip fit">${SVC[k].short} profile · ${caseFile(n, k).srcs.length}/${NEED_SOURCES} sources</span>`).join('')}</div>` : '';
+    const facts = G.evidence.filter(e => e.who === n.id).map(e => e.kind === 'link' ? `${SVC[e.svc].short} link: ${e.src.toLowerCase()}` : e.kind === 'motive' ? `motive on file: ${e.val}` : `wants ${e.val}`);
+    const fitHtml = (fitsS.length || facts.length) ? `<div class="fitline">${fitsS.map(k => `<span class="chip fit">fits ${SVC[k].short} description</span>`).join('')}${[...new Set(facts)].map(f => `<span class="chip fit">${f}</span>`).join('')}</div>` : '';
     const notes = n.notes.length ? `<ul>${n.notes.map(x => `<li class="${x.strong ? 'strong' : ''}">${x.text}</li>`).join('')}</ul>` : '';
     row.innerHTML = `<div class="num">#${n.desk.num}</div><div style="min-width:0"><h4>${n.name}<small>${n.dept}${gone ? ' · ' + n.status.toUpperCase() + (n.spy && n.status === 'arrested' ? ' · ' + svc(n).short : '') : ''}${G.affair === n ? ' · ♥' : ''}</small></h4><div>${traits}</div>${fitHtml}${notes}</div>`;
     const b = document.createElement('button'); b.className = 'b95 stamp ' + MARKS[n.mark][1]; b.textContent = MARKS[n.mark][0];
