@@ -134,6 +134,8 @@ button{touch-action:manipulation}
 .board small{color:#555;font-size:11.5px}
 .chip{display:inline-block;font-size:11px;padding:1px 6px;border:1px solid var(--shadow);background:#fff;margin:3px 4px 0 0;white-space:nowrap}
 .board .chip{background:#ffe9a8;border-color:#b08a20}
+.chip.fit{background:#ffd9d9;border-color:var(--red);color:var(--red);font-weight:bold}
+.fitline{margin-top:2px}
 .rumors{background:var(--paper);padding:6px 10px;font-size:12.5px}
 .rumors summary{cursor:pointer;font-weight:bold}
 .rumors ul{margin:6px 0 0;padding-left:18px}
@@ -182,7 +184,7 @@ button{touch-action:manipulation}
   <div id="dossier" class="layer" hidden>
     <div class="win bevel" role="dialog" aria-modal="true">
       <div class="tb"><span>DOSSIER.TXT — Notepad</span><button class="b95" id="dos-x" aria-label="Close">×</button></div>
-      <div class="body"><div style="font-size:12px;color:#333">Evidence on each service's asset is at the top. Every clue describes the spy, never names them. Compare it against your staff below and click a stamp to mark your hunch.</div><div class="dlist" id="dlist"></div></div>
+      <div class="body"><div style="font-size:12px;color:#333"><b>How to solve it:</b> every clue says which service's spy it describes. Whoever matches all the MSS clues works for the MSS, and so on. Each person below shows which profiles they still fit. Click a stamp to mark your hunch.</div><div class="dlist" id="dlist"></div></div>
     </div>
   </div>
 
@@ -193,7 +195,7 @@ button{touch-action:manipulation}
         <div class="memo">
           <h2>CONFIDENTIAL MEMORANDUM</h2>
           <div class="hdr"><b>TO:</b><span>You, Chief Executive Officer</span><b>FROM:</b><span>Board of Directors</span><b>DATE:</b><span>Monday, March 3, 1997</span><b>RE:</b><span>Project ORCHID</span></div>
-          <p>Our security consultant believes <b>three people on this floor</b> are passing ORCHID chip designs to three different foreign services: one to <b>China's MSS</b>, one to <b>Russia's SVR</b>, and one to <b>IDF Military Intelligence</b>. We don't know who. Every clue you find will describe a spy (hair, glasses, where they sit…), never name them. Cross off suspects like a game of Clue, then tell the FBI <b>who</b> and <b>who they work for</b>.</p>
+          <p>Our security consultant believes <b>three people on this floor</b> are passing ORCHID chip designs to three different foreign services: one to <b>China's MSS</b>, one to <b>Russia's SVR</b>, and one to <b>IDF Military Intelligence</b>. We don't know who. Every clue says <b>which service's spy</b> it's about and describes them (hair, glasses, where they sit…), but never names them. Whoever matches the MSS clues works for the MSS, and so on. Cross off suspects like a game of Clue, then tell the FBI <b>who</b> and <b>who they work for</b>.</p>
           <p>Catch all three before 5:00 PM Friday, or before ORCHID leaks. Keep the stock up. And stay on the right side of Margaret Thornbury in Legal. She has buried better CEOs than you.</p>
           <p>And for God's sake, keep your personal life out of the papers.</p>
         </div>
@@ -207,7 +209,7 @@ button{touch-action:manipulation}
           <kbd>Click</kbd><span>Look around with the mouse (Esc to release)</span>
           <kbd>W A S D</kbd><span>Walk (Shift to hurry)</span>
           <kbd>E</kbd><span>Talk to people, use the copier, fax, server rack, water cooler…</span>
-          <kbd>N</kbd><span>Open your dossier</span>
+          <kbd>N</kbd><span>Open your dossier (your evidence board)</span>
           <kbd>B</kbd><span>Call your broker (yes, you can short your own company)</span>
           <kbd>T</kbd><span>Read the latest TIMES cover about you (a new one prints every hour)</span>
           <kbd>Q</kbd><span>Eat or drink whatever you bought from the vending machines</span>
@@ -426,6 +428,10 @@ box(-15.3, 0.4, 5, 0.6, 0.8, 1.2, mats.deskDark); box(-15.3, 0.92, 5, 0.45, 0.24
 box(0, 1.05, B.maxZ - 0.02, 1.1, 2.1, 0.05, mats.deskDark, false);
 box(-8, 1.05, B.maxZ - 0.02, 1.1, 2.1, 0.05, M(0x7a2a1a), false);
 const swSign = makeLabel('STAIRWELL', 'Fire exit only'); swSign.position.set(-8, 2.35, B.maxZ - 0.15); scene.add(swSign);
+box(-15.35, 0.4, 7.0, 0.5, 0.8, 0.5, M(0x34363c)); box(-15.35, 0.82, 7.0, 0.42, 0.05, 0.3, M(0x111111), false);
+const shSign = makeLabel('SHREDDER', 'Confidential only'); shSign.scale.set(0.8, 0.22, 1); shSign.position.set(-15.3, 1.15, 7.0); scene.add(shSign);
+box(-4, 1.35, B.maxZ - 0.1, 0.4, 0.62, 0.16, M(0x8a8f96), false); box(-4.1, 1.38, B.maxZ - 0.22, 0.08, 0.3, 0.08, M(0x111111), false);
+const ppSign = makeLabel('PAYPHONE', '25¢ local calls'); ppSign.scale.set(0.8, 0.22, 1); ppSign.position.set(-4, 1.9, B.maxZ - 0.15); scene.add(ppSign);
 const scSign = makeLabel('SUPPLY CLOSET'); scSign.position.set(0, 2.35, B.maxZ - 0.15); scene.add(scSign);
 
 /* ---------------- draw-call merging ---------------- */
@@ -925,6 +931,8 @@ function setupInteractables() {
     { name: 'Restroom stalls', x: -14.6, z: -4.3, use: () => say('Restroom', pick(['You check under the stalls. Just one pair of loafers. Yours.', 'Someone has written "ORCHID 4EVER" on the stall door in pencil.', 'The automatic flush goes off while you are still standing. You flinch.'])), r: 2 },
     { name: 'Sink', x: -13.2, z: -0.5, use: () => say('Restroom', pick(['You wash your hands. The mirror shows a person with a lot of problems.', 'The soap dispenser is empty. It has been empty since 1995.'])), r: 1.8 },
     { name: 'Talk to Vinnie (loitering by the stairwell)', get x() { return dealer.pos.x; }, get z() { return dealer.pos.z; }, use: () => talkDealer(), r: 2.4 },
+    { name: 'Dig through the shredder bin', x: -15.35, z: 7.0, r: 2.0, use: () => checkOnce('shred', 'Shredder', () => { const c = spyClue('Shredder bin'); return c ? `You spend twenty minutes taping strips back together. It's an ${c.svc.short} contact sheet. One line survives: "...our friend, the one who <b>${c.desc}</b>..."` : 'Just shredded lunch menus.'; }) },
+    { name: 'Press redial on the payphone', x: -4, z: 13.8, r: 2.0, use: () => checkOnce('payphone', 'Payphone', () => { const c = spyClue('Payphone redial'); return c ? `You drop in a quarter and hit redial. An ${c.svc.short} handler answers: "You're early. Is this the one who <b>${c.desc}</b>?" You hang up fast.` : 'Redial reaches a pizza place. You order a large.'; }) },
     { name: 'Supply closet', x: 0, z: 13.9, use: () => say('Supply closet', 'It smells like toner and bad decisions. Someone has been hoarding the good pens.') },
   ];
   npcs.forEach(n => {
@@ -1265,7 +1273,8 @@ function searchDesk(n, present) {
   if (n.searched) return present ? reply(n, `You already went through my stuff, boss. You found: ${n.found}`) : say(`Desk #${n.desk.num}`, `You found: ${n.found}${CHECKED}`);
   n.searched = true;
   let item;
-  if (n.spy && Math.random() < .5) { item = pick([...L.deskSpy, ...svc(n).desk, ...svc(n).desk]); note(n, `Desk: ${item}`, true); }
+  if (n.spy && Math.random() < .7) { item = `${pick(svc(n).desk)} <b>That's ${svc(n).short} tradecraft.</b>`; note(n, `Desk: ${item}`, true); G.evidence.push({ svc: n.service, text: `Search of desk #${n.desk.num} (${n.name}): ${svc(n).short} tradecraft.`, when: stamp() }); toast(`Evidence · ${svc(n).short}`, `${n.name}'s desk has ${svc(n).short} tradecraft in it.`); }
+  else if (n.spy) { item = pick(L.deskSpy); note(n, `Desk: ${item}`, true); }
   else if (n.odd && Math.random() < .7) { item = pick(L.deskOdd); note(n, `Desk: ${item}`); }
   else { item = pick(L.deskInno); note(n, `Desk: ${item}`); }
   n.found = item;
@@ -1277,7 +1286,11 @@ function searchDesk(n, present) {
     speak(n, react);
     dialog(`Searching desk #${n.desk.num}`, `<div class="speech">${portrait(n)}<p>${react}</p></div><div class="memo" style="font-size:14px">You find: ${item}</div>`, [{ label: 'Keep talking', fn: () => talk(n, 'Anything else?') }, { label: 'Leave' }]);
     updateHUD(); checkEnd();
-  } else say(`Desk #${n.desk.num} (${n.name})`, `Nobody's around. You quietly open the drawers.<br><br>You find: ${item}`);
+  } else {
+    const w = witnesses(n);
+    if (w.length) { legalGrr(5, `going through ${n.name}'s drawers while they were out`); toast('Seen', `${w[0].first} saw you going through ${n.first}'s desk.`); }
+    say(`Desk #${n.desk.num} (${n.name})`, `${w.length ? `${w[0].first} is watching from the next cubicle.` : 'Nobody\'s around.'} You quietly open the drawers.<br><br>You find: ${item}`);
+  }
 }
 function raise(n) {
   if (!once(n.id + 'raise')) return reply(n, 'Another raise? Boss, people will talk.');
@@ -1327,6 +1340,7 @@ function useCeoDesk() {
   const opts = [];
   if (!G.seated) opts.push({ label: 'Sit down', fn: sitDown });
   opts.push({ label: 'Log into DialTrade (private)', fn: () => openBroker('desk') });
+  opts.push({ label: 'Call your FBI contact (once a day)', fn: () => checkOnce('fbi', 'FBI liaison', () => { const c = spyClue('FBI liaison'); return c ? `Special Agent Dana Ruiz picks up on the first ring.<br><br>"Our ${c.svc.short} intercepts mention someone on your floor who <b>${c.desc}</b>. That's all I can give you today."` : '"Your floor is clean. Nice work."'; }) });
   if (G.lastCover) opts.push({ label: 'Read the latest TIMES', fn: () => showCover(G.lastCover) });
   opts.push({ label: 'Crawl into the bed under your desk (2 hours)', cls: 'love', fn: underDeskNap });
   opts.push({ label: 'Read the security consultant\'s report', fn: () => say('Report', `"Three suspected assets on the floor, one each for China\'s MSS, Russia\'s SVR and IDF Military Intelligence. Each has a handler who calls, faxes and mails. Witnesses will only ever give you descriptions, so build a profile for each service and eliminate. Typical behaviors: after-hours copying, interest in R&D access, contact with foreign numbers, unexplained cash. <b>Do not profile by name, accent or background.</b> Half the people who fit a stereotype are your best engineers. Watch behavior."`) });
@@ -2103,8 +2117,10 @@ function openDossier() {
     const row = document.createElement('div'); row.className = 'drow sunk';
     const gone = n.status !== 'active';
     const traits = TRAIT_KEYS.filter(k => k !== 'dept').map(k => chip(TRAIT_SHORT[k](n.tr[k]))).join('');
+    const fitsS = gone ? [] : Object.keys(SVC).filter(k => Object.keys(G.known[k]).length && !npcs.some(o => o.spy && o.service === k && o.status !== 'active') && matchesKnown(n, k));
+    const fitHtml = fitsS.length ? `<div class="fitline">Fits: ${fitsS.map(k => `<span class="chip fit">${SVC[k].short} profile</span>`).join('')}</div>` : '';
     const notes = n.notes.length ? `<ul>${n.notes.map(x => `<li class="${x.strong ? 'strong' : ''}">${x.text}</li>`).join('')}</ul>` : '';
-    row.innerHTML = `<div class="num">#${n.desk.num}</div><div style="min-width:0"><h4>${n.name}<small>${n.dept}${gone ? ' · ' + n.status.toUpperCase() + (n.spy && n.status === 'arrested' ? ' · ' + svc(n).short : '') : ''}${G.affair === n ? ' · ♥' : ''}</small></h4><div>${traits}</div>${notes}</div>`;
+    row.innerHTML = `<div class="num">#${n.desk.num}</div><div style="min-width:0"><h4>${n.name}<small>${n.dept}${gone ? ' · ' + n.status.toUpperCase() + (n.spy && n.status === 'arrested' ? ' · ' + svc(n).short : '') : ''}${G.affair === n ? ' · ♥' : ''}</small></h4><div>${traits}</div>${fitHtml}${notes}</div>`;
     const b = document.createElement('button'); b.className = 'b95 stamp ' + MARKS[n.mark][1]; b.textContent = MARKS[n.mark][0];
     b.onclick = () => { n.mark = (n.mark + 1) % MARKS.length; b.className = 'b95 stamp ' + MARKS[n.mark][1]; b.textContent = MARKS[n.mark][0]; };
     row.appendChild(b); list.appendChild(row);
