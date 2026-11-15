@@ -904,7 +904,7 @@ function movePlayer(dt) {
   if (len > 1) { fx /= len; fz /= len; }
   const rush = G.rush && G.min < G.rush.until ? G.rush.mult : 1;
   const run = keys.ShiftLeft || keys.ShiftRight || Math.hypot(joy.x, joy.y) > 0.92;
-  const sp = (run ? 5 : 3) * rush * (wired() ? 1.5 : 1) * dt;
+  const sp = (run ? 5 : 3) * rush * cokeMult() * dt;
   const sx = Math.sin(yaw), cz = Math.cos(yaw);
   const dx = (fx * cz - fz * sx) * sp, dz = (-fx * sx - fz * cz) * sp;
   if (!blocked(player.x + dx, player.z, player.r)) player.x += dx;
@@ -1125,7 +1125,7 @@ function endOfDay() {
   dialog(`End of ${DAYS[G.day]}`, body, [{ label: `Go home. Come back ${DAYS[G.day + 1]}.`, fn: nextDay }]);
 }
 function nextDay() {
-  G.day++; G.min = 540; G.lastHour = 9; G.lastTick = 540; G.rush = null; G.coke = 0; G.dayStart = { leaks: G.leaks, stock: G.stock };
+  G.day++; G.min = 540; G.lastHour = 9; G.lastTick = 540; G.rush = null; G.coke = 0; G.grams = 0; G.dayStart = { leaks: G.leaks, stock: G.stock };
   for (const o of legalStaff) { o.state = G.legal.summoned ? 'summon' : 'desk'; o.path = []; o.talking = false; o.pos.set(o.home.x, 0, o.home.z); o.mesh.rotation.y = o.rotY; o.sit = 1; }
   if (G.legal.summoned) G.legal.deadline = 540 + 90;
   G.seated = false; npcs.forEach(n => n.invite = null); clearEvents();
@@ -1165,7 +1165,7 @@ function updateHUD() {
   const pl = $('#pl'); pl.hidden = !G.short;
   if (G.short) { const v = pnl(); pl.textContent = `SHORT ${Math.round(G.short / 1000)}K ${v >= 0 ? '+' : ''}${fmtMoney(v)}`; pl.classList.toggle('neg', v < 0); }
   $('#coverbtn').hidden = !G.lastCover;
-  $('#wired').hidden = !wired();
+  $('#wired').hidden = !wired(); if (wired()) $('#wired').textContent = `WIRED ${cokeMult()}× · ${grams()}g`;
   const hb = $('#heldbtn'); hb.hidden = !G.held; if (G.held) hb.textContent = `Holding: ${G.held.n} (Q)`;
 }
 function toast(title, text) {
@@ -1829,6 +1829,8 @@ function talkPara() {
 
 /* ---------------- Vinnie the "courier" ---------------- */
 const wired = () => G.coke && G.min < G.coke;
+const grams = () => wired() ? (G.grams || 0) : 0;
+const cokeMult = () => 1 + 0.5 * grams();
 function updateDealer(dt) {
   if (!dealer) return;
   const t = performance.now() / 1000, d = Math.hypot(player.x - dealer.pos.x, player.z - dealer.pos.z);
@@ -1841,23 +1843,31 @@ function updateDealer(dt) {
 }
 function talkDealer(msg) {
   dealer.talking = true;
-  const line = msg || (wired() ? pick(['Easy, boss. You\'re already flying. Come back later.', 'Whoa. Blink, boss. You gotta blink sometimes.', 'Slow down, you\'re making ME nervous.'])
+  const line = msg || (grams() >= 3 ? 'Boss. BOSS. Three\'s the limit. Your eyes are doing a thing. I\'m serious, a fourth one and you\'re going in an ambulance.' : wired() ? pick(['Back for more? Easy, boss. You\'re already flying.', 'Whoa. Blink, boss. You gotta blink sometimes.', 'Slow down, you\'re making ME nervous.'])
     : pick(['Psst. Boss. You look tired. Long week? I got something for that.', 'I\'m a courier. I deliver things. Some of them are documents.', 'Nice suit. Shame about the bags under your eyes. I can help with that.', 'You didn\'t see me. I didn\'t see you. Now, what do you need?']));
   speak(dealer, line);
-  dialog('Vinnie — "Courier"', `<div class="speech">${portrait(dealer)}<p>${line}</p></div><small>A gram makes you walk 1.5× faster for 2 hours. Anyone standing nearby will see the deal.</small>`, [
-    { label: 'Buy a gram of coke ($500)', cls: 'danger', fn: buyCoke },
+  dialog('Vinnie — "Courier"', `<div class="speech">${portrait(dealer)}<p>${line}</p></div><small>Each gram stacks: 1.5×, then 2×, then 2.5× speed for 2 hours. Don't take a fourth. Anyone standing nearby will see the deal.</small>`, [
+    { label: grams() === 0 ? 'Buy a gram of coke ($500)' : grams() >= 3 ? 'One more gram… ($500) — gram #4' : `Another gram ($500) — gram #${grams() + 1}`, cls: 'danger', fn: buyCoke },
     { label: 'Hear anything about the leaks? ($1,000)', fn: dealerInfo },
     { label: 'Walk away' },
   ]);
 }
 function buyCoke() {
   if (G.cash < 500) return talkDealer('Five hundred, boss. Cash. Not a promise, not stock options. Cash.');
-  G.cash -= 500; G.coke = Math.max(G.coke || 0, G.min) + 120;
+  const g = grams() + 1;
+  G.cash -= 500; G.grams = g; G.coke = Math.max(G.coke || 0, G.min) + 120;
   const w = witnesses(null);
   if (w.length) { G.scandal += 8; legalGrr(10, 'buying cocaine from a man in the stairwell. In front of staff.'); toast('Seen', `${w[0].first} watched you buy something from Vinnie. They look horrified.`); }
   else if (Math.random() < .25) { G.scandal += 3; legalGrr(5, 'spending fifteen minutes in the stairwell with someone named "Vinnie"'); }
-  toast('WIRED', 'Your heart is pounding. Everything is VERY important. 1.5× speed for 2 hours.');
-  updateHUD(); checkEnd();
+  updateHUD();
+  if (g >= 4) {
+    closeDialog();
+    return fade('Your left arm goes numb. The ceiling tiles start spinning.<br><br>You wake up in an ambulance. A paramedic asks how many grams.<br>You hold up four fingers. He sighs.', () =>
+      gameOver(false, 'Cardiac event', 'Four grams in one afternoon. You survive, but you spend the rest of the quarter in a hospital bed eating Jell-O. The board names an interim CEO from your hospital room. Vinnie sends flowers.'));
+  }
+  const msg = ['Your heart is pounding. Everything is VERY important.', 'Your jaw is clenched. You can hear the fluorescent lights. ALL of them.', 'You are vibrating. Your left arm feels a bit funny. Probably fine.'][g - 1];
+  toast(`WIRED · ${g}g`, `${msg} ${1 + 0.5 * g}× speed for 2 hours.`);
+  checkEnd();
 }
 function dealerInfo() {
   const k = G.day + ':vinnie';
