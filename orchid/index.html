@@ -207,7 +207,7 @@ button{touch-action:manipulation}
   <div id="dossier" class="layer" hidden>
     <div class="win bevel" role="dialog" aria-modal="true">
       <div class="tb"><span>DOSSIER.TXT — Notepad</span><button class="b95" id="dos-x" aria-label="Close">×</button></div>
-      <div class="body"><div style="font-size:12px;color:#333"><b>How to solve it:</b> every clue says which service's spy it describes. Whoever matches all the MSS clues works for the MSS, and so on. Each person below shows which profiles they still fit. Click a stamp to mark your hunch.</div><div class="dlist" id="dlist"></div></div>
+      <div class="body"><div style="font-size:12px;color:#333"><b>How to solve it:</b> every clue says which service's spy it describes. Whoever matches all the MSS clues works for the MSS, and so on. Each person below shows which profiles they still fit and how many independent sources back it. The FBI needs 3 different sources pointing at the same person. Click a stamp to mark your hunch.</div><div class="dlist" id="dlist"></div></div>
     </div>
   </div>
 
@@ -218,7 +218,7 @@ button{touch-action:manipulation}
         <div class="memo">
           <h2>CONFIDENTIAL MEMORANDUM</h2>
           <div class="hdr"><b>TO:</b><span>You, Chief Executive Officer</span><b>FROM:</b><span>Board of Directors</span><b>DATE:</b><span>Monday, March 3, 1997</span><b>RE:</b><span>Project ORCHID</span></div>
-          <p>Our security consultant believes <b>three people on this floor</b> are passing ORCHID chip designs to three different foreign services: one to <b>China's MSS</b>, one to <b>Russia's SVR</b>, and one to <b>IDF Military Intelligence</b>. We don't know who. Every clue says <b>which service's spy</b> it's about and describes them (hair, glasses, where they sit…), but never names them. Whoever matches the MSS clues works for the MSS, and so on. Cross off suspects like a game of Clue, then tell the FBI <b>who</b> and <b>who they work for</b>.</p>
+          <p>Our security consultant believes <b>three people on this floor</b> are passing ORCHID chip designs to three different foreign services: one to <b>China's MSS</b>, one to <b>Russia's SVR</b>, and one to <b>IDF Military Intelligence</b>. We don't know who. Every clue says <b>which service's spy</b> it's about and describes them (hair, glasses, where they sit…), but never names them. Whoever matches the MSS clues works for the MSS, and so on. Cross off suspects like a game of Clue, then tell the FBI <b>who</b> and <b>who they work for</b>. The FBI won't move without <b>three independent sources</b> pointing at the same person.</p>
           <p>Catch all three before 5:00 PM Friday, or before ORCHID leaks. Keep the stock up. And stay on the right side of Margaret Thornbury in Legal. She has buried better CEOs than you.</p>
           <p>And for God's sake, keep your personal life out of the papers.</p>
         </div>
@@ -1466,7 +1466,7 @@ function searchDesk(n, present) {
   if (n.searched) return present ? reply(n, `You already went through my stuff, boss. You found: ${n.found}`) : say(`Desk #${n.desk.num}`, `You found: ${n.found}${CHECKED}`);
   n.searched = true;
   let item;
-  if (n.spy && Math.random() < .7) { item = `${pick(svc(n).desk)} <b>That's ${svc(n).short} tradecraft.</b>`; note(n, `Desk: ${item}`, true); G.evidence.push({ svc: n.service, text: `Search of desk #${n.desk.num} (${n.name}): ${svc(n).short} tradecraft.`, when: stamp() }); toast(`Evidence · ${svc(n).short}`, `${n.name}'s desk has ${svc(n).short} tradecraft in it.`); }
+  if (n.spy && Math.random() < .7) { item = `${pick(svc(n).desk)} <b>That's ${svc(n).short} tradecraft.</b>`; note(n, `Desk: ${item}`, true); G.evidence.push({ svc: n.service, src: 'Desk search', who: n.id, text: `Search of desk #${n.desk.num} (${n.name}): ${svc(n).short} tradecraft.`, when: stamp() }); toast(`Evidence · ${svc(n).short}`, `${n.name}'s desk has ${svc(n).short} tradecraft in it.`); }
   else if (n.spy) { item = pick(L.deskSpy); note(n, `Desk: ${item}`, true); }
   else if (n.odd && Math.random() < .7) { item = pick(L.deskOdd); note(n, `Desk: ${item}`); }
   else { item = pick(L.deskInno); note(n, `Desk: ${item}`); }
@@ -1673,8 +1673,8 @@ function bathScene(n) {
           G.cash += 150000; G.leaks = clamp(G.leaks + 18, 0, 100); G.sec += 12; note(n, 'Seduced you in the restroom, then handed you $150,000 for ORCHID access. You took it.', true);
           fade('The envelope is thick. Very thick.<br><br>You flush, for no reason. It doesn\'t work. Level 7.'); updateHUD(); checkEnd();
         } },
-        { label: 'Play along. Learn more.', fn: () => { note(n, 'Honeytrap in the restroom, then tried to buy ORCHID. Works for "friends overseas".', true); n.nervous = G.min + 600; reply(n, 'Good. We\'ll be in touch. Wash your hands, boss. Appearances.'); } },
-        { label: 'Get out of my bathroom.', fn: () => { note(n, 'Seduced you in the restroom, then tried to bribe you for ORCHID. You refused.', true); reply(n, 'A pity. Forget we spoke. I certainly will.'); } },
+        { label: 'Play along. Learn more.', fn: () => { G.evidence.push({ svc: n.service, src: 'Restroom approach', who: n.id, text: `Restroom: ${n.name} offered to buy ORCHID for friends in ${svc(n).city}.`, when: stamp() }); note(n, 'Honeytrap in the restroom, then tried to buy ORCHID. Works for "friends overseas".', true); n.nervous = G.min + 600; reply(n, 'Good. We\'ll be in touch. Wash your hands, boss. Appearances.'); } },
+        { label: 'Get out of my bathroom.', fn: () => { G.evidence.push({ svc: n.service, src: 'Restroom approach', who: n.id, text: `Restroom: ${n.name} offered to buy ORCHID for friends in ${svc(n).city}.`, when: stamp() }); note(n, 'Seduced you in the restroom, then tried to bribe you for ORCHID. You refused.', true); reply(n, 'A pity. Forget we spoke. I certainly will.'); } },
       ]);
     } else toast('Restroom', `The hand dryer ran for a very long time. You leave first; ${n.first} leaves four minutes later. Gloria from reception notices both.`);
   });
@@ -1710,18 +1710,9 @@ function makeCover() {
   if (good) { bg.addColorStop(0, '#f6d77a'); bg.addColorStop(1, '#c7892a'); } else { bg.addColorStop(0, '#6b6f72'); bg.addColorStop(1, '#2d2f33'); }
   g.fillStyle = bg; g.fillRect(0, 0, W, H);
   if (good) { g.save(); g.translate(W / 2, 250); for (let i = 0; i < 24; i++) { g.rotate(Math.PI / 12); g.fillStyle = 'rgba(255,255,255,.12)'; g.beginPath(); g.moveTo(0, 0); g.lineTo(-18, -360); g.lineTo(18, -360); g.fill(); } g.restore(); }
-  const cx = W / 2, hy = 225, sk = G.ceo.skin, hair = G.ceo.hair;
-  g.fillStyle = '#1d2433'; g.beginPath(); g.moveTo(40, H); g.quadraticCurveTo(50, 340, cx, 322); g.quadraticCurveTo(W - 50, 340, W - 40, H); g.fill();
-  g.fillStyle = '#f4f2ec'; g.beginPath(); g.moveTo(cx - 36, 330); g.lineTo(cx, 420); g.lineTo(cx + 36, 330); g.fill();
-  g.fillStyle = good ? '#a3122a' : '#4a2a2a'; g.beginPath(); g.moveTo(cx - 10, 338); g.lineTo(cx + 10, 338); g.lineTo(cx + 14, 410); g.lineTo(cx, 428); g.lineTo(cx - 14, 410); g.fill();
-  g.fillStyle = sk; g.fillRect(cx - 24, 290, 48, 46);
-  g.beginPath(); g.ellipse(cx - 72, hy + 6, 12, 22, 0, 0, 7); g.ellipse(cx + 72, hy + 6, 12, 22, 0, 0, 7); g.fill();
-  g.beginPath(); g.ellipse(cx, hy, 74, 92, 0, 0, 7); g.fill();
-  const f = Object.assign({}, faceFromLook(CEO_LOOK), { look: 0, smile: good ? 1.1 : -0.6, wrinkles: !good, blush: good });
-  const face = drawFace(f, good ? {} : { angry: true }).image;
-  g.drawImage(face, cx - 82, hy - 78, 164, 159);
-  if (!G.ceo.bald) { g.fillStyle = hair; g.beginPath(); g.ellipse(cx, hy - 66, 78, 36, 0, Math.PI, 0); g.fill(); g.fillRect(cx - 78, hy - 70, 14, 50); g.fillRect(cx + 64, hy - 70, 14, 50); }
-  if (!good) { g.fillStyle = 'rgba(120,160,255,.6)'; g.beginPath(); g.ellipse(cx + 66, hy - 30, 6, 10, 0, 0, 7); g.fill(); }
+  const cx = W / 2;
+  g.drawImage(coverPortrait(good), (W - COVW) / 2, H - COVH);
+  if (!good) { g.fillStyle = 'rgba(140,180,255,.75)'; [[cx + 78, 150], [cx + 88, 190], [cx - 82, 170]].forEach(([x, y]) => { g.beginPath(); g.moveTo(x, y - 9); g.quadraticCurveTo(x + 6, y + 2, x, y + 6); g.quadraticCurveTo(x - 6, y + 2, x, y - 9); g.fill(); }); }
   g.fillStyle = '#ffffff'; g.font = 'bold 96px Georgia, "Times New Roman", serif'; g.textAlign = 'center';
   g.lineWidth = 6; g.strokeStyle = 'rgba(0,0,0,.35)'; g.strokeText('TIMES', cx, 104); g.fillText('TIMES', cx, 104);
   g.font = '11px Georgia, serif'; g.fillStyle = good ? '#3a2a0a' : '#ddd';
@@ -2214,7 +2205,7 @@ function spyClue(source, spy) {
   let k = unknown.length ? (Math.random() < .7 ? unknown.sort((a, b) => fits(a) - fits(b) || Math.random() - .5)[0] : pick(unknown)) : pick(TRAIT_KEYS);
   const v = s.tr[k], desc = TRAIT_DESC[k](v), fresh = !(k in known);
   known[k] = v;
-  G.evidence.push({ svc: s.service, text: `${source}: the ${SVC[s.service].short} asset ${desc}.`, when: stamp() });
+  G.evidence.push({ svc: s.service, src: source, k, v, text: `${source}: the ${SVC[s.service].short} asset ${desc}.`, when: stamp() });
   toast(`Evidence · ${SVC[s.service].short}`, `The ${SVC[s.service].short} asset ${desc}.${fresh ? '' : ' (You knew that already.)'} Logged in your dossier.`);
   return { s, k, v, desc, svc: SVC[s.service] };
 }
@@ -2289,7 +2280,9 @@ function reviewCase() {
     else {
       const k = fits.sort((a, b) => Object.keys(G.known[b]).length - Object.keys(G.known[a]).length)[0], cnt = Object.keys(G.known[k]).length;
       const rivals = active().filter(o => o !== n && matchesKnown(o, k)).length;
-      v = rivals === 0 && cnt >= 2 ? `${n.first} is the only person on this floor who fits everything we have on the ${SVC[k].short} asset. That would hold up. Name the right service when you call.`
+      const ns = caseFile(n, k).srcs.length;
+      v = rivals === 0 && cnt >= 2 && ns >= NEED_SOURCES ? `${n.first} is the only person on this floor who fits everything we have on the ${SVC[k].short} asset, from ${ns} separate sources. That would hold up. Name the right service when you call.`
+        : rivals === 0 && cnt >= 2 ? `${n.first} is the only one who fits the ${SVC[k].short} profile, but you only have ${ns} source${ns === 1 ? '' : 's'}. The FBI wants ${NEED_SOURCES}. Keep digging.`
         : `${n.first} fits the ${SVC[k].short} evidence, but so do ${rivals} other${rivals === 1 ? '' : 's'}. Thin. Get me more before you call anyone.`;
     }
     talkLegal(v);
@@ -2297,13 +2290,30 @@ function reviewCase() {
   opts.push({ label: 'Never mind', fn: () => talkLegal('Then stop wasting billable time.') });
   dialog('Legal review', `<div class="speech">${portrait(gc)}<p>Who? I'll tell you whether they fit the evidence. Not whether they're guilty. That's your problem.</p></div>`, opts);
 }
+const NEED_SOURCES = 3;
+function caseFile(n, sk) {
+  const mine = G.evidence.filter(e => e.svc === sk);
+  const backs = mine.filter(e => e.who != null ? e.who === n.id : (e.k && n.tr[e.k] === e.v));
+  const contra = mine.some(e => (e.who != null && e.who !== n.id) || (e.k && n.tr[e.k] !== e.v));
+  return { srcs: [...new Set(backs.map(e => e.src))], contra };
+}
 function confirmAct(n, kind) {
+  if (kind === 'fbi') {
+    const rows = Object.keys(SVC).map(k => { const f = caseFile(n, k); return `<li><b>${SVC[k].label}:</b> ${f.contra ? '<span style="color:var(--red)">your evidence contradicts this</span>' : `${f.srcs.length}/${NEED_SOURCES} sources${f.srcs.length ? ` (${f.srcs.join(', ')})` : ''}`}</li>`; }).join('');
+    return dialog('Call the FBI?', `<div class="memo" style="font-size:13.5px">Special Agent Ruiz needs <b>who</b>, <b>who for</b>, and at least <b>${NEED_SOURCES} independent sources</b> that point at that person.<br><br>Your file on <b>${n.name}</b>:<ul style="margin:6px 0 0;padding-left:18px">${rows}</ul></div>`,
+      [...Object.keys(SVC).map(k => ({ label: `${n.first} works for ${SVC[k].label}`, cls: 'danger', fn: () => resolveAct(n, 'fbi', k) })), { label: 'Cancel', fn: () => talk(n) }]);
+  }
   if (kind === 'fbi') return dialog('Call the FBI?', `<div class="memo" style="font-size:14px">The FBI needs <b>who</b> and <b>who for</b>. Name the service <b>${n.name}</b> works for.<br><br>Wrong person: a wrongful-arrest lawsuit. Right person, wrong service: they walk, and they know you're onto them.</div>`,
     [...Object.keys(SVC).map(k => ({ label: `${n.first} works for ${SVC[k].label}`, cls: 'danger', fn: () => resolveAct(n, 'fbi', k) })), { label: 'Cancel', fn: () => talk(n) }]);
   dialog('Fire employee?', `<div class="memo" style="font-size:14px">Security will escort <b>${n.name}</b> out with a cardboard box. Nobody will be told why.</div>`,
     [{ label: 'Fire them', cls: 'danger', fn: () => resolveAct(n, kind) }, { label: 'Cancel', fn: () => talk(n) }]);
 }
 function resolveAct(n, kind, sk) {
+  if (kind === 'fbi') {
+    const f = caseFile(n, sk);
+    if (f.contra) { legalGrr(3, `calling the FBI with a file that contradicts itself`); return say('FBI', `Special Agent Ruiz reads your file back to you.<br><br>"Your own evidence says the ${SVC[sk].short} asset doesn't look like ${n.first}. I'm not arresting someone your file clears. Call me when it adds up."`); }
+    if (f.srcs.length < NEED_SOURCES) { legalGrr(2, 'wasting the FBI\'s time'); return say('FBI', `Special Agent Ruiz sighs.<br><br>"${f.srcs.length === 0 ? 'You have nothing on them.' : f.srcs.length === 1 ? 'One source is gossip.' : 'Two sources is a hunch.'} I need ${NEED_SOURCES} independent sources that point at ${n.first} for the ${SVC[sk].short}. Different places, not the same copier twice."<br><br><small>You have ${f.srcs.length}/${NEED_SOURCES}${f.srcs.length ? ': ' + f.srcs.join(', ') : ''}.</small>`); }
+  }
   if (kind === 'fbi' && n.spy && sk !== n.service) {
     n.nervous = G.min + 600; G.stock = Math.max(0.5, G.stock - 1); legalGrr(15, `telling the FBI that ${n.name} worked for ${SVC[sk].label}. They didn't.`);
     note(n, `Accused of working for ${SVC[sk].label}. The FBI released them: "the evidence points elsewhere."`);
@@ -2347,7 +2357,7 @@ function openDossier() {
     const gone = n.status !== 'active';
     const traits = TRAIT_KEYS.filter(k => k !== 'dept').map(k => chip(TRAIT_SHORT[k](n.tr[k]))).join('');
     const fitsS = gone ? [] : Object.keys(SVC).filter(k => Object.keys(G.known[k]).length && !npcs.some(o => o.spy && o.service === k && o.status !== 'active') && matchesKnown(n, k));
-    const fitHtml = fitsS.length ? `<div class="fitline">Fits: ${fitsS.map(k => `<span class="chip fit">${SVC[k].short} profile</span>`).join('')}</div>` : '';
+    const fitHtml = fitsS.length ? `<div class="fitline">Fits: ${fitsS.map(k => `<span class="chip fit">${SVC[k].short} profile · ${caseFile(n, k).srcs.length}/${NEED_SOURCES} sources</span>`).join('')}</div>` : '';
     const notes = n.notes.length ? `<ul>${n.notes.map(x => `<li class="${x.strong ? 'strong' : ''}">${x.text}</li>`).join('')}</ul>` : '';
     row.innerHTML = `<div class="num">#${n.desk.num}</div><div style="min-width:0"><h4>${n.name}<small>${n.dept}${gone ? ' · ' + n.status.toUpperCase() + (n.spy && n.status === 'arrested' ? ' · ' + svc(n).short : '') : ''}${G.affair === n ? ' · ♥' : ''}</small></h4><div>${traits}</div>${fitHtml}${notes}</div>`;
     const b = document.createElement('button'); b.className = 'b95 stamp ' + MARKS[n.mark][1]; b.textContent = MARKS[n.mark][0];
@@ -2364,7 +2374,36 @@ let CEO_LOOK = Object.assign({}, CEO_DEFAULT);
 try { const saved = JSON.parse(localStorage.getItem('orchid.ceo') || 'null'); if (saved) Object.assign(CEO_LOOK, saved); } catch (e) {}
 const ceoCoverInfo = () => ({ hair: hexs(CEO_LOOK.hair), skin: hexs(CEO_LOOK.skin), glasses: !!CEO_LOOK.glasses, bald: CEO_LOOK.style === 8, name: CEO_LOOK.name || 'The CEO' });
 function disposeObj(o) { o.traverse(c => { if (c.geometry) c.geometry.dispose(); }); }
+const covS = new THREE.Scene();
+const covKey = new THREE.DirectionalLight(lc(0xfff0dd), 1.35); covKey.position.set(1.4, 2.6, 2.6); covS.add(covKey);
+covS.add(new THREE.HemisphereLight(lc(0xffffff), lc(0x334455), 0.85));
+{ const rim = new THREE.DirectionalLight(lc(0xffffff), 0.7); rim.position.set(-2, 2.2, -2); covS.add(rim); }
+const COVW = 300, COVH = 360;
+const covRT = new THREE.WebGLRenderTarget(COVW, COVH); covRT.texture.encoding = THREE.sRGBEncoding;
+const covCam = new THREE.PerspectiveCamera(24, COVW / COVH, 0.05, 20);
+let covMesh = null;
+function rebuildCoverMesh() {
+  if (covMesh) { covS.remove(covMesh); disposeObj(covMesh); }
+  covMesh = makePerson({ look: Object.assign({}, CEO_LOOK, { pants: CEO_LOOK.suit }), angry: true }); covS.add(covMesh); finishMaterials(covS);
+}
+function coverPortrait(good) {
+  if (!covMesh) rebuildCoverMesh();
+  const u = covMesh.userData;
+  pose({ mesh: covMesh, sit: 0, walkAmp: 0, walkT: 0, sip: 0, talking: false, state: 'x', id: 997 }, 0);
+  u.faceMat.map = good ? u.tex.n : u.tex.a;
+  if (good) { u.armL.rotation.set(-1.35, 0, 0.85); u.armR.rotation.set(-1.25, 0, -0.85); covMesh.rotation.y = -0.22; u.head.rotation.set(-0.06, 0.12, 0); }
+  else { u.armL.rotation.set(0.05, 0, 0.08); u.armR.rotation.set(0.05, 0, -0.08); covMesh.rotation.y = 0.22; u.head.rotation.set(0.2, -0.15, 0.14); }
+  covKey.intensity = good ? 1.45 : 0.95;
+  covCam.position.set(0, 1.52, 1.95); covCam.lookAt(0, 1.47, 0);
+  const prevA = renderer.getClearAlpha(), prevC = renderer.getClearColor(new THREE.Color());
+  renderer.setClearColor(0x000000, 0); renderer.setRenderTarget(covRT); renderer.clear(); renderer.render(covS, covCam);
+  const buf = new Uint8Array(COVW * COVH * 4); renderer.readRenderTargetPixels(covRT, 0, 0, COVW, COVH, buf);
+  renderer.setRenderTarget(null); renderer.setClearColor(prevC, prevA);
+  const img = new ImageData(COVW, COVH); for (let y = 0; y < COVH; y++) img.data.set(buf.subarray((COVH - 1 - y) * COVW * 4, (COVH - y) * COVW * 4), y * COVW * 4);
+  const c = document.createElement('canvas'); c.width = COVW; c.height = COVH; c.getContext('2d').putImageData(img, 0, 0); return c;
+}
 function rebuildCeo() {
+  rebuildCoverMesh();
   if (ceo) { scene.remove(ceo.mesh); disposeObj(ceo.mesh); }
   const mesh = makePerson({ look: Object.assign({}, CEO_LOOK, { pants: CEO_LOOK.suit }) }); mesh.visible = false; scene.add(mesh);
   ceo = { id: 999, mesh, pos: mesh.position, sit: 0, walkT: 0, walkAmp: 0, sip: 0, talking: false, state: 'cut' };
