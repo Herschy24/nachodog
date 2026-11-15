@@ -972,7 +972,8 @@ function loadModels(onProgress) {
   if (!THREE.GLTFLoader || !THREE.SkeletonUtils) { modelsFailed = true; return Promise.resolve(); }
   const loader = new THREE.GLTFLoader(), files = [...new Set(MODEL_DEFS.map(d => d.file))];
   let done = 0;
-  return Promise.all(files.map(f => new Promise(res => loader.load(`models/${f}.glb`, g => { done++; onProgress && onProgress(done, files.length); res([f, g.scene]); }, undefined, e => { console.warn('model', f, e); done++; onProgress && onProgress(done, files.length); res([f, null]); }))))
+  const one = (f, exts) => new Promise(res => loader.load(`models/${f}${exts[0]}`, g => res(g.scene), undefined, e => exts.length > 1 ? one(f, exts.slice(1)).then(res) : (console.warn('model', f, e), res(null))));
+  return Promise.all(files.map(f => one(f, ['.glb', '.glb.wasm']).then(sc => { done++; onProgress && onProgress(done, files.length); return [f, sc]; })))
     .then(list => {
       const byFile = Object.fromEntries(list);
       for (const d of MODEL_DEFS) { if (!byFile[d.file]) continue; try { MODELS[d.key] = prepModel(d, byFile[d.file]); } catch (e) { console.warn(e); } }
