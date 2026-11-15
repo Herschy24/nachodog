@@ -274,6 +274,8 @@ button{touch-action:manipulation}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/objects/Reflector.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/SkeletonUtils.js"></script>
 <script>
 (() => {
 'use strict';
@@ -901,6 +903,132 @@ function crossArms(u) {
   u.armL.rotation.set(-0.3, 0, -0.03); u.armR.rotation.set(-0.4, 0, 0.03);
   u.elbowL.rotation.set(-1.66, 1.22, 0); u.elbowR.rotation.set(-1.5, -1.28, 0);
 }
+/* ---------------- imported character models (rigged GLBs, posed procedurally) ---------------- */
+// Each person keeps the old procedural rig as an invisible "driver"; every frame its joint rotations are copied onto the model's bones.
+const MODEL_DEFS = [
+  { key: 'suitgirl', file: 'suitgirl', g: 1 }, { key: 'girl17', file: 'girl17', g: 1 }, { key: 'girl18', file: 'girl18', g: 1 }, { key: 'kanisha', file: 'suitspack', part: /^female_02/, g: 1 },
+  { key: 'male7', file: 'male7', g: 0 }, { key: 'officeworker', file: 'officeworker', g: 0 }, { key: 'dad', file: 'dad', g: 0 }, { key: 'elder', file: 'elder', g: 0 },
+  { key: 'gallahan', file: 'suitspack', part: /^Gallahan/, g: 0 }, { key: 'gus', file: 'gus', g: 0, special: true },
+];
+const MODELS = {}, DRESSED = new Set(), MODEL_USES = {};
+let modelsReady = false, modelsFailed = false;
+const ROLE_RX = {
+  hips: /^(Hips|ValveBiped\.?Bip01_Pelvis)$/, head: /^(Head|ValveBiped\.?Bip01_Head1)$/, neck: /^(Neck|ValveBiped\.?Bip01_Neck1)$/,
+  armA: /^(LeftArm|ValveBiped\.?Bip01_L_UpperArm)$/, foreA: /^(LeftForeArm|ValveBiped\.?Bip01_L_Forearm)$/, handA: /^(LeftHand|ValveBiped\.?Bip01_L_Hand)$/,
+  armB: /^(RightArm|ValveBiped\.?Bip01_R_UpperArm)$/, foreB: /^(RightForeArm|ValveBiped\.?Bip01_R_Forearm)$/, handB: /^(RightHand|ValveBiped\.?Bip01_R_Hand)$/,
+  thighA: /^(LeftUpLeg|ValveBiped\.?Bip01_L_Thigh)$/, shinA: /^(LeftLeg|ValveBiped\.?Bip01_L_Calf)$/, footA: /^(LeftFoot|ValveBiped\.?Bip01_L_Foot)$/,
+  thighB: /^(RightUpLeg|ValveBiped\.?Bip01_R_Thigh)$/, shinB: /^(RightLeg|ValveBiped\.?Bip01_R_Calf)$/, footB: /^(RightFoot|ValveBiped\.?Bip01_R_Foot)$/,
+  eyeA: /^LeftEye$/, eyeB: /^RightEye$/, toeA: /^(LeftToeBase|ValveBiped\.?Bip01_L_Toe0)$/,
+};
+const boneRole = name => { const base = name.replace(/_\d+$/, ''); for (const r in ROLE_RX) if (ROLE_RX[r].test(base)) return r; return null; };
+function prepModel(def, gltfScene) {
+  let root = gltfScene;
+  if (def.part) {
+    root = THREE.SkeletonUtils.clone(gltfScene);
+    const drop = []; root.traverse(o => { if (/_ARM_\d+$/.test(o.name) && !def.part.test(o.name)) drop.push(o); });
+    drop.forEach(o => o.parent.remove(o));
+  }
+  const wrap = new THREE.Group(); wrap.add(root); wrap.updateMatrixWorld(true);
+  const roles = {}; root.traverse(o => { if (o.isBone) { const r = boneRole(o.name); if (r && !roles[r]) roles[r] = o; } });
+  const need = ['hips', 'head', 'armA', 'foreA', 'armB', 'foreB', 'thighA', 'shinA', 'thighB', 'shinB', 'footA'];
+  if (need.some(r => !roles[r])) throw new Error(def.key + ' missing bones ' + need.filter(r => !roles[r]));
+  const P = o => o.getWorldPosition(new THREE.Vector3());
+  // face +z: toes point forward
+  const toe = roles.toeA ? P(roles.toeA) : P(roles.footA).add(new THREE.Vector3(0, 0, 0.1)), heel = P(roles.footA);
+  const fwd = new THREE.Vector3(toe.x - heel.x, 0, toe.z - heel.z).normalize();
+  root.rotation.y = -Math.atan2(fwd.x, fwd.z) + root.rotation.y; wrap.updateMatrixWorld(true);
+  // scale to a sensible height and stand on the floor
+  const bb = new THREE.Box3(); root.traverse(o => { if (o.isMesh) { o.geometry.computeBoundingBox(); const b = o.geometry.boundingBox.clone().applyMatrix4(o.isSkinnedMesh ? o.bindMatrix.clone().premultiply(o.matrixWorld) : o.matrixWorld); bb.union(b); } });
+  let topBone = null; root.traverse(o => { if (o.isBone && /^HeadTop_End(_\d+)?$/.test(o.name)) topBone = o; });
+  const feet = Math.min(P(roles.footA).y, bb.min.y), hy = P(roles.head).y;
+  const H = (hy - feet) / 0.89; // head joint sits ~89% of standing height
+  const target = def.g ? 1.7 : 1.78, k = target / H;
+  wrap.scale.setScalar(k); wrap.position.y = -feet * k; wrap.updateMatrixWorld(true);
+  const outer = new THREE.Group(); outer.add(wrap); outer.updateMatrixWorld(true);
+  // rest frames in character space
+  const rest = {}, inv = new THREE.Quaternion();
+  for (const r in roles) {
+    const b = roles[r], W = b.getWorldQuaternion(new THREE.Quaternion());
+    rest[r] = { name: b.name, q0: b.quaternion.clone(), W, Winv: W.clone().invert() };
+  }
+  const side = P(roles.armA).x > 0 ? 1 : -1; // which rig side is at +x
+  // rotation that takes each upper arm from its rest direction to hanging down
+  const down = {};
+  for (const s of ['A', 'B']) {
+    const a = P(roles['arm' + s]), f = P(roles['fore' + s]), dir = f.sub(a).normalize(), sx = Math.sign(a.x);
+    down[s] = new THREE.Quaternion().setFromUnitVectors(dir, new THREE.Vector3(sx * 0.06, -1, 0.01).normalize());
+  }
+  const hipH = P(roles.thighA).y;
+  root.traverse(o => {
+    if (!o.isMesh) return;
+    o.castShadow = !isTouch; o.receiveShadow = true; o.frustumCulled = false;
+    const ms = Array.isArray(o.material) ? o.material : [o.material];
+    for (const m of ms) { LIN.add(m); if (m.map) m.map.anisotropy = 4; if (m.transparent && m.opacity > 0.95 && !/glass/i.test(m.name)) { m.transparent = false; m.alphaTest = 0.5; } }
+    o.userData.shad = true;
+  });
+  return { def, scene: outer, rest, roles: Object.fromEntries(Object.entries(roles).map(([r, b]) => [r, b.name])), side, down, hipH };
+}
+function loadModels(onProgress) {
+  if (!THREE.GLTFLoader || !THREE.SkeletonUtils) { modelsFailed = true; return Promise.resolve(); }
+  const loader = new THREE.GLTFLoader(), files = [...new Set(MODEL_DEFS.map(d => d.file))];
+  let done = 0;
+  return Promise.all(files.map(f => new Promise(res => loader.load(`models/${f}.glb`, g => { done++; onProgress && onProgress(done, files.length); res([f, g.scene]); }, undefined, e => { console.warn('model', f, e); done++; onProgress && onProgress(done, files.length); res([f, null]); }))))
+    .then(list => {
+      const byFile = Object.fromEntries(list);
+      for (const d of MODEL_DEFS) { if (!byFile[d.file]) continue; try { MODELS[d.key] = prepModel(d, byFile[d.file]); } catch (e) { console.warn(e); } }
+      modelsReady = Object.keys(MODELS).length > 0; modelsFailed = !modelsReady;
+    });
+}
+function pickModel(gender, special) {
+  if (special && MODELS[special]) return special;
+  const pool = MODEL_DEFS.filter(d => MODELS[d.key] && !d.special && d.g === (gender > 0.5 ? 1 : 0)).map(d => d.key);
+  if (!pool.length) return null;
+  const least = Math.min(...pool.map(k => MODEL_USES[k] || 0));
+  return pick(pool.filter(k => (MODEL_USES[k] || 0) === least));
+}
+const TINTABLE = /outfit_top|outfit_bottom|suit|shirt|pants|top|bottom/i;
+function dressPerson(mesh, opts = {}) {
+  const u = mesh.userData; if (!modelsReady || u.model) return;
+  const key = opts.key && MODELS[opts.key] ? opts.key : pickModel(u.look ? u.look.gender : 0, opts.special); if (!key) return;
+  const proto = MODELS[key], uses = MODEL_USES[key] = (MODEL_USES[key] || 0) + 1;
+  const inst = THREE.SkeletonUtils.clone(proto.scene);
+  const bones = {}; inst.traverse(o => { if (o.isBone) for (const r in proto.roles) if (proto.roles[r] === o.name) bones[r] = o; });
+  // repeat wearers get a different coloured outfit
+  if (uses > 1) {
+    const tint = new THREE.Color(u.look ? u.look.suit : 0x334455).lerp(new THREE.Color(0xffffff), 0.35).convertSRGBToLinear(), seen = new Map();
+    inst.traverse(o => { if (!o.isMesh) return; const m = o.material; if (!m || !TINTABLE.test(m.name) || /skin|hair|eye|face|hand|body|teeth/i.test(m.name)) return;
+      if (!seen.has(m)) { const c = m.clone(); c.color.multiply(tint).multiplyScalar(1.25); LIN.add(c); seen.set(m, c); } o.material = seen.get(m); });
+  }
+  mesh.traverse(o => { if (o.isMesh) o.visible = false; });
+  mesh.add(inst);
+  u.model = { proto, inst, wrap: inst, bones, key };
+  DRESSED.add(mesh); syncModel(mesh);
+}
+const _q = new THREE.Quaternion(), _q2 = new THREE.Quaternion(), _e = new THREE.Euler();
+function setBone(md, role, R) {
+  const b = md.bones[role], r = md.proto.rest[role]; if (!b) return;
+  b.quaternion.copy(r.q0).multiply(_q2.copy(r.Winv).multiply(R).multiply(r.W));
+}
+function syncModel(mesh, s) {
+  const u = mesh.userData, md = u.model; if (!md) return;
+  const p = md.proto, A = p.side > 0 ? 'B' : 'A', B = p.side > 0 ? 'A' : 'B'; // driver "L" arm sits at -x
+  if (s === undefined) s = clamp((-mesh.position.y) / 0.33, 0, 1);
+  md.inst.position.y = -(p.hipH - 0.82) * s;
+  setBone(md, 'thigh' + A, u.legL.hip.quaternion); setBone(md, 'thigh' + B, u.legR.hip.quaternion);
+  setBone(md, 'shin' + A, u.legL.knee.quaternion); setBone(md, 'shin' + B, u.legR.knee.quaternion);
+  for (const [S, arm, el] of [[A, u.armL, u.elbowL], [B, u.armR, u.elbowR]]) {
+    const D = p.down[S];
+    setBone(md, 'arm' + S, _q.copy(arm.quaternion).multiply(D));
+    setBone(md, 'fore' + S, _q.copy(D).invert().multiply(el.quaternion).multiply(D));
+  }
+  const now = performance.now(), talk = u.talkNod && now < u.talkNod ? Math.sin(now / 95) * 0.035 : 0;
+  _e.set(u.head.rotation.x + talk, u.head.rotation.y, u.head.rotation.z); setBone(md, 'head', _q.setFromEuler(_e));
+  if (u.eyes && md.bones.eyeA) { _q.setFromEuler(_e.set(0, u.eyes[0].rotation.y * 0.8, 0)); setBone(md, 'eyeA', _q); setBone(md, 'eyeB', _q); }
+}
+function syncAllModels() {
+  for (const m of DRESSED) { if (!m.parent) { DRESSED.delete(m); continue; } syncModel(m); }
+}
+
 function makePerson(opts = {}) {
   const gen = opts.gender != null ? opts.gender : opts.name ? (FEM.has(opts.name.split(' ')[0]) ? rnd(.72, .95) : rnd(.05, .3)) : Math.random();
   const L = opts.look ? Object.assign({}, opts.look) : randomLook(gen);
@@ -1216,6 +1344,16 @@ function newGame() {
   updateHUD();
   finishMaterials(scene);
   snapDay();
+  for (const k in MODEL_USES) delete MODEL_USES[k];
+  dressAll();
+}
+function dressAll() { try { dressAll0(); } catch (e) { console.warn('dress', e); } }
+function dressAll0() {
+  if (!modelsReady) return;
+  if (gc) dressPerson(gc.mesh, { key: 'kanisha' });
+  for (const n of npcs) dressPerson(n.mesh);
+  for (const o of legalStaff) dressPerson(o.mesh);
+  for (const o of extras) dressPerson(o.mesh, { special: 'gus' });
 }
 const note = (n, text, strong = false) => { if (!n.notes.some(x => x.text === text)) n.notes.push({ text, strong, when: stamp() }); };
 const stamp = () => DAYS[G.day].slice(0, 3) + ' ' + fmtTime(G.min);
@@ -1367,6 +1505,7 @@ function pose(n, t) {
   u.legR.knee.rotation.x = Math.PI / 2 * s + Math.max(0, -Math.sin(ph)) * 0.8 * w;
   const typing = s > 0.85 && !n.talking ? Math.sin(t * 13 + n.id * 1.7) * 0.07 : 0;
   const talkArm = n.talking || (n.speakUntil && performance.now() < n.speakUntil) ? Math.sin(t * 3 + n.id) * 0.12 - 0.15 : 0;
+  u.talkNod = talkArm ? performance.now() + 150 : 0;
   u.armL.rotation.set(-0.5 * s + typing - sw * 0.8 + talkArm * (1 - s), 0, -0.09 + 0.05 * s);
   u.armR.rotation.set(-0.5 * s - typing + sw * 0.8 + n.sip * 0.45, 0, 0.09 - 0.05 * s);
   if (u.elbowL) {
@@ -1577,11 +1716,12 @@ const pbuf = new Uint8Array(PW * PH * 4), pimg = new ImageData(PW, PH), hp = new
 function drawPortrait() {
   const n = G.portraitNpc, cv = document.querySelector('#dlg .pcv');
   if (!n || !cv || n.status !== 'active') return;
-  n.mesh.userData.head.getWorldPosition(hp);
+  const md = n.mesh.userData.model;
+  if (md) { syncModel(n.mesh); n.mesh.updateMatrixWorld(true); md.bones.head.getWorldPosition(hp); hp.y += 0.09; } else n.mesh.userData.head.getWorldPosition(hp);
   const a = n.mesh.rotation.y;
   pcam.position.set(hp.x + Math.sin(a) * 0.82, hp.y + 0.03, hp.z + Math.cos(a) * 0.82); pcam.lookAt(hp.x, hp.y - 0.04, hp.z);
   const ppl = [...npcs, ...legalStaff, ...extras], vis = ppl.map(o => o.tag.visible); ppl.forEach(o => o.tag.visible = false);
-  renderer.setRenderTarget(prt); renderer.render(scene, pcam); renderer.readRenderTargetPixels(prt, 0, 0, PW, PH, pbuf); renderer.setRenderTarget(null);
+  syncAllModels(); renderer.setRenderTarget(prt); renderer.render(scene, pcam); renderer.readRenderTargetPixels(prt, 0, 0, PW, PH, pbuf); renderer.setRenderTarget(null);
   ppl.forEach((o, i) => o.tag.visible = vis[i]);
   for (let y = 0; y < PH; y++) pimg.data.set(pbuf.subarray((PH - 1 - y) * PW * 4, (PH - y) * PW * 4), y * PW * 4);
   cv.getContext('2d').putImageData(pimg, 0, 0);
@@ -2857,7 +2997,13 @@ function playAnthem() {
 function beginGame() {
   playAnthem(); $('#intro').hidden = true; G.ui = false; G.paused = false; toast('Welcome', 'Walk the floor. Talk to people. Trust nobody completely.'); if (isTouch && innerHeight > innerWidth) toast('Tip', 'Turn your phone sideways for a better view.'); if (!isTouch) canvas.click();
 }
-$('#startgame').onclick = () => { $('#intro').hidden = true; openCreator('start'); };
+$('#startgame').onclick = () => { if (!modelsReady && !modelsFailed) return; $('#intro').hidden = true; openCreator('start'); };
+{
+  const sb = $('#startgame'), label = sb.textContent; sb.disabled = true; sb.textContent = 'Hiring staff…';
+  const finish = () => { sb.disabled = false; sb.textContent = label; dressAll(); };
+  const to = setTimeout(() => { if (!modelsReady) { modelsFailed = true; finish(); } }, 25000);
+  loadModels((d, n) => { if (!modelsReady) sb.textContent = `Hiring staff… ${d}/${n}`; }).then(() => { clearTimeout(to); finish(); });
+}
 
 // touch controls
 const joy = { x: 0, y: 0 };
@@ -2935,6 +3081,7 @@ function frame(now) {
   } else promptEl.hidden = true;
   if (G.portraitNpc && !$('#dlg').hidden && (++pFrame % 4 === 1)) drawPortrait();
   if (!$('#creator').hidden) renderPreview(now);
+  syncAllModels();
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
 }
