@@ -904,22 +904,22 @@ function makePerson(opts = {}) {
   const shoeY = -0.395;
   const mkLeg = x => {
     const hip = new THREE.Group(); hip.position.set(x, 0.82, 0); g.add(hip);
-    add(limbGeo(lerpG(0.082, 0.086), 0.056, 0.42), pantsM, 0, 0, 0, hip);
+    add(limbGeo(lerpG(0.076, 0.08), 0.056, 0.42), pantsM, 0, 0, 0, hip);
     const knee = new THREE.Group(); knee.position.set(0, -0.42, 0); hip.add(knee);
     add(limbGeo(0.054, 0.043, 0.37), pantsM, 0, 0, 0, knee);
     add(new THREE.SphereGeometry(0.06, 14, 10), shoeM, 0, shoeY, 0.045, knee).scale.set(0.92, 0.55, 2.0);
     add(new THREE.BoxGeometry(0.105, 0.018, 0.235), soleM, 0, shoeY - 0.022, 0.045, knee);
     return { hip, knee };
   };
-  const hx = lerpG(0.085, 0.092);
+  const hx = lerpG(0.079, 0.086);
   const legL = mkLeg(-hx), legR = mkLeg(hx);
   // hips (trousers) and torso (jacket / top)
   // seat of the trousers, mostly tucked under the jacket hem; thighs grow out of it
-  add(loftGeo([[0.755, 0.04, 0.04, 2], [0.775, 0.1, 0.075], [0.81, lerpG(0.145, 0.152), 0.092], [0.86, lerpG(0.146, 0.15), 0.095]]), pantsM, 0, 0, 0);
+  add(loftGeo([[0.755, 0.04, 0.04, 2], [0.775, 0.1, 0.075], [0.81, lerpG(0.145, 0.152), 0.094], [0.86, lerpG(0.147, 0.15), 0.098], [0.93, lerpG(0.146, 0.14), 0.094]]), pantsM, 0, 0, 0);
   // one continuous shell from jacket hem through waist and chest to the shoulder line and neck
-  add(loftGeo([
-    [0.755, lerpG(0.165, 0.17), 0.104],
-    [0.80, lerpG(0.162, 0.166), 0.104],
+  const jacket = add(loftGeo([
+    [0.755, lerpG(0.168, 0.172), 0.122, 2.4, -0.012],
+    [0.80, lerpG(0.165, 0.168), 0.116, 2.4, -0.008],
     [0.90, lerpG(0.155, 0.148), 0.1],
     [1.00, lerpG(0.15, 0.128), lerpG(0.096, 0.09)],
     [1.10, lerpG(0.157, 0.138), lerpG(0.1, 0.102)],
@@ -931,6 +931,17 @@ function makePerson(opts = {}) {
     [1.418, lerpG(0.13, 0.112), 0.072, 2.4],
     [1.44, 0.07, 0.062, 2],
   ]), shirtM, 0, 0, 0);
+  {
+    const p = jacket.geometry.attributes.position, HEM = 0.865;
+    for (let i = 0; i < p.count; i++) {
+      const x = p.getX(i), y = p.getY(i), z = p.getZ(i);
+      if (y >= HEM) continue;
+      if (Math.abs(x) < 1e-6 && Math.abs(z) < 1e-6) { p.setY(i, 0.8); continue; } // bottom cap centre
+      const f = z <= 0 ? 0 : Math.pow(clamp((z / 0.11 - 0.25) / 0.65, 0, 1), 1.8);
+      p.setY(i, y + (HEM - y) * f);
+    }
+    jacket.geometry.computeVertexNormals();
+  }
   // collar, shirt V and tie
   add(new THREE.CylinderGeometry(0.062, 0.07, 0.06, 16, 1, true), whiteM, 0, 1.438, 0);
   const vee = add(new THREE.ShapeGeometry(new THREE.Shape([new THREE.Vector2(-0.056, 0), new THREE.Vector2(0.056, 0), new THREE.Vector2(0, -0.2)])), whiteM, 0, 1.418, 0.079);
@@ -969,9 +980,10 @@ function makePerson(opts = {}) {
   add(loftGeo([[0.006, 0.0055, 0.005, 2, 0.003], [-0.01, 0.0075, 0.008, 2.2, 0.008], [-0.026, 0.0095, 0.011, 2.2, 0.0135], [-0.037, 0.011, 0.011, 2, 0.0165], [-0.044, 0.009, 0.008, 2, 0.0145], [-0.047, 0.005, 0.005, 2, 0.011]], 14), skinM, 0, 0, 0, ng);
   for (const s of [-1, 1]) add(new THREE.SphereGeometry(0.0072, 10, 8), skinM, s * 0.0095, -0.039, 0.0065, ng).scale.set(0.9, 0.7, 1.05);
   // ears with a rim
-  for (const s of [-1, 1]) {
-    const e = add(new THREE.SphereGeometry(0.036, 12, 10), skinM, s * 0.151, -0.012, -0.012, head); e.scale.set(0.38, 1.05, 0.7); e.rotation.y = s * 0.35;
-    const rim = add(new THREE.TorusGeometry(0.026, 0.006, 6, 14, Math.PI * 1.3), skinM, s * 0.158, -0.004, -0.014, head); rim.rotation.set(0, s * Math.PI / 2 + s * 0.35, -Math.PI * 0.15); rim.scale.set(0.95, 1.35, 1);
+  const EAR_X = { 0: 0.181, 2: 0.18, 4: 0.181, 7: 0.177, 8: 0.152 }, ex0 = EAR_X[L.style];
+  if (ex0) for (const s of [-1, 1]) {
+    const e = add(new THREE.SphereGeometry(0.036, 12, 10), skinM, s * ex0, -0.012, -0.012, head); e.scale.set(0.38, 1.05, 0.7); e.rotation.y = s * 0.35;
+    const rim = add(new THREE.TorusGeometry(0.026, 0.006, 6, 14, Math.PI * 1.3), skinM, s * (ex0 + 0.007), -0.004, -0.014, head); rim.rotation.set(0, s * Math.PI / 2 + s * 0.35, -Math.PI * 0.15); rim.scale.set(0.95, 1.35, 1);
   }
   // eyes: textured eyeballs sat in the sockets; they blink and follow you
   const er = 0.0205 * (L.eyeSize || 1) * (1 + L.gender * 0.06), eyeMat = eyeTex(L.eyes, hexs(L.skin), L.gender > 0.5), eyes = [];
