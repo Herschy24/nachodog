@@ -44,6 +44,8 @@ button.b95.love{color:#8a1060}
 #ticker.down{color:#ff5555}
 #pl{font:18px/1 var(--crt);background:#000;color:#33ff66;padding:3px 8px;font-variant-numeric:tabular-nums;white-space:nowrap}
 #pl.neg{color:#ff5555}
+#wired{font:18px/1 var(--crt);background:#fff;color:#b00000;padding:3px 8px;white-space:nowrap;animation:jit .12s steps(2) infinite}
+@keyframes jit{50%{transform:translate(1px,-1px)}}
 #heldbtn{font-size:12px;padding:3px 8px;background:#ffffe1}
 .brk{display:grid;grid-template-columns:auto 1fr;gap:3px 14px;font-variant-numeric:tabular-nums}
 .brk b{font-weight:normal;color:#555}
@@ -161,6 +163,7 @@ button{touch-action:manipulation}
     <div class="meter bad" title="SEC attention on your trades"><span>SEC</span><div class="bar sunk"><div class="fill" id="m-sec"></div></div></div>
     <div id="ticker" class="sunk">ORCH $24.00</div>
     <div id="pl" class="sunk" hidden></div>
+    <div id="wired" class="sunk" hidden>WIRED 1.5×</div>
     <div id="clock" class="sunk">Mon 9:00 AM</div>
   </div>
 
@@ -421,6 +424,8 @@ box(-15.2, 0.6, 9, 1.0, 1.2, 1.4, mats.grey); box(-15.2, 1.25, 9, 0.9, 0.1, 1.2,
 box(-15.3, 0.4, 5, 0.6, 0.8, 1.2, mats.deskDark); box(-15.3, 0.92, 5, 0.45, 0.24, 0.5, mats.beige, false);
 // supply closet door south wall
 box(0, 1.05, B.maxZ - 0.02, 1.1, 2.1, 0.05, mats.deskDark, false);
+box(-8, 1.05, B.maxZ - 0.02, 1.1, 2.1, 0.05, M(0x7a2a1a), false);
+const swSign = makeLabel('STAIRWELL', 'Fire exit only'); swSign.position.set(-8, 2.35, B.maxZ - 0.15); scene.add(swSign);
 const scSign = makeLabel('SUPPLY CLOSET'); scSign.position.set(0, 2.35, B.maxZ - 0.15); scene.add(scSign);
 
 /* ---------------- draw-call merging ---------------- */
@@ -798,7 +803,7 @@ const L = {
 };
 
 /* ---------------- game state ---------------- */
-let G, npcs = [], interactables = [], legalStaff = [], gc = null, para = null, ceo = null;
+let G, npcs = [], interactables = [], legalStaff = [], gc = null, para = null, ceo = null, dealer = null, extras = [];
 function newGame() {
   npcs.forEach(n => scene.remove(n.mesh, n.tag));
   const roster = shuffle(ROSTER).slice(0, 12);
@@ -824,7 +829,7 @@ function newGame() {
       pos: mesh.position, walkT: 0,
     };
   });
-  G = { min: 540, day: 0, leaks: 0, scandal: 0, morale: 70, stock: 24, paused: true, over: false, ui: false, affair: null, daily: {}, lastHour: 9, dayStart: { leaks: 0, stock: 24 }, arrests: 0, wrong: 0,
+  G = { min: 540, day: 0, leaks: 0, scandal: 0, morale: 70, stock: 24, paused: true, over: false, ui: false, affair: null, daily: {}, lastHour: 9, dayStart: { leaks: 0, stock: 24 }, arrests: 0, wrong: 0, said: {}, capture: null, coke: 0,
     seated: false, covers: 0, lastCover: null, ceo: { hair: pick(['#3b2314', '#1b1b1b', '#8c8c8c', '#6a4a2a']), skin: pick(['#f1c9a5', '#e0ac7e', '#c68642', '#8d5524']), glasses: Math.random() < .4 },
     known: { MSS: {}, SVR: {}, AMAN: {} }, evidence: [], rumors: [],
     legal: { anger: 0, summoned: false, deadline: 0, log: [], memos: 0, nagAt: 0 },
@@ -850,6 +855,14 @@ function newGame() {
   gc = mkStaff(100, 'Margaret Thornbury', 'General Counsel', { x: 15.0, z: -3.8 }, -Math.PI / 2, 0x2b2b3a);
   para = mkStaff(101, 'Kyle Bentsen', 'Paralegal', { x: 12.4, z: 0.2 }, 0, null);
   legalStaff = [gc, para];
+  extras.forEach(o => { scene.remove(o.mesh); scene.remove(o.tag); });
+  { const mesh = makePerson({ suit: 0x4a3f2e }); mesh.position.set(-8, 0, 13.3); mesh.rotation.y = Math.PI; scene.add(mesh);
+    const h = mesh.userData.head, shades = M(0x0a0a0a);
+    for (const sx of [-0.055, 0.055]) { const l = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.035, 0.02), shades); l.position.set(sx, 0.02, 0.165); h.add(l); }
+    const br = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.008, 0.01), shades); br.position.set(0, 0.03, 0.17); h.add(br);
+    const tag = makeLabel('Vinnie', '"Courier"'); tag.visible = false; scene.add(tag);
+    dealer = { id: 102, name: 'Vinnie', first: 'Vinnie', dept: 'Courier', mesh, tag, pos: mesh.position, status: 'active', state: 'idle', sit: 0, walkT: 0, walkAmp: 0, sip: 0, talking: false };
+    pose(dealer, 0); extras = [dealer]; }
   if (ceo) scene.remove(ceo.mesh);
   { const mesh = makePerson({ suit: 0x1d2433 }); mesh.visible = false; scene.add(mesh); ceo = { id: 999, mesh, pos: mesh.position, sit: 0, walkT: 0, walkAmp: 0, sip: 0, talking: false, state: 'cut' }; }
   buildDeskProps(); clearEvents(); G.cut = null; $('#hearts').hidden = true;
@@ -872,7 +885,7 @@ function blocked(x, z, r, ignore) {
   if (x - r < B.minX || x + r > B.maxX || z - r < B.minZ || z + r > B.maxZ) return true;
   for (const c of colliders) if (x + r > c.minX && x - r < c.maxX && z + r > c.minZ && z - r < c.maxZ) return true;
   // people only block you if you'd move CLOSER to them, so nobody can pin you in place
-  for (const o of [...legalStaff, ...npcs]) { if (o.status !== 'active' || o === ignore) continue; const dx = o.pos.x - x, dz = o.pos.z - z, d2 = dx * dx + dz * dz; if (d2 < (r + 0.28) ** 2) { const cx = o.pos.x - player.x, cz = o.pos.z - player.z; if (d2 < cx * cx + cz * cz) return true; } }
+  for (const o of [...legalStaff, ...extras, ...npcs]) { if (o.status !== 'active' || o === ignore) continue; const dx = o.pos.x - x, dz = o.pos.z - z, d2 = dx * dx + dz * dz; if (d2 < (r + 0.28) ** 2) { const cx = o.pos.x - player.x, cz = o.pos.z - player.z; if (d2 < cx * cx + cz * cz) return true; } }
   return false;
 }
 function movePlayer(dt) {
@@ -885,7 +898,7 @@ function movePlayer(dt) {
   if (len > 1) { fx /= len; fz /= len; }
   const rush = G.rush && G.min < G.rush.until ? G.rush.mult : 1;
   const run = keys.ShiftLeft || keys.ShiftRight || Math.hypot(joy.x, joy.y) > 0.92;
-  const sp = (run ? 5 : 3) * rush * dt;
+  const sp = (run ? 5 : 3) * rush * (wired() ? 1.5 : 1) * dt;
   const sx = Math.sin(yaw), cz = Math.cos(yaw);
   const dx = (fx * cz - fz * sx) * sp, dz = (-fx * sx - fz * cz) * sp;
   if (!blocked(player.x + dx, player.z, player.r)) player.x += dx;
@@ -911,6 +924,7 @@ function setupInteractables() {
     { name: 'Flush the toilet', x: -15.55, z: -3.5, use: flushToilet, r: 2.3 },
     { name: 'Restroom stalls', x: -14.6, z: -4.3, use: () => say('Restroom', pick(['You check under the stalls. Just one pair of loafers. Yours.', 'Someone has written "ORCHID 4EVER" on the stall door in pencil.', 'The automatic flush goes off while you are still standing. You flinch.'])), r: 2 },
     { name: 'Sink', x: -13.2, z: -0.5, use: () => say('Restroom', pick(['You wash your hands. The mirror shows a person with a lot of problems.', 'The soap dispenser is empty. It has been empty since 1995.'])), r: 1.8 },
+    { name: 'Talk to Vinnie (loitering by the stairwell)', get x() { return dealer.pos.x; }, get z() { return dealer.pos.z; }, use: () => talkDealer(), r: 2.4 },
     { name: 'Supply closet', x: 0, z: 13.9, use: () => say('Supply closet', 'It smells like toner and bad decisions. Someone has been hoarding the good pens.') },
   ];
   npcs.forEach(n => {
@@ -1056,7 +1070,7 @@ function hourTick() {
   const before = G.stock;
   let leak = 0;
   for (const n of activeSpies()) {
-    let r = 1.35 * rnd(0.6, 1.4);
+    let r = 1.05 * rnd(0.6, 1.4);
     if (n.nervous > G.min) r *= 0.4;
     if (n.state === 'at' && n.target === 'server') r *= 1.8;
     if (G.affair === n) r *= 2;
@@ -1103,7 +1117,7 @@ function endOfDay() {
   dialog(`End of ${DAYS[G.day]}`, body, [{ label: `Go home. Come back ${DAYS[G.day + 1]}.`, fn: nextDay }]);
 }
 function nextDay() {
-  G.day++; G.min = 540; G.lastHour = 9; G.lastTick = 540; G.rush = null; G.dayStart = { leaks: G.leaks, stock: G.stock };
+  G.day++; G.min = 540; G.lastHour = 9; G.lastTick = 540; G.rush = null; G.coke = 0; G.dayStart = { leaks: G.leaks, stock: G.stock };
   for (const o of legalStaff) { o.state = G.legal.summoned ? 'summon' : 'desk'; o.path = []; o.talking = false; o.pos.set(o.home.x, 0, o.home.z); o.mesh.rotation.y = o.rotY; o.sit = 1; }
   if (G.legal.summoned) G.legal.deadline = 540 + 90;
   G.seated = false; npcs.forEach(n => n.invite = null); clearEvents();
@@ -1143,6 +1157,7 @@ function updateHUD() {
   const pl = $('#pl'); pl.hidden = !G.short;
   if (G.short) { const v = pnl(); pl.textContent = `SHORT ${Math.round(G.short / 1000)}K ${v >= 0 ? '+' : ''}${fmtMoney(v)}`; pl.classList.toggle('neg', v < 0); }
   $('#coverbtn').hidden = !G.lastCover;
+  $('#wired').hidden = !wired();
   const hb = $('#heldbtn'); hb.hidden = !G.held; if (G.held) hb.textContent = `Holding: ${G.held.n} (Q)`;
 }
 function toast(title, text) {
@@ -1166,7 +1181,7 @@ function dialog(title, html, opts, noClose) {
   $('#dlg-x').hidden = !!noClose;
   $('#dlg').hidden = false; setTimeout(() => wrap.querySelector('button')?.focus(), 0);
 }
-function closeDialog() { $('#dlg').hidden = true; G.portraitNpc = null; legalStaff.forEach(o => o.talking = false); G.ui = !$('#dossier').hidden; npcs.forEach(n => n.talking = false); }
+function closeDialog() { $('#dlg').hidden = true; G.portraitNpc = null; legalStaff.forEach(o => o.talking = false); extras.forEach(o => o.talking = false); G.ui = !$('#dossier').hidden; npcs.forEach(n => n.talking = false); }
 const say = (title, text, more) => dialog(title, `<div class="memo" style="font-size:14px">${text}</div>`, more || [{ label: 'OK' }]);
 function portrait(n) { G.portraitNpc = n; return `<canvas class="portrait sunk pcv" width="${PW}" height="${PH}"></canvas>`; }
 const speak = (n, text) => { n.speakUntil = performance.now() + Math.min(4200, 500 + text.length * 50); };
@@ -1180,7 +1195,7 @@ function drawPortrait() {
   n.mesh.userData.head.getWorldPosition(hp);
   const a = n.mesh.rotation.y;
   pcam.position.set(hp.x + Math.sin(a) * 0.82, hp.y + 0.03, hp.z + Math.cos(a) * 0.82); pcam.lookAt(hp.x, hp.y - 0.04, hp.z);
-  const ppl = [...npcs, ...legalStaff], vis = ppl.map(o => o.tag.visible); ppl.forEach(o => o.tag.visible = false);
+  const ppl = [...npcs, ...legalStaff, ...extras], vis = ppl.map(o => o.tag.visible); ppl.forEach(o => o.tag.visible = false);
   renderer.setRenderTarget(prt); renderer.render(scene, pcam); renderer.readRenderTargetPixels(prt, 0, 0, PW, PH, pbuf); renderer.setRenderTarget(null);
   ppl.forEach((o, i) => o.tag.visible = vis[i]);
   for (let y = 0; y < PH; y++) pimg.data.set(pbuf.subarray((PH - 1 - y) * PW * 4, (PH - y) * PW * 4), y * PW * 4);
@@ -1198,16 +1213,14 @@ function talk(n, line) {
   if (G.held) opts.push({ label: `Want my ${G.held.n}?`, fn: () => gift(n) });
   if (!n.invite) opts.push({ label: 'Join me in the bathroom?', cls: 'love', fn: () => inviteBath(n) });
   const pk = n.props && n.props.length ? n.props[(G.day + n.id) % n.props.length] : null;
-  if (pk && PROP_INFO[pk]) opts.splice(2, 0, { label: `Nice ${PROP_INFO[pk][0]}!`, fn: () => {
-    if (!once(n.id + 'prop')) return reply(n, 'You already said that. I\'m starting to think you\'re after my ' + PROP_INFO[pk][0] + '.');
+  if (pk && PROP_INFO[pk]) opts.splice(2, 0, { label: `Nice ${PROP_INFO[pk][0]}!`, fn: () => ask(n, 'prop', () => {
     G.morale = clamp(G.morale + 1, 0, 100); if (n.romance) n.affection++; updateHUD(); reply(n, pick(PROP_INFO[pk][1]));
-  } });
+  }) });
   opts.splice(2, 0, { label: 'Noticed anything odd about anyone?', fn: () => askOdd(n) });
-  if (G.bday === n) opts.unshift({ label: 'Happy birthday!', cls: 'love', fn: () => {
-    if (!once(n.id + 'bday')) return reply(n, 'You already said that! But thanks again.');
+  if (G.bday === n) opts.unshift({ label: 'Happy birthday!', cls: 'love', fn: () => ask(n, 'bday', () => {
     G.morale = clamp(G.morale + 4, 0, 100); if (n.romance) n.affection++; updateHUD();
     reply(n, n.spy ? pick(['Thank you. I will celebrate… later. Somewhere private.', 'Birthdays are for people with nothing to hide. …That was a joke.']) : pick(['You remembered! Nobody remembers!', 'Thanks, boss! There\'s cake in the break room. It\'s carrot. Sorry.']));
-  } });
+  }) });
   if (G.affair === n) opts.push({ label: 'We need to end this.', cls: 'love', fn: () => endAffair(n) });
   else if (n.romance && n.affection >= 2 && !G.affair) opts.push({ label: 'Supply closet. After five?', cls: 'love', fn: () => startAffair(n) });
   opts.push({ label: 'You\'re fired.', cls: 'danger', fn: () => confirmAct(n, 'fire') });
@@ -1217,9 +1230,23 @@ function talk(n, line) {
   speak(n, greet);
   dialog(`${n.name} — ${n.dept}, desk #${n.desk.num}`, `<div class="speech">${portrait(n)}<p>${greet}</p></div>`, opts);
 }
-function reply(n, text) { talk(n, text); }
-function chat(n, topic) {
-  if (!once(n.id + topic)) return reply(n, topic === 'work' ? 'Like I said, it\'s fine. Busy. Very busy.' : 'I already told you about my weekend.');
+/* ---------------- repeat questions replay the answer ---------------- */
+const ASKED = '<br><small><i>(You already asked me that.)</i></small>';
+const CHECKED = '<br><br><small><i>(You already checked this today. Same as before.)</i></small>';
+function ask(n, key, fn) {
+  const k = G.day + ':' + n.id + key;
+  if (G.said[k]) return talk(n, G.said[k] + ASKED);
+  G.capture = k; fn(); G.capture = null;
+}
+function reply(n, text) { if (G.capture) { G.said[G.capture] = text; G.capture = null; } talk(n, text); }
+function checkOnce(key, title, fn) {
+  const k = G.day + ':' + key;
+  if (G.said[k]) return say(title, G.said[k] + CHECKED);
+  const html = fn(); G.said[k] = html; say(title, html);
+}
+
+function chat(n, topic) { ask(n, topic, () => chatInner(n, topic)); }
+function chatInner(n, topic) {
   let t;
   if (topic === 'work') {
     if (G.affair === n && n.spy && Math.random() < .7) { t = 'Pillow talk aside… where do you keep the ORCHID master disk at night? Just so I know you\'re safe.'; note(n, 'Asked, very casually, where you keep the ORCHID master disk.', true); }
@@ -1235,12 +1262,13 @@ function chat(n, topic) {
 }
 function searchDesk(n, present) {
   if (n.status !== 'active') return say(`Desk #${n.desk.num}`, 'Cleared out. Just a dent in the carpet where the chair was and a single pushpin.');
-  if (n.searched) return present ? reply(n, 'You already went through my stuff, boss.') : say(`Desk #${n.desk.num}`, 'You already searched this desk. Same Beanie Babies. Same stapler.');
+  if (n.searched) return present ? reply(n, `You already went through my stuff, boss. You found: ${n.found}`) : say(`Desk #${n.desk.num}`, `You found: ${n.found}${CHECKED}`);
   n.searched = true;
   let item;
   if (n.spy && Math.random() < .5) { item = pick([...L.deskSpy, ...svc(n).desk, ...svc(n).desk]); note(n, `Desk: ${item}`, true); }
   else if (n.odd && Math.random() < .7) { item = pick(L.deskOdd); note(n, `Desk: ${item}`); }
   else { item = pick(L.deskInno); note(n, `Desk: ${item}`); }
+  n.found = item;
   if (present) {
     const memo = G.legal.memos > 0; if (memo) G.legal.memos--; else { G.morale = clamp(G.morale - 3, 0, 100); legalGrr(6, `rifling through ${n.name}'s desk while they watched`); }
     let react;
@@ -1320,8 +1348,8 @@ function underDeskNap() {
 
 /* ---------------- restroom ---------------- */
 const inBathroom = () => player.x < -11.1 && player.x > -16 && player.z > -6 && player.z < 0;
-function inviteBath(n) {
-  if (!once(n.id + 'bath')) return reply(n, 'You asked me that already. The answer is still… what it was.');
+function inviteBath(n) { ask(n, 'bath', () => inviteBathInner(n)); }
+function inviteBathInner(n) {
   const w = witnesses(n);
   if (!n.bathYes) {
     G.scandal += 3 + Math.min(3, w.length) * 2; G.morale = clamp(G.morale - 2, 0, 100);
@@ -1571,22 +1599,82 @@ const WB = {
   lights: (d) => { const cols = LIGHTM; for (let i = 0; i < 15; i++) pm(new THREE.SphereGeometry(.022, 6, 4), cols[i % 4], d.x - 1.4 + i * .2, 1.42 - Math.sin(i * 0.9) * .03, d.z - 1.44); },
   hoop: (d, side) => { pm(new THREE.BoxGeometry(.02, .22, .32), Mc(0xf4f4f4), d.x + side * 1.44, 1.25, d.z - 0.2); const r = pm(new THREE.TorusGeometry(.07, .008, 6, 14), Mc(0xff6a00), d.x + side * 1.37, 1.17, d.z - 0.2, Math.PI / 2); },
 };
+// ---- more desk props so cubicles look different ----
+Object.assign(PB, {
+  floppies: (x, z) => { for (let i = 0; i < 5; i++) pm(new THREE.BoxGeometry(.09, .006, .09), Mc(pick([0x222222, 0x2a5aa0, 0xc0392b, 0xf1c40f])), x + rnd(-.01, .01), Y + .004 + i * .007, z + rnd(-.01, .01), 0, rnd(-.3, .3)); },
+  rolodex: (x, z) => { pm(new THREE.BoxGeometry(.16, .03, .1), Mc(0x333333), x, Y + .015, z); pm(new THREE.CylinderGeometry(.06, .06, .12, 14), Mc(0xf4f0e0), x, Y + .09, z, 0, 0, Math.PI / 2); },
+  lamp: (x, z) => { pm(new THREE.CylinderGeometry(.06, .07, .02, 12), Mc(0x2a2a2a), x, Y + .01, z); pm(new THREE.CylinderGeometry(.008, .008, .3, 6), Mc(0x2a2a2a), x, Y + .16, z, 0, 0, 0.2); pm(new THREE.ConeGeometry(.08, .1, 12, 1, true), Mc(pick([0x1a5a3a, 0x7a1a1a, 0x1a2a6a])), x - .04, Y + .31, z, 0, 0, 0.5); },
+  stapler: (x, z) => { pm(new THREE.BoxGeometry(.16, .035, .04), Mc(0xc8102e), x, Y + .02, z, 0, 0.4); pm(new THREE.BoxGeometry(.17, .012, .045), Mc(0x333333), x, Y + .004, z, 0, 0.4); },
+  plush: (x, z) => { const c = pick([0x8a5a2a, 0xf0e0c0, 0xff9ac0, 0x9ac0ff]); pm(new THREE.SphereGeometry(.06, 10, 8), Mc(c), x, Y + .06, z); pm(new THREE.SphereGeometry(.045, 10, 8), Mc(c), x, Y + .15, z); [-.035, .035].forEach(o => pm(new THREE.SphereGeometry(.018, 6, 4), Mc(c), x + o, Y + .19, z)); },
+  pager: (x, z) => { pm(new THREE.BoxGeometry(.06, .02, .09), Mc(0x111111), x, Y + .01, z, 0, -0.3); pm(new THREE.PlaneGeometry(.04, .025), Mc(0x9ab08a), x, Y + .021, z, -Math.PI / 2, 0, -0.3); },
+  football: (x, z) => { const f = pm(new THREE.SphereGeometry(.06, 10, 8), Mc(0x7a3a1a), x, Y + .05, z, 0, 0.6); f.scale.set(1.6, 1, 1); },
+  plane: (x, z) => { pm(new THREE.CylinderGeometry(.006, .006, .12, 6), Mc(0x888888), x, Y + .06, z); pm(new THREE.CylinderGeometry(.015, .012, .2, 8), Mc(0xdddddd), x, Y + .13, z, 0, 0, Math.PI / 2); pm(new THREE.BoxGeometry(.04, .004, .22), Mc(0xb00000), x, Y + .13, z); },
+  candy: (x, z) => { pm(new THREE.CylinderGeometry(.055, .055, .14, 12), new THREE.MeshLambertMaterial({ color: 0xddeeff, transparent: true, opacity: .5 }), x, Y + .07, z); pm(new THREE.CylinderGeometry(.05, .05, .08, 12), texMat('candy', 32, 32, (g) => { g.fillStyle = '#fff'; g.fillRect(0, 0, 32, 32); for (let i = 0; i < 50; i++) { g.fillStyle = pick(['#e33', '#3a3', '#ee3', '#f80', '#a3f']); g.fillRect(Math.random() * 30, Math.random() * 30, 3, 3); } }), x, Y + .04, z); },
+  zen: (x, z) => { pm(new THREE.BoxGeometry(.22, .02, .14), Mc(0x5a3a1a), x, Y + .01, z); pm(new THREE.BoxGeometry(.2, .01, .12), Mc(0xe8dcc0), x, Y + .022, z); pm(new THREE.SphereGeometry(.02, 6, 4), Mc(0x666666), x + .05, Y + .03, z); pm(new THREE.SphereGeometry(.014, 6, 4), Mc(0x444444), x - .04, Y + .028, z + .02); },
+  pens: (x, z) => { pm(new THREE.CylinderGeometry(.035, .035, .1, 10), Mc(pick([0x2a6a9a, 0x333333, 0xc0a020])), x, Y + .05, z); for (let i = 0; i < 4; i++) pm(new THREE.CylinderGeometry(.005, .005, .14, 5), Mc(pick([0x1a1aff, 0xff1a1a, 0x111111, 0xf0c000])), x + rnd(-.015, .015), Y + .11, z + rnd(-.015, .015), rnd(-.2, .2), 0, rnd(-.2, .2)); },
+  radio: (x, z) => { pm(new THREE.BoxGeometry(.18, .1, .07), Mc(pick([0x8a6a4a, 0xc0c0c0])), x, Y + .05, z); pm(new THREE.CircleGeometry(.03, 10), Mc(0x333333), x - .04, Y + .05, z + .036); pm(new THREE.CylinderGeometry(.003, .003, .2, 4), Mc(0xcccccc), x + .07, Y + .19, z, 0, 0, -0.3); },
+  pizza: (x, z) => { pm(new THREE.BoxGeometry(.32, .04, .32), Mc(0xd8c8a0), x, Y + .02, z, 0, 0.2); },
+  dino: (x, z) => { const c = pick([0x3a9a3a, 0x9a3a9a, 0x3a6a9a]); const b = pm(new THREE.SphereGeometry(.05, 8, 6), Mc(c), x, Y + .06, z); b.scale.set(1.5, 1, 1); pm(new THREE.CylinderGeometry(.015, .02, .1, 6), Mc(c), x + .07, Y + .12, z, 0, 0, -0.4); pm(new THREE.SphereGeometry(.025, 6, 4), Mc(c), x + .1, Y + .17, z); },
+  walkman: (x, z) => { pm(new THREE.BoxGeometry(.1, .025, .14), Mc(0x2a3a6a), x, Y + .013, z, 0, 0.5); pm(new THREE.TorusGeometry(.05, .006, 4, 12, Math.PI), Mc(0x111111), x, Y + .03, z - .02, -Math.PI / 2, 0, 0.5); },
+});
+Object.assign(PROP_INFO, {
+  floppies: ['floppy disks', ['That\'s my entire life on 1.44 megabytes. Backed up. Probably.', 'Half of those are Doom shareware.']],
+  rolodex: ['Rolodex', ['Every contact I\'ve ever made. Alphabetized. Laminated.', 'It spins. That\'s the best part.']],
+  lamp: ['desk lamp', ['The fluorescents give me migraines. This is my little sun.', 'It\'s a banker\'s lamp. I am not a banker. I dream.']],
+  stapler: ['red stapler', ['Please don\'t take it. I\'ve had it since 1989.', 'They switched everyone to the new staplers. I kept mine.']],
+  plush: ['teddy bear', ['My daughter said he gets lonely at home. So now he works here.', 'He\'s my emotional support bear. Don\'t tell HR.']],
+  pager: ['pager', ['It goes off at 3 AM. Every time. It\'s always the server.', 'Nobody pages me. I just like having it.']],
+  football: ['football', ['Lunchtime catch in the parking lot. You in?', 'Signed by my high school coach. Nobody you\'d know.']],
+  plane: ['model plane', ['Took me three months to build. The glue fumes took a year off my life.', 'It\'s a P-51 Mustang. Ask me anything about it. Please.']],
+  candy: ['candy jar', ['Take one. Everyone does. That\'s why I\'m everyone\'s favorite.', 'The red ones are for closers.']],
+  zen: ['zen garden', ['I rake it when the quarterly numbers come out.', 'It\'s supposed to be calming. It mostly collects pencil shavings.']],
+  pens: ['pen cup', ['Half of those are from hotels. I travel a lot. In my mind.', 'Not one of them works.']],
+  radio: ['clock radio', ['Classic rock station. Same twelve songs since 1985.', 'I listen to traffic reports. It makes me feel better about the commute.']],
+  pizza: ['pizza box', ['Don\'t open it. That\'s Tuesday\'s.', 'It\'s empty. I keep it as a reminder of a better time.']],
+  dino: ['toy dinosaur', ['Dinosaurs are back. Haven\'t you heard?', 'His name is Rex. Very original, I know.']],
+  walkman: ['Walkman', ['Mix tape. Side A is for work. Side B is for crying.', 'It eats tapes but I love it.']],
+});
+DESK_PROPS.push('floppies', 'rolodex', 'lamp', 'stapler', 'plush', 'pager', 'football', 'plane', 'candy', 'zen', 'pens', 'radio', 'pizza', 'dino', 'walkman');
+Object.assign(posterDraw, {
+  carpe: (g, w, h) => { g.fillStyle = '#111'; g.fillRect(0, 0, w, h); const gr = g.createLinearGradient(0, 10, 0, 120); gr.addColorStop(0, '#2a7ab0'); gr.addColorStop(1, '#0a3a5a'); g.fillStyle = gr; g.fillRect(10, 10, 108, 110); g.fillStyle = '#e8f4ff'; g.beginPath(); g.moveTo(10, 100); g.quadraticCurveTo(40, 40, 90, 70); g.quadraticCurveTo(70, 85, 118, 95); g.lineTo(118, 120); g.lineTo(10, 120); g.fill(); g.font = 'bold 16px Georgia'; g.textAlign = 'center'; g.fillStyle = '#fff'; g.fillText('CARPE DIEM', 64, 145); g.font = '9px Georgia'; g.fillText('Seize the day', 64, 160); },
+  success: (g, w, h) => { g.fillStyle = '#111'; g.fillRect(0, 0, w, h); g.fillStyle = '#c9a85a'; g.fillRect(10, 10, 108, 110); g.fillStyle = '#2a1a0a'; g.beginPath(); g.moveTo(20, 70); g.quadraticCurveTo(50, 40, 64, 60); g.quadraticCurveTo(78, 40, 108, 70); g.quadraticCurveTo(78, 58, 64, 72); g.quadraticCurveTo(50, 58, 20, 70); g.fill(); g.font = 'bold 17px Georgia'; g.textAlign = 'center'; g.fillStyle = '#fff'; g.fillText('SUCCESS', 64, 145); },
+  magiceye: (g, w, h) => { for (let y = 0; y < h; y += 2) for (let x = 0; x < w; x += 2) { g.fillStyle = `hsl(${(x * 3 + y * 2 + Math.random() * 40) % 360},70%,55%)`; g.fillRect(x, y, 2, 2); } },
+  rad: (g, w, h) => { g.fillStyle = '#fff'; g.fillRect(0, 0, w, h); for (let i = 0; i < 18; i++) { g.strokeStyle = pick(['#ff2a9a', '#2ad0ff', '#ffd000', '#7a2aff']); g.lineWidth = 4; g.beginPath(); const x = Math.random() * w, y = Math.random() * h; g.moveTo(x, y); g.lineTo(x + 14, y + 10); g.lineTo(x + 6, y + 22); g.stroke(); } g.font = 'bold 34px Impact, Arial Black'; g.textAlign = 'center'; g.fillStyle = '#111'; g.fillText('RAD', 64, 98); },
+});
+POSTERS.push('carpe', 'success', 'magiceye', 'rad');
+Object.assign(WB, {
+  cork: (d) => { pm(new THREE.PlaneGeometry(.55, .38), texMat('cork' + Math.floor(Math.random() * 3), 96, 66, (g, w, h) => { g.fillStyle = '#b8864b'; g.fillRect(0, 0, w, h); g.strokeStyle = '#5a3a1a'; g.lineWidth = 4; g.strokeRect(0, 0, w, h); for (let i = 0; i < 6; i++) { g.fillStyle = pick(['#fff', '#fff27a', '#ffd0e0', '#d0f0ff']); const x = 6 + Math.random() * (w - 30), y = 6 + Math.random() * (h - 26); g.fillRect(x, y, 22, 18); g.fillStyle = '#c00'; g.fillRect(x + 9, y + 1, 4, 4); } }), d.x - 0.85, 1.12, d.z - 1.453); },
+  clock: (d) => { pm(new THREE.CircleGeometry(.13, 20), texMat('clock', 64, 64, (g, w, h) => { g.fillStyle = '#fff'; g.beginPath(); g.arc(32, 32, 31, 0, 7); g.fill(); g.strokeStyle = '#111'; g.lineWidth = 3; g.stroke(); g.lineWidth = 2; g.beginPath(); g.moveTo(32, 32); g.lineTo(32, 12); g.moveTo(32, 32); g.lineTo(46, 36); g.stroke(); }, true), d.x + 0.85, 1.2, d.z - 1.452); },
+  dart: (d) => { pm(new THREE.CircleGeometry(.16, 20), texMat('dart', 64, 64, (g) => { ['#111', '#e8e0c8', '#c0392b', '#e8e0c8', '#27ae60', '#c0392b'].forEach((c, i) => { g.fillStyle = c; g.beginPath(); g.arc(32, 32, 31 - i * 5.5, 0, 7); g.fill(); }); }, true), d.x + 0.85, 1.15, d.z - 1.452); },
+  cert: (d) => { pm(new THREE.PlaneGeometry(.34, .26), texMat('cert', 80, 60, (g, w, h) => { g.fillStyle = '#5a3a1a'; g.fillRect(0, 0, w, h); g.fillStyle = '#f8f2dc'; g.fillRect(5, 5, w - 10, h - 10); g.fillStyle = '#5a3a0a'; g.font = 'bold 8px Georgia'; g.textAlign = 'center'; g.fillText('CERTIFICATE', 40, 20); g.font = '6px Georgia'; g.fillText('of Achievement', 40, 30); g.fillStyle = '#b8902a'; g.beginPath(); g.arc(62, 44, 6, 0, 7); g.fill(); }), d.x - 0.85, 1.12, d.z - 1.453); },
+});
 function buildDeskProps() {
   if (propGroup) { scene.remove(propGroup); propGroup.traverse(o => o.geometry && o.geometry.dispose()); }
   propGroup = new THREE.Group(); scene.add(propGroup);
+  // deal items like cards so every cubicle looks different
+  let deck = [];
+  const draw = (have) => { if (!deck.length) deck = shuffle(DESK_PROPS); let i = deck.findIndex(k => !have.includes(k)); if (i < 0) i = 0; return deck.splice(i, 1)[0]; };
+  let posters = shuffle(POSTERS);
+  let backDeck = [];
+  const backL = ['calendar', 'cork', 'cert'], backR = ['pennant', 'clock', 'dart'];
   for (const n of npcs) {
     const d = n.desk; n.props = [];
-    // everyone has a desk phone
-    pm(new THREE.BoxGeometry(.18, .06, .2), Mc(0xd8d0bb), d.x + 1.0, Y + .03, d.z - 0.85); pm(new THREE.BoxGeometry(.2, .04, .05), Mc(0xd8d0bb), d.x + 1.0, Y + .08, d.z - 0.9);
+    pm(new THREE.BoxGeometry(.18, .06, .2), Mc(pick([0xd8d0bb, 0x2a2a2a, 0xb8b0a0])), d.x + 1.0, Y + .03, d.z - 0.85); pm(new THREE.BoxGeometry(.2, .04, .05), Mc(0xd8d0bb), d.x + 1.0, Y + .08, d.z - 0.9);
     if (!d.ring) { d.ring = new THREE.Mesh(new THREE.SphereGeometry(.025, 8, 6), new THREE.MeshBasicMaterial({ color: 0xff2020 })); d.ring.position.set(d.x + 1.07, Y + .07, d.z - 0.78); scene.add(d.ring); }
     d.ring.visible = false;
-    // sticky notes on most monitors
-    if (Math.random() < .6) for (let i = 0; i < 1 + Math.floor(Math.random() * 3); i++) pm(new THREE.PlaneGeometry(.06, .06), Mc(pick([0xfff27a, 0xffb0d0, 0xb0ffb0])), d.x - .2 + i * .14, 1.2 - (i % 2) * .03, d.z - 0.932, 0, 0, rnd(-.2, .2));
+    if (Math.random() < .5) for (let i = 0; i < 1 + Math.floor(Math.random() * 3); i++) pm(new THREE.PlaneGeometry(.06, .06), Mc(pick([0xfff27a, 0xffb0d0, 0xb0ffb0])), d.x - .2 + i * .14, 1.2 - (i % 2) * .03, d.z - 0.932, 0, 0, rnd(-.2, .2));
     const slots = shuffle([[-1.05, -1.25], [-0.72, -1.28], [-1.08, -0.82], [-0.62, -0.84], [1.08, -1.28]]);
-    shuffle(DESK_PROPS).slice(0, 3 + Math.floor(Math.random() * 2)).forEach((k, i) => { PB[k](d.x + slots[i][0], d.z + slots[i][1]); n.props.push(k); });
-    const walls = shuffle(['poster', 'poster', 'calendar', 'pennant', 'lights', 'hoop']).slice(0, 2 + Math.floor(Math.random() * 2));
-    let sides = shuffle([-1, 1]);
-    walls.forEach(k => { let side = 0; if (k === 'poster' || k === 'hoop') { if (!sides.length) return; side = sides.pop(); } WB[k](d, side); if (!n.props.includes(k)) n.props.push(k); });
+    const count = 3 + Math.floor(Math.random() * 2);
+    for (let i = 0; i < count; i++) { const k = draw(n.props); PB[k](d.x + slots[i][0], d.z + slots[i][1]); n.props.push(k); }
+    // one poster per cubicle (no repeats until all 12 are used), plus a couple of back-wall items
+    const side = pick([-1, 1]);
+    if (!posters.length) posters = shuffle(POSTERS);
+    const pk = posters.pop();
+    pm(new THREE.PlaneGeometry(.5, .66), texMat('poster_' + pk, 128, 170, posterDraw[pk]), d.x + side * 1.452, 1.0, d.z - 0.45, 0, -side * Math.PI / 2); n.props.push('poster');
+    if (Math.random() < .5) { WB.hoop(d, -side); n.props.push('hoop'); }
+    if (Math.random() < .8) { const k = pick(backL); WB[k](d); if (k === 'calendar') n.props.push('calendar'); }
+    if (Math.random() < .7) { const k = pick(backR); WB[k](d); if (k === 'pennant') n.props.push('pennant'); }
+    if (Math.random() < .3) { WB.lights(d); n.props.push('lights'); }
   }
   mergeChildren(propGroup);
 }
@@ -1725,6 +1813,49 @@ function talkPara() {
   dialog('Kyle Bentsen — Paralegal', `<div class="speech">${portrait(para)}<p>${line}</p></div>`, [{ label: 'Thanks, Kyle' }]);
 }
 
+/* ---------------- Vinnie the "courier" ---------------- */
+const wired = () => G.coke && G.min < G.coke;
+function updateDealer(dt) {
+  if (!dealer) return;
+  const t = performance.now() / 1000, d = Math.hypot(player.x - dealer.pos.x, player.z - dealer.pos.z);
+  if (dealer.talking || d < 5) faceToward(dealer, player.x, player.z, dt * 0.6); else dealer.mesh.rotation.y = lerpAngle(dealer.mesh.rotation.y, Math.PI, dt * 2);
+  dealer.sit = 0; dealer.walkAmp = 0;
+  pose(dealer, t);
+  const u = dealer.mesh.userData; if (!dealer.talking) { u.armL.rotation.set(-0.35, 0, 0.3); u.armR.rotation.set(-0.35, 0, -0.3); }
+  dealer.mesh.position.y = 0; dealer.mesh.rotation.z = Math.sin(t * 1.3) * 0.02;
+  dealer.tag.position.set(dealer.pos.x, 2.05, dealer.pos.z);
+}
+function talkDealer(msg) {
+  dealer.talking = true;
+  const line = msg || (wired() ? pick(['Easy, boss. You\'re already flying. Come back later.', 'Whoa. Blink, boss. You gotta blink sometimes.', 'Slow down, you\'re making ME nervous.'])
+    : pick(['Psst. Boss. You look tired. Long week? I got something for that.', 'I\'m a courier. I deliver things. Some of them are documents.', 'Nice suit. Shame about the bags under your eyes. I can help with that.', 'You didn\'t see me. I didn\'t see you. Now, what do you need?']));
+  speak(dealer, line);
+  dialog('Vinnie — "Courier"', `<div class="speech">${portrait(dealer)}<p>${line}</p></div><small>A gram makes you walk 1.5× faster for 2 hours. Anyone standing nearby will see the deal.</small>`, [
+    { label: 'Buy a gram of coke ($500)', cls: 'danger', fn: buyCoke },
+    { label: 'Hear anything about the leaks? ($1,000)', fn: dealerInfo },
+    { label: 'Walk away' },
+  ]);
+}
+function buyCoke() {
+  if (G.cash < 500) return talkDealer('Five hundred, boss. Cash. Not a promise, not stock options. Cash.');
+  G.cash -= 500; G.coke = Math.max(G.coke || 0, G.min) + 120;
+  const w = witnesses(null);
+  if (w.length) { G.scandal += 8; legalGrr(10, 'buying cocaine from a man in the stairwell. In front of staff.'); toast('Seen', `${w[0].first} watched you buy something from Vinnie. They look horrified.`); }
+  else if (Math.random() < .25) { G.scandal += 3; legalGrr(5, 'spending fifteen minutes in the stairwell with someone named "Vinnie"'); }
+  toast('WIRED', 'Your heart is pounding. Everything is VERY important. 1.5× speed for 2 hours.');
+  updateHUD(); checkEnd();
+}
+function dealerInfo() {
+  const k = G.day + ':vinnie';
+  if (G.said[k]) return talkDealer(G.said[k] + ASKED);
+  if (G.cash < 1000) return talkDealer('Information costs a grand, boss. I got overheads.');
+  const c = spyClue('Vinnie the courier');
+  if (!c) return talkDealer('Nothing to tell. Your floor\'s clean now. Bad for business, honestly.');
+  G.cash -= 1000; updateHUD();
+  const line = `I deliver to all kinds of people. One of my regulars picks up envelopes for the ${c.svc.short}. Never got a name. But they ${c.desc}.`;
+  G.said[k] = line; talkDealer(line);
+}
+
 /* ---------------- vending ---------------- */
 function vend(list, title, desc) {
   const opts = list.map(it => ({ label: `${it.code} — ${it.n} ($${it.p.toFixed(2)})`, fn: () => buy(it) }));
@@ -1835,7 +1966,9 @@ const traitsOf = n => ({ ...n.mesh.userData.traits, row: n.desk.row, side: n.des
 function spyClue(source, spy) {
   const pool = activeSpies(); if (!pool.length) return null;
   const s = spy || pick(pool), known = G.known[s.service];
-  let k = s.clueQ.find(k => !(k in known)); if (!k) k = pick(TRAIT_KEYS);
+  // usually reveal the most useful unknown trait (the one that rules out the most people)
+  const unknown = TRAIT_KEYS.filter(k => !(k in known)), fits = k => active().filter(o => Object.keys(known).every(q => o.tr[q] === known[q]) && o.tr[k] === s.tr[k]).length;
+  let k = unknown.length ? (Math.random() < .7 ? unknown.sort((a, b) => fits(a) - fits(b) || Math.random() - .5)[0] : pick(unknown)) : pick(TRAIT_KEYS);
   const v = s.tr[k], desc = TRAIT_DESC[k](v), fresh = !(k in known);
   known[k] = v;
   G.evidence.push({ svc: s.service, text: `${source}: the ${SVC[s.service].short} asset ${desc}.`, when: stamp() });
@@ -1844,7 +1977,7 @@ function spyClue(source, spy) {
 }
 function addRumor(source) {
   const s = pick(activeSpies()); if (!s) return null;
-  const k = pick(TRAIT_KEYS), truthful = Math.random() < .65;
+  const k = pick(TRAIT_KEYS), truthful = Math.random() < .78;
   const v = truthful ? s.tr[k] : pick(npcs.filter(o => o !== s)).tr[k];
   const desc = TRAIT_DESC[k](v);
   G.rumors.push({ svc: s.service, text: `${source}: the ${SVC[s.service].short} mole ${desc}.`, when: stamp() });
@@ -1852,29 +1985,25 @@ function addRumor(source) {
 }
 function matchesKnown(n, sk) { const kn = G.known[sk]; return Object.keys(kn).every(k => n.tr[k] === kn[k]); }
 
-function useCooler() {
-  if (!once('gossip' + Math.floor(G.min / 60))) return say('Water cooler', 'Nobody new around. You drink a paper cone of water. It immediately goes soggy.');
+function useCooler() { checkOnce('cooler' + Math.floor(G.min / 60), 'Water cooler', () => {
   let line;
   if (G.affair && Math.random() < .3) { G.scandal += 3; line = `"People are saying things about you and ${G.affair.first}. Not that I listen."`; updateHUD(); }
   else { const r = addRumor('Water cooler gossip'); line = r ? `"Word around the floor is that the ${r.svc.short} mole ${r.desc}. Don't quote me."` : '"Quiet day."'; }
-  say('Water cooler', `Someone from Facilities leans in.<br><br>${line}<br><br><small>Gossip goes in your dossier as a rumor. About a third of it is wrong.</small>`);
-}
-function useCopier() {
-  if (!once('copier')) return say('Copier', 'PC LOAD LETTER. You already checked the counter today.');
-  const c = spyClue('Copier, after hours'); if (!c) return say('Copier', 'Nothing unusual. Just a jam.');
-  say('Copier', `The counter shows 340 after-hours copies of ORCHID schematics, sent with a ${c.svc.short}-style cover sheet. The night cleaner saw who made them, but not their face. All she remembers: they <b>${c.desc}</b>.`);
-}
-function useFax() {
-  if (!once('fax')) return say('Fax machine', 'The fax screeches at you. Nothing new today.');
-  if (G.leaks < 6) return say('Fax machine', 'A fax about a pizza party in Accounting. Nothing else.');
-  const c = spyClue('Misdialed fax'); if (!c) return say('Fax machine', 'Just a lunch menu.');
-  say('Fax machine', `A misdialed fax is stuck in the tray, addressed to a number starting <b>${c.svc.code}</b>. The sender's extension is torn off, but the receptionist remembers who used the machine at 7 PM: someone who <b>${c.desc}</b>.`);
-}
-function useServer() {
-  if (!once('server')) return say('Server rack', 'The login log hasn\'t changed since you last checked. The fans hum.');
-  const c = spyClue('Server room badge camera'); if (!c) return say('Server rack', 'Clean logs.');
-  say('Server rack', `412 ORCHID files were copied at 2:13 AM using a cloned badge, then sent to a ${c.svc.short} drop server. The badge camera caught a blurry still. You can make out one thing: the person <b>${c.desc}</b>.`);
-}
+  return (`Someone from Facilities leans in.<br><br>${line}<br><br><small>Gossip goes in your dossier as a rumor. About a quarter of it is wrong.</small>`);
+}); }
+function useCopier() { checkOnce('copier', 'Copier', () => {
+  const c = spyClue('Copier, after hours'); if (!c) return ('Nothing unusual. Just a jam.');
+  return (`The counter shows 340 after-hours copies of ORCHID schematics, sent with a ${c.svc.short}-style cover sheet. The night cleaner saw who made them, but not their face. All she remembers: they <b>${c.desc}</b>.`);
+}); }
+function useFax() { checkOnce('fax', 'Fax machine', () => {
+  if (G.leaks < 6) return ('A fax about a pizza party in Accounting. Nothing else.');
+  const c = spyClue('Misdialed fax'); if (!c) return ('Just a lunch menu.');
+  return (`A misdialed fax is stuck in the tray, addressed to a number starting <b>${c.svc.code}</b>. The sender's extension is torn off, but the receptionist remembers who used the machine at 7 PM: someone who <b>${c.desc}</b>.`);
+}); }
+function useServer() { checkOnce('server', 'Server rack', () => {
+  const c = spyClue('Server room badge camera'); if (!c) return ('Clean logs.');
+  return (`412 ORCHID files were copied at 2:13 AM using a cloned badge, then sent to a ${c.svc.short} drop server. The badge camera caught a blurry still. You can make out one thing: the person <b>${c.desc}</b>.`);
+}); }
 function deadDrop() {
   G.daily[G.day + ':deaddrop'] = 1;
   const c = spyClue('Dead drop, snack machine coil B4'); if (!c) return say('Behind coil B4', 'Just an old Cosmic Nougat.');
@@ -1895,8 +2024,8 @@ function answerPhone(n) {
     say(`Desk #${n.desk.num} phone`, `Wrong extension. ${t}<br><br>Before hanging up, the caller adds: <b>"Tell our friend, the one who ${c.desc}, that we are waiting."</b>`);
   } else say(`Desk #${n.desk.num} phone`, pick(['"Hi, this is Dr. Feldman\'s office confirming a root canal at 3." You promise to pass it on.', '"Congratulations! You\'ve won a timeshare presentation in Branson, Missouri!"', '"Honey? Did you remember the dry cleaning?" You hang up very quietly.', '"This is the library. Your copy of The Bridges of Madison County is 14 weeks overdue."']));
 }
-function askOdd(n) {
-  if (!once(n.id + 'gossip')) return reply(n, `I told you what I know. Which is nothing. I see nothing. I'm in ${n.dept}.`);
+function askOdd(n) { ask(n, 'odd', () => askOddInner(n)); }
+function askOddInner(n) {
   let line;
   if (n.spy) {
     const inno = active().filter(o => !o.spy && o !== n);
@@ -1965,7 +2094,7 @@ function openDossier() {
     const kn = G.known[k], keys = Object.keys(kn);
     const fits = caught ? null : active().filter(n => matchesKnown(n, k)).length;
     return `<div class="col sunk"><h4>${SVC[k].label}</h4>${caught ? `<div class="stamp s2">CAUGHT: ${caught.name}</div>` :
-      (keys.length ? `<div>${keys.map(t => chip(TRAIT_SHORT[t](kn[t]))).join('')}</div><small>${keys.length} clue${keys.length === 1 ? '' : 's'} so far</small>` : '<small>No evidence yet.</small>')}</div>`;
+      (keys.length ? `<div>${keys.map(t => chip(TRAIT_SHORT[t](kn[t]))).join('')}</div><small>${fits} ${fits === 1 ? 'person fits' : 'people fit'} this so far</small>` : '<small>No evidence yet.</small>')}</div>`;
   }).join('');
   list.appendChild(board);
   if (G.rumors.length) { const r = document.createElement('details'); r.className = 'rumors'; r.innerHTML = `<summary>Rumors (${G.rumors.length}) — unreliable</summary><ul>${G.rumors.slice(-12).reverse().map(x => `<li>${x.text} <small>${x.when}</small></li>`).join('')}</ul>`; list.appendChild(r); }
@@ -2057,14 +2186,14 @@ function frame(now) {
     if (G.min >= 17 * 60 && !G.over) endOfDay();
     if (movePlayer(dt)) bob += dt * 9;
     for (const n of npcs) updateNPC(n, dt);
-    updateLegal(dt);
-    if (!G.seated) for (const o of [...npcs, ...legalStaff]) { if (o.status !== 'active') continue; const dx = player.x - o.pos.x, dz = player.z - o.pos.z, d = Math.hypot(dx, dz); if (d < 0.56 && d > 1e-4) { const push = (0.56 - d) * 0.6, nx = player.x + dx / d * push, nz = player.z + dz / d * push; if (!blockedStatic(nx, nz, 0.3)) { player.x = nx; player.z = nz; } } }
+    updateLegal(dt); updateDealer(dt);
+    if (!G.seated) for (const o of [...npcs, ...legalStaff, ...extras]) { if (o.status !== 'active') continue; const dx = player.x - o.pos.x, dz = player.z - o.pos.z, d = Math.hypot(dx, dz); if (d < 0.56 && d > 1e-4) { const push = (0.56 - d) * 0.6, nx = player.x + dx / d * push, nz = player.z + dz / d * push; if (!blockedStatic(nx, nz, 0.3)) { player.x = nx; player.z = nz; } } }
     for (const n of npcs) if (n.desk.ring) n.desk.ring.visible = n.ringUntil > G.min && (now % 700) < 350;
     if (Math.floor(now / 500) !== Math.floor((now - dt * 1000) / 500)) updateHUD();
   } else for (const n of npcs) if (n.talking && n.status === 'active') faceToward(n, player.x, player.z, dt);
   // faces: blink + lip flap
   const ts = now / 1000;
-  for (const n of [...npcs, ...legalStaff]) if (n.status === 'active') {
+  for (const n of [...npcs, ...legalStaff, ...extras]) if (n.status === 'active') {
     const u = n.mesh.userData, ang = n.angry && u.tex.a;
     if (ts > u.nextBlink) { u.blinkEnd = ts + 0.13; u.nextBlink = ts + rnd(2, 5.5); }
     const talkOpen = now < (n.speakUntil || 0) && Math.sin(ts * 17) > -0.15;
@@ -2074,7 +2203,7 @@ function frame(now) {
   // leds
   if (Math.random() < 0.15) { const l = pick(leds); l.visible = !l.visible; }
   // labels
-  for (const n of [...npcs, ...legalStaff]) if (n.status === 'active') n.tag.visible = Math.hypot(n.pos.x - player.x, n.pos.z - player.z) < 5;
+  for (const n of [...npcs, ...legalStaff, ...extras]) if (n.status === 'active') n.tag.visible = Math.hypot(n.pos.x - player.x, n.pos.z - player.z) < 5;
   // mirror only renders near the restroom (it redraws the whole scene)
   mirror.visible = !!G.cut || (player.x < -9 && player.z > -7.5 && player.z < 1.5);
   hookMirror();
