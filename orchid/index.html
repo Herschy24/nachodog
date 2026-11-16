@@ -919,6 +919,8 @@ const ROLE_RX = {
   thighA: /^(LeftUpLeg|ValveBiped\.?Bip01_L_Thigh)$/, shinA: /^(LeftLeg|ValveBiped\.?Bip01_L_Calf)$/, footA: /^(LeftFoot|ValveBiped\.?Bip01_L_Foot)$/,
   thighB: /^(RightUpLeg|ValveBiped\.?Bip01_R_Thigh)$/, shinB: /^(RightLeg|ValveBiped\.?Bip01_R_Calf)$/, footB: /^(RightFoot|ValveBiped\.?Bip01_R_Foot)$/,
   spine: /^(Spine1|ValveBiped\.?Bip01_Spine1)$/,
+  idxA: /^(LeftHandIndex1|ValveBiped\.?Bip01_L_Finger1)$/, pnkA: /^(LeftHandPinky1|ValveBiped\.?Bip01_L_Finger4)$/,
+  idxB: /^(RightHandIndex1|ValveBiped\.?Bip01_R_Finger1)$/, pnkB: /^(RightHandPinky1|ValveBiped\.?Bip01_R_Finger4)$/,
   eyeA: /^LeftEye$/, eyeB: /^RightEye$/, toeA: /^(LeftToeBase|ValveBiped\.?Bip01_L_Toe0)$/,
 };
 const boneRole = name => { const base = name.replace(/_\d+$/, ''); for (const r in ROLE_RX) if (ROLE_RX[r].test(base)) return r; return null; };
@@ -930,6 +932,22 @@ function prepModel(def, gltfScene) {
     drop.forEach(o => o.parent.remove(o));
   }
   const wrap = new THREE.Group(); wrap.add(root); wrap.updateMatrixWorld(true);
+  {
+    const W = o => o.getWorldPosition(new THREE.Vector3()), fingers = [];
+    const isHand = n => /(^|_)(Left|Right)?Hand(_\d+)?$/.test(n.replace(/^ValveBiped\.?Bip01_[LR]_/, '')) || /Bip01_[LR]_Hand(_\d+)?$/.test(n);
+    root.traverse(o => { if (!o.isBone) return; const n = o.name;
+      if (isHand(n) || (/(Finger[1-4]\d?|Hand(Index|Middle|Ring|Pinky)[1-3])(_\d+)?$/.test(n) && !/HandThumb|Finger0/.test(n))) if (o.children.some(c => c.isBone)) fingers.push(o); });
+    for (const b of fingers) {
+      const c = isHand(b.name) ? b.children.find(c => c.isBone && /Finger2|HandMiddle1/.test(c.name)) : b.children.find(c => c.isBone), pa = b.parent; if (!c || !pa || !pa.isBone) continue;
+      wrap.updateMatrixWorld(true);
+      const want = W(b).sub(W(pa)).normalize(), cur = W(c).sub(W(b)).normalize();
+      if (want.dot(cur) > 0.9995) continue;
+      const q = new THREE.Quaternion().slerp(new THREE.Quaternion().setFromUnitVectors(cur, want), 0.85);
+      const bw = b.getWorldQuaternion(new THREE.Quaternion()).premultiply(q), pw = pa.getWorldQuaternion(new THREE.Quaternion()).invert();
+      b.quaternion.copy(pw.multiply(bw));
+    }
+    wrap.updateMatrixWorld(true);
+  }
   const roles = {}; root.traverse(o => { if (o.isBone) { const r = boneRole(o.name); if (r && !roles[r]) roles[r] = o; } });
   const need = ['hips', 'head', 'armA', 'foreA', 'armB', 'foreB', 'thighA', 'shinA', 'thighB', 'shinB', 'footA'];
   if (need.some(r => !roles[r])) throw new Error(def.key + ' missing bones ' + need.filter(r => !roles[r]));
@@ -962,6 +980,15 @@ function prepModel(def, gltfScene) {
     down[s] = new THREE.Quaternion().setFromUnitVectors(dir, hang);
     const h = roles['hand' + s] ? P(roles['hand' + s]) : null, fdir = h ? h.sub(P(roles['fore' + s])).normalize().applyQuaternion(down[s]) : hang.clone();
     down['f' + s] = new THREE.Quaternion().setFromUnitVectors(fdir, hang);
+    // twist the hanging arm about its own axis so the thumb side faces forward (palms toward the thighs)
+    if (roles['idx' + s] && roles['pnk' + s]) {
+      const across = P(roles['idx' + s]).sub(P(roles['pnk' + s])).applyQuaternion(down[s]).applyQuaternion(down['f' + s]);
+      const fw = new THREE.Vector3(0, 0, 1);
+      across.addScaledVector(hang, -across.dot(hang)).normalize(); fw.addScaledVector(hang, -fw.dot(hang)).normalize();
+      let ang = Math.acos(clamp(across.dot(fw), -1, 1)); if (new THREE.Vector3().crossVectors(across, fw).dot(hang) < 0) ang = -ang;
+      const Rt = new THREE.Quaternion().setFromAxisAngle(hang, ang);
+      down[s].premultiply(Rt); down['f' + s] = Rt.clone().multiply(down['f' + s]).multiply(Rt.clone().invert());
+    }
   }
   const ankle = Math.min(P(roles.footA).y, roles.footB ? P(roles.footB).y : 9);
   const hipH = P(roles.thighA).y;
@@ -1558,7 +1585,7 @@ function steer(n, dt) {
     if (!blockedStatic(n.pos.x, n.pos.z + mz, 0.18)) n.pos.z += mz;
   } else n.speed *= 0.6;
   n.mesh.rotation.y = n.heading;
-  n.walkT += dt * n.speed * 4.9;
+  { const md = n.mesh.userData.model, L = md ? md.proto.hipH : 0.82; n.walkT += dt * n.speed * Math.PI / (2 * L * Math.sin(0.46) * 0.92); }
   n.walkAmp += (Math.min(1, n.speed / 1.1) - n.walkAmp) * Math.min(1, dt * 6);
   if (playerBlock && n.speed < 0.15) { n.waitT += dt; if (n.waitT > 2.5) { n.waitT = -6; speak(n, 'scuse me'); toast(n.first, pick(['"\'Scuse me, boss."', '"Coming through!"', '"Can I just… squeeze past?"'])); } } else if (n.waitT > 0) n.waitT = 0;
   return true;
@@ -1573,8 +1600,9 @@ function pose(n, t) {
   const sw = Math.sin(ph) * 0.46 * w;
   u.legL.hip.rotation.x = -Math.PI / 2 * s + sw;
   u.legR.hip.rotation.x = -Math.PI / 2 * s - sw;
-  u.legL.knee.rotation.x = Math.PI / 2 * s + Math.max(0, Math.sin(ph)) * 0.8 * w;
-  u.legR.knee.rotation.x = Math.PI / 2 * s + Math.max(0, -Math.sin(ph)) * 0.8 * w;
+  // knee folds while the leg swings through under the body, straight while it carries weight
+  u.legL.knee.rotation.x = Math.PI / 2 * s + Math.pow(Math.max(0, -Math.cos(ph)), 1.4) * 0.7 * w + 0.06 * w;
+  u.legR.knee.rotation.x = Math.PI / 2 * s + Math.pow(Math.max(0, Math.cos(ph)), 1.4) * 0.7 * w + 0.06 * w;
   const typing = s > 0.85 && !n.talking ? Math.sin(t * 13 + n.id * 1.7) * 0.07 : 0;
   const talkArm = n.talking || (n.speakUntil && performance.now() < n.speakUntil) ? Math.sin(t * 3 + n.id) * 0.12 - 0.15 : 0;
   u.talkNod = talkArm ? performance.now() + 150 : 0;
