@@ -38,6 +38,7 @@ button.b95.love{color:#8a1060}
 #startbtn{font-weight:bold;display:flex;align-items:center;gap:6px;padding:3px 8px}
 #startbtn i{display:inline-block;width:14px;height:14px;background:conic-gradient(#d00 0 25%,#0a0 0 50%,#ffd200 0 75%,#00d 0);transform:skewX(-8deg)}
 .meter{display:flex;align-items:center;gap:5px;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+.alibi{border-collapse:collapse;margin-top:6px;font-size:12px;width:100%}.alibi th,.alibi td{border:1px solid #9a9a9a;padding:2px 5px;text-align:left;vertical-align:top}.alibi th{background:#d4d0c8}.inv{display:grid;gap:4px;font-size:12px;overflow-x:auto}
 .meter .bar{width:72px;height:12px;background:var(--hi);position:relative;overflow:hidden}
 @media (max-width:1500px){.meter .bar{width:42px}}
 @media (max-width:1250px){.meter span{font-size:10px;letter-spacing:0}.meter .bar{width:34px}}
@@ -1687,7 +1688,7 @@ function newGame() {
   npcs.forEach(n => n.tr = traitsOf(n));
   const tkey = n => TRAIT_KEYS.map(k => n.tr[k]).join('|');
   const uniq = npcs.filter(n => npcs.filter(o => tkey(o) === tkey(n)).length === 1);
-  const chosen = shuffle(uniq.length >= 3 ? uniq : npcs).slice(0, 3), order = shuffle(['MSS', 'SVR', 'AMAN']);
+  const humansU = uniq.filter(n => !n.critter), chosen = shuffle(humansU.length >= 3 ? humansU : npcs.filter(n => !n.critter)).slice(0, 3), order = shuffle(['MSS', 'SVR', 'AMAN']);
   npcs.forEach(n => { n.spy = false; n.service = null; });
   const its = shuffle(ITEMS), mos = shuffle(MOTIVES);
   chosen.forEach((n, k) => { n.spy = true; n.service = order[k]; n.item = its[k]; n.motive = mos[k]; n.clueQ = shuffle(TRAIT_KEYS); });
@@ -1719,6 +1720,7 @@ function newGame() {
   player.x = 0; player.z = 11; yaw = 0; pitch = 0;
   updateHUD();
   finishMaterials(scene);
+  G.canary = null; G.canaryLeaks = []; G.canaryLog = []; planNight(); nightReport(true);
   snapDay();
   for (const k in MODEL_USES) delete MODEL_USES[k];
   dressAll();
@@ -1789,6 +1791,7 @@ function setupInteractables() {
     { name: 'Read the personnel files', x: 10.95, z: -5.5, r: 1.9, use: readPersonnel },
     { name: 'Dig through the shredder bin', x: -15.35, z: 7.0, r: 2.0, use: () => checkOnce('shred', 'Shredder', () => { const c = spyClue('Shredder bin', null, 'item'); return c ? `You spend twenty minutes taping strips back together. It's an ${c.svc.short} shopping list. One line is circled twice: <b>${c.val}</b>.` : 'Just shredded lunch menus.'; }) },
     { name: 'Press redial on the payphone', x: -4, z: 13.8, r: 2.0, use: () => checkOnce('payphone', 'Payphone', () => { const c = spyClue('Payphone redial'); return c ? `You drop in a quarter and hit redial. An ${c.svc.short} handler answers: "You're early. Is this the one who <b>${c.desc}</b>?" You hang up fast.` : 'Redial reaches a pizza place. You order a large.'; }) },
+    { name: 'Read last night\'s badge-out log', x: -6.9, z: 13.7, r: 1.6, use: readBadgeLog },
     { name: 'Supply closet', x: 0, z: 13.9, use: () => say('Supply closet', 'It smells like toner and bad decisions. Someone has been hoarding the good pens.') },
   ];
   npcs.forEach(n => {
@@ -1998,8 +2001,10 @@ function resetFloor() {
   player.x = 0; player.z = 11; yaw = 0; pitch = 0;
 }
 function nextDay() {
+  const press = resolveCanary();
   G.day++; G.dayStart = { leaks: G.leaks, stock: G.stock };
   resetFloor();
+  planNight(); nightReport(); if (press) setTimeout(() => dialog('Morning papers', press, [{ label: 'Back to work' }]), 400);
   toast(DAYS[G.day], pick(['A memo says casual Friday is cancelled. It is not Friday.', 'The coffee machine has been fixed. It has not been fixed.', 'IT announces everyone is getting Windows 95. Groans echo across the floor.', 'Someone brought donuts. They are gone by 9:04.']));
   G.paused = false; updateHUD(); snapDay();
 }
@@ -2121,6 +2126,9 @@ function talk(n, line) {
     G.morale = clamp(G.morale + 1, 0, 100); if (n.romance) n.affection++; updateHUD(); const pl = PROP_INFO[pk][1]; reply(n, pl[(n.id + G.day) % pl.length]);
   }) });
   opts.splice(2, 0, { label: 'Noticed anything odd about anyone?', fn: () => askOdd(n) });
+  if (G.night && G.night.culprit) opts.splice(0, 0, { label: `Where were you last night around ${fmtTime(G.night.t)}?`, fn: () => askAlibi(n) });
+  if (confrontFacts(n).length && !n.critter) opts.splice(1, 0, { label: 'Your story doesn\'t add up…', cls: 'danger', fn: () => confront(n) });
+  if (G.canary && G.canary.day === G.day && G.canary.versions.some(v => v.to === null) && !G.canary.versions.some(v => v.to === n.id)) opts.splice(2, 0, { label: 'Here\'s a confidential memo. Eyes only.', fn: () => giveCanary(n) });
   if (G.bday === n) opts.unshift({ label: 'Happy birthday!', cls: 'love', fn: () => ask(n, 'bday', () => {
     G.morale = clamp(G.morale + 4, 0, 100); if (n.romance) n.affection++; updateHUD();
     reply(n, n.spy ? pick(['Thank you. I will celebrate… later. Somewhere private.', 'Birthdays are for people with nothing to hide. …That was a joke.']) : pick(['You remembered! Nobody remembers!', 'Thanks, boss! There\'s cake in the break room. It\'s carrot. Sorry.']));
@@ -2255,6 +2263,8 @@ function useCoffee() { say('Coffee machine', pick(L.coffee)); }
 function useCeoDesk() {
   const opts = [];
   if (!G.seated) opts.push({ label: 'Sit down', fn: sitDown });
+  opts.push({ label: 'Read last night\'s security report', fn: () => say('Night security report', nightIntro()) });
+  opts.push({ label: 'Print canary memos (trap a leaker)', fn: draftCanary });
   opts.push({ label: 'Log into DialTrade (private)', fn: () => openBroker('desk') });
   opts.push({ label: 'Call your FBI contact (once a day)', fn: () => checkOnce('fbi', 'FBI liaison', () => { const c = spyClue('FBI liaison', null, 'motive'); return c ? `Special Agent Dana Ruiz picks up on the first ring.<br><br>"Our ${c.svc.short} intercepts say their asset on your floor is in it for <b>${c.val}</b>. That's all I can give you today."` : '"Your floor is clean. Nice work."'; }) });
   if (G.lastCover) opts.push({ label: 'Read the latest TIMES', fn: () => showCover(G.lastCover) });
@@ -3097,6 +3107,165 @@ function resolveAct(n, kind, sk, acc) {
   checkEnd();
 }
 
+/* ---------------- investigation: last night's incident, alibis, the badge log, confrontations, the canary trap ---------------- */
+const NIGHT_ACTS = [
+  { where: 'the copier', act: it => `ran 212 after-hours copies of ${it}` },
+  { where: 'the server room', act: it => `badged into the server room and pulled ${it} onto floppies` },
+  { where: 'the fax machine', act: it => `faxed 14 pages of ${it} to an overseas number` },
+  { where: 'R&D\'s filing cabinets', act: it => `photographed ${it} from R&D's locked cabinets` },
+];
+const LATE_PLACES = ['the big conference room', 'the break room', 'Marketing\'s corner', 'the copier', 'the training room'];
+const LATE_WHY = ['finishing the Q3 forecast', 'wrestling the plotter for a trade-show banner', 'rehearsing the board presentation', 'untangling the Y2K audit', 'proofreading the annual report'];
+const SOLO_WHY = ['catching up on email', 'waiting out the traffic', 'on hold with the phone company for an hour', 'reorganizing my Rolodex', 'finishing expense reports'];
+const HOME_LINES = [
+  t => `I left at ${t}. Went home, microwaved a Hungry-Man, watched Seinfeld.`,
+  t => `Out the door at ${t}. I had a dentist appointment.`,
+  t => `I left at ${t}. Picked up a pizza and fell asleep on the couch.`,
+  t => `Around ${t}. I had to get to Blockbuster before they closed.`,
+  t => `${t}, on the dot. My carpool waits for no one.`,
+  t => `I was gone by ${t}. Grocery store, then bed.`,
+  t => `Left at ${t}. Kids had a recital. It was long.`,
+  t => `I clocked out at ${t}. Gym, then home.`,
+  t => `${t}. I had a date. It went fine. Don't ask.`,
+  t => `I left at ${t} and sat in traffic for an hour.`,
+  t => `About ${t}. I went to a Tupperware party.`,
+  t => `Left at ${t}. Bowling league.`,
+];
+const PAPER = { MSS: 'a Shenzhen electronics weekly', SVR: 'a Moscow technical digest', AMAN: 'a Tel Aviv defense newsletter' };
+const CANARY = [['ships on March 3', 'ships on March 10', 'ships on March 17'], ['codename LOTUS', 'codename IVORY', 'codename SPARROW'], ['priced at $189', 'priced at $219', 'priced at $249'], ['fabbed in Oregon', 'fabbed in Texas', 'fabbed in Arizona']];
+const hm = (h, m) => h * 60 + m;
+function planNight() {
+  const pool = active(), spies = activeSpies();
+  const N = { day: G.day, heard: {}, badge: false, conf: {}, people: {} };
+  G.night = N;
+  if (!spies.length) return;
+  const culprit = pick(spies.filter(s => !G.evidence.some(e => e.kind === 'link' && e.who === s.id)).concat(spies).slice(0, Math.max(1, spies.length)));
+  const T = hm(18, 20) + Math.floor(Math.random() * 140), a = pick(NIGHT_ACTS);
+  Object.assign(N, { t: T, culprit: culprit.id, svc: culprit.service, item: culprit.item, where: a.where, what: a.act(culprit.item) });
+  const humans = shuffle(pool.filter(n => n !== culprit && !n.critter));
+  const homeDeck = shuffle(HOME_LINES.slice());
+  const home = (n, early) => { const out = early || hm(16, 50) + Math.floor(Math.random() * 65); N.people[n.id] = { out, claim: homeDeck.length ? homeDeck.pop()(fmtTime(out)) : `I left at ${fmtTime(out)}.`, kind: 'home' }; };
+  // two innocents stayed late together and vouch for each other
+  const [p1, p2] = humans.splice(0, 2), place = pick(LATE_PLACES), why = pick(LATE_WHY), pout = T + 15 + Math.floor(Math.random() * 50);
+  if (p1 && p2) {
+    N.people[p1.id] = { out: pout, kind: 'pair', with: p2.id, claim: `I was in ${place} with ${p2.first} until about ${fmtTime(pout)}, ${why}. Ask ${p2.first === p1.first ? 'them' : p2.first}.` };
+    N.people[p2.id] = { out: pout + 2, kind: 'pair', with: p1.id, claim: `${p1.first} and I were stuck in ${place} until around ${fmtTime(pout)}, ${why}. Ugh.` };
+  }
+  // one innocent stayed late alone: suspicious-looking, but telling the truth
+  const solo = humans.shift();
+  if (solo) { const out = T + 10 + Math.floor(Math.random() * 60); N.people[solo.id] = { out, kind: 'solo', claim: `I was at my desk until ${fmtTime(out)}, ${pick(SOLO_WHY)}. Nobody else around. Well, the cleaners.` }; }
+  humans.forEach(n => home(n));
+  pool.filter(n => n.critter).forEach(n => { N.people[n.id] = { out: null, kind: 'critter', claim: n.critter === 'bot' ? 'I ENTERED LOW-POWER MODE IN THE SUPPLY CLOSET AT 17:00. I HAVE NO BADGE. I AM THE BADGE.' : 'I was in the walls. I\'m always in the walls. I don\'t have a badge, I have a hole.' }; });
+  // the culprit lies, and the lie can be checked
+  const out = T + 12 + Math.floor(Math.random() * 45), early = pool.filter(n => N.people[n.id] && N.people[n.id].kind === 'home');
+  if (early.length && Math.random() < .5) {
+    const b = pick(early);
+    N.people[culprit.id] = { out, kind: 'lie', lie: 'buddy', buddy: b.id, claim: `I was with ${b.first} in ${pick(LATE_PLACES)} until about ${fmtTime(out)}. Ask ${b.first}, they'll tell you.` };
+    N.people[b.id].claim += ` Was I with ${culprit.first}? No. Why would I be?`;
+  } else {
+    const fake = hm(17, 5) + Math.floor(Math.random() * 40);
+    N.people[culprit.id] = { out, kind: 'lie', lie: 'home', claim: pick([`Me? I went home at ${fmtTime(fake)}. Like a normal person.`, `I left at ${fmtTime(fake)}. Long day.`, `Gone by ${fmtTime(fake)}. Had to feed the cat.`]) };
+  }
+}
+function nightReport(quiet) {
+  const N = G.night; if (!N || !N.culprit || N.reported) return;
+  N.reported = true;
+  const short = SVC[N.svc].short;
+  G.evidence.push({ svc: N.svc, kind: 'item', val: N.item, src: 'Night security report', text: `Night security report: at ${fmtTime(N.t)} someone ${N.what}. Signature points to the ${short}.`, when: stamp() });
+  if (!quiet) toast('Security · last night', `At ${fmtTime(N.t)} someone ${N.what}. Ask people where they were, and check the badge-out log by the stairwell.`);
+}
+function nightIntro() {
+  const N = G.night; if (!N || !N.culprit) return 'Quiet night. The guard watched Letterman.';
+  return `<b>${fmtTime(N.t)}:</b> someone ${N.what}. The handwriting on the cover sheet is ${SVC[N.svc].short} tradecraft.<br><br>Everyone left at different times. Ask people where they were last night, then check their stories against the <b>badge-out log</b> by the stairwell, and against each other. Liars contradict something.`;
+}
+function askAlibi(n) {
+  const N = G.night, p = N && N.people[n.id];
+  ask(n, 'alibi', () => {
+    if (!p) return reply(n, 'Last night? Home. Asleep. Why?');
+    N.heard[n.id] = p.claim; reply(n, p.claim);
+  });
+}
+function readBadgeLog() {
+  const N = G.night; if (!N || !N.culprit) return say('Badge-out log', 'The printer jammed. Nothing to read tonight.');
+  N.badge = true;
+  const rows = active().filter(n => N.people[n.id] && N.people[n.id].out).map(n => [n.desk.num, N.people[n.id].out]).sort((a, b) => a[1] - b[1]);
+  say('Badge-out log · last night', `<div class="memo" style="font-size:13px">STAIRWELL / LOBBY TURNSTILE — EXITS AFTER 4:30 PM<br>Badges are logged by <b>desk number</b>, not name.<table style="margin-top:6px;border-collapse:collapse">${rows.map(([d, t]) => `<tr><td style="padding:1px 14px 1px 0">BADGE #${d}</td><td>${fmtTime(t)}</td></tr>`).join('')}</table><br><small>Incident at ${fmtTime(N.t)}. Copied to your dossier.</small></div>`);
+}
+// facts you can throw at someone, and whether each one really breaks their story
+function confrontFacts(n) {
+  const N = G.night, F = [];
+  if (N && N.badge) F.push({ id: 'badge', label: 'The badge-out log', ok: () => N.culprit === n.id });
+  if (N) Object.keys(N.heard).map(Number).filter(id => id !== n.id).forEach(id => { const o = npcs.find(x => x.id === id); if (o) F.push({ id: 'said' + id, label: `What ${o.first} told you about last night`, ok: () => N.culprit === n.id && N.people[n.id].lie === 'buddy' && N.people[n.id].buddy === id }); });
+  (G.canaryLeaks || []).forEach((c, i) => F.push({ id: 'canary' + i, label: `The leaked memo (ORCHID ${c.tag})`, ok: () => c.to === n.id, canary: c }));
+  return F;
+}
+function confront(n) {
+  const F = confrontFacts(n), N = G.night;
+  const heard = N && N.heard[n.id];
+  if (!F.length) return talk(n, 'Doesn\'t add up how? You don\'t have anything on me, boss.');
+  dialog(`Confront ${n.first}`, `<div class="speech">${portrait(n)}<p>${heard ? `They told you: <i>"${heard}"</i>` : 'You haven\'t asked where they were last night.'}</p></div><div class="memo" style="font-size:13px">Pick the one piece of evidence that proves ${n.first} lied or leaked. Guess wrong and they\'ll complain to HR.</div>`,
+    [...F.map(f => ({ label: f.label, fn: () => confrontWith(n, f) })), { label: 'Back', fn: () => talk(n) }]);
+}
+function confrontWith(n, f) {
+  const key = 'conf:' + n.id + ':' + f.id;
+  if (G.said[G.day + ':' + key]) return talk(n, 'We already went over this.');
+  G.said[G.day + ':' + key] = 1;
+  if (f.ok() && (f.canary || (G.night && G.night.heard[n.id]))) {
+    const sk = n.service, short = SVC[sk].short;
+    n.nervous = G.min + 600;
+    const how = f.canary ? `the ${f.canary.tag} version only went to ${n.first}, and it turned up in ${PAPER[sk]}` : f.id === 'badge' ? `badge #${n.desk.num} didn't leave until ${fmtTime(G.night.people[n.id].out)}, after the ${fmtTime(G.night.t)} incident` : `${npcs.find(o => o.id === G.night.people[n.id].buddy).first} went home hours earlier`;
+    if (!G.evidence.some(e => e.kind === 'link' && e.who === n.id)) G.evidence.push({ svc: sk, kind: 'link', who: n.id, src: f.canary ? 'Canary trap' : 'Broken alibi', text: `${n.name} caught out: ${how}. They work for the ${short}.`, when: stamp() });
+    note(n, `CAUGHT LYING: ${how}.`, true);
+    toast(`Evidence · ${short}`, `${n.first}'s story fell apart. Direct link to the ${short} logged in your dossier.`);
+    const crack = f.canary ? `…Fine. FINE. I gave it to a man from ${SVC[sk].city}. He pays in cash. I'm not saying anything else without a lawyer.` : pick([`…Okay. I was here. I needed something from ${G.night.where}. That's all I'm saying.`, `I— look, I panicked. I was in the building. Can we not do this here?`]);
+    G.morale = clamp(G.morale - 1, 0, 100); updateHUD();
+    return dialog(`${n.first} cracks`, `<div class="speech">${portrait(n)}<p>${crack}</p></div><div class="memo" style="font-size:13px">You point out that ${how}.<br><br><b>That's a direct link to the ${short}.</b> You still need what they're stealing and why before the FBI will move.</div>`, [{ label: 'Keep talking', fn: () => talk(n, 'Are we done?') }, { label: 'Leave' }]);
+  }
+  G.morale = clamp(G.morale - 3, 0, 100); legalGrr(5, `accusing ${n.name} of lying with no proof`); updateHUD(); checkEnd();
+  talk(n, pick(['That doesn\'t prove anything and you know it.', 'Are you accusing me of something? Because HR would love to hear about this.', 'I have no idea what you\'re getting at, boss.']));
+}
+// canary trap: three slightly different memos, one person each; whichever version shows up in foreign press names the leaker
+function draftCanary() {
+  if (G.canary && G.canary.day === G.day) return say('Canary memos', 'You already printed today\'s batch. Hand them out.');
+  const set = pick(CANARY);
+  G.canary = { day: G.day, versions: set.map(tag => ({ tag, to: null })) };
+  say('Canary memos', `<div class="memo" style="font-size:13px">You type up a "CONFIDENTIAL: ORCHID LAUNCH" memo and print three copies. Each one has one small detail changed:<ul>${set.map(t => `<li>ORCHID <b>${t}</b></li>`).join('')}</ul>Hand each copy to a <b>different</b> person ("Here's a confidential memo"). Anyone working for a foreign service will pass theirs on tonight, and whichever version turns up in the foreign press tells you who leaked it.</div>`);
+}
+function giveCanary(n) {
+  const v = G.canary.versions.find(x => x.to === null);
+  if (G.canary.versions.some(x => x.to === n.id)) return talk(n, 'You already gave me one of those, boss.');
+  v.to = n.id; note(n, `Given the canary memo: ORCHID ${v.tag}.`);
+  talk(n, n.spy ? pick(['Confidential. Of course. I\'ll guard it with my life.', 'Oh! Thank you for trusting me with this.']) : pick(['Ooh, launch details. My lips are sealed.', 'Why are you giving me this? …Okay.', 'I\'ll put it in my locked drawer. I have a locked drawer.']));
+}
+function resolveCanary() {
+  const C = G.canary; if (!C || C.resolved) return null;
+  C.resolved = true; G.canaryLeaks = G.canaryLeaks || [];
+  const out = [];
+  C.versions.filter(v => v.to !== null).forEach(v => {
+    const n = npcs.find(o => o.id === v.to);
+    if (n && n.spy && n.status === 'active') { const leak = { tag: v.tag, to: n.id, svc: n.service, day: G.day }; G.canaryLeaks.push(leak); G.leaks = Math.min(100, G.leaks + 2); out.push(`<li><b>${PAPER[n.service]}</b> reports that ORCHID <b>${v.tag}</b>.</li>`); G.rumors.push({ svc: n.service, text: `Morning press: ${PAPER[n.service]} says ORCHID ${v.tag}.`, when: stamp() }); }
+    else out.push(`<li>Nobody printed the "${v.tag}" version.</li>`);
+    const who = npcs.find(o => o.id === v.to); (G.canaryLog = G.canaryLog || []).push(`${DAYS[C.day].slice(0, 3)}: ${v.tag} → ${who ? who.first : '?'}`);
+  });
+  return out.length ? `<div class="memo" style="font-size:13px"><h2>MORNING PRESS CLIPPINGS</h2><ul>${out.join('')}</ul>Check your dossier to see who got which copy. A leaked copy is proof you can confront them with.</div>` : null;
+}
+function investigationHTML() {
+  const N = G.night; let h = '';
+  if (N && N.culprit) {
+    const heard = Object.keys(N.heard).map(Number).map(id => npcs.find(o => o.id === id)).filter(Boolean);
+    h += `<div><b>Last night, ${fmtTime(N.t)}:</b> someone ${N.what}.</div>`;
+    h += `<table class="alibi"><tr><th>Desk</th><th>Name</th><th>Their story</th>${N.badge ? '<th>Badge out</th>' : ''}</tr>${active().slice().sort((a, b) => a.desk.num - b.desk.num).map(n => {
+      const p = N.people[n.id], said = N.heard[n.id];
+      return `<tr><td>#${n.desk.num}</td><td>${n.first}</td><td>${said ? `"${said}"` : '<small>not asked</small>'}</td>${N.badge ? `<td>${p && p.out ? fmtTime(p.out) : '—'}</td>` : ''}</tr>`; }).join('')}</table>`;
+    if (!N.badge) h += '<small>Read the badge-out log by the stairwell to add exit times.</small>';
+  }
+  const C = G.canary;
+  if (C && C.day === G.day) h += `<div style="margin-top:6px"><b>Canary memos (today):</b> ${C.versions.map(v => `ORCHID ${v.tag} → ${v.to !== null ? npcs.find(o => o.id === v.to).first : '<i>not handed out</i>'}`).join(' · ')}</div>`;
+  if ((G.canaryLeaks || []).length) h += `<div style="margin-top:6px"><b>Leaked canaries:</b> ${G.canaryLeaks.map(c => `ORCHID ${c.tag} (in ${PAPER[c.svc]}), given to ${npcs.find(o => o.id === c.to).first}`).join(' · ')}</div>`;
+  if (G.canaryLog && G.canaryLog.length) h += `<div><small>Earlier canaries: ${G.canaryLog.join(' · ')}</small></div>`;
+  return h;
+}
+
 const MARKS = [['UNSURE', ''], ['MSS?', 's1'], ['SVR?', 's1'], ['IDF?', 's1'], ['CLEAR', 's2']];
 function openDossier() {
   G.ui = true; releaseLock();
@@ -3113,6 +3282,7 @@ function openDossier() {
        <div class="caseln"><b>Motive:</b> ${(() => { const v = [...new Set(G.evidence.filter(e => e.kind === 'motive' && e.svc === k).map(e => e.val))]; return v.length ? v.join(' / ') : '?'; })()}</div>`}</div>`;
   }).join('');
   list.appendChild(board);
+  { const inv = investigationHTML(); if (inv) { const d = document.createElement('details'); d.className = 'rumors'; d.open = true; d.innerHTML = `<summary>Last night & the canary trap</summary><div class="inv">${inv}</div>`; list.appendChild(d); } }
   if (G.rumors.length) { const r = document.createElement('details'); r.className = 'rumors'; r.innerHTML = `<summary>Rumors (${G.rumors.length}) — unreliable</summary><ul>${G.rumors.slice(-12).reverse().map(x => `<li>${x.text} <small>${x.when}</small></li>`).join('')}</ul>`; list.appendChild(r); }
   if (G.evidence.length) { const r = document.createElement('details'); r.className = 'rumors'; r.innerHTML = `<summary>Evidence log (${G.evidence.length})</summary><ul>${G.evidence.slice().reverse().map(x => `<li>${x.text} <small>${x.when}</small></li>`).join('')}</ul>`; list.appendChild(r); }
   npcs.slice().sort((a, b) => a.desk.num - b.desk.num).forEach(n => {
@@ -3394,7 +3564,7 @@ function playAnthem() {
   toast('Over the PA', 'The Star-Spangled Banner crackles through the ceiling speakers. Somebody in Sales salutes.');
 }
 function beginGame() {
-  startMusic(); $('#intro').hidden = true; G.ui = false; G.paused = false; toast('Welcome', 'Walk the floor. Talk to people. Trust nobody completely.'); if (isTouch && innerHeight > innerWidth) toast('Tip', 'Turn your phone sideways for a better view.'); if (!isTouch) canvas.click();
+  startMusic(); $('#intro').hidden = true; G.ui = false; G.paused = false; toast('Welcome', 'Walk the floor. Talk to people. Trust nobody completely.'); if (G.night && G.night.culprit) setTimeout(() => toast('Security · last night', `At ${fmtTime(G.night.t)} someone ${G.night.what}. Ask people where they were, and check the badge-out log by the stairwell.`), 2500); if (isTouch && innerHeight > innerWidth) toast('Tip', 'Turn your phone sideways for a better view.'); if (!isTouch) canvas.click();
 }
 $('#startgame').onclick = () => { if (!modelsReady && !modelsFailed) return; $('#intro').hidden = true; openCreator('start'); };
 {
