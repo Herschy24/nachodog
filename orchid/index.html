@@ -414,6 +414,10 @@ const mats = {
 };
 
 /* ---------------- world building ---------------- */
+// procedural stand-ins that get swapped for imported props once those load
+const OLD = {}, OLD_ALL = new Set(), PLACE = {}, CEO_DESK_H = 0.74;
+function captureOld(tag, fn) { const n0 = scene.children.length; fn(); const add = scene.children.slice(n0); (OLD[tag] = OLD[tag] || []).push(...add); add.forEach(o => OLD_ALL.add(o)); }
+const place = (kind, x, y, z, ry = 0, s = 1) => (PLACE[kind] = PLACE[kind] || []).push({ x, y, z, ry, s });
 const colliders = [];
 mats.metal = new THREE.MeshPhongMaterial({ color: 0x8a8d92, shininess: 60, specular: 0x444444 });
 function chairBase(x, z) {
@@ -437,10 +441,10 @@ for (let x = -14; x <= 14; x += 4) for (let z = -12; z <= 12; z += 4) {
   const p = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.6), mats.light); p.rotation.x = Math.PI / 2; p.position.set(x, 2.99, z); scene.add(p);
 }
 // windows with blinds on north wall
-for (let x = -14; x <= 14; x += 4) { const w = new THREE.Mesh(new THREE.PlaneGeometry(3, 1.3), mats.blinds); w.position.set(x, 1.85, B.minZ + 0.01); scene.add(w); }
+for (let x = -14; x <= 6; x += 4) { const w = new THREE.Mesh(new THREE.PlaneGeometry(3, 1.3), mats.blinds); w.position.set(x, 1.85, B.minZ + 0.01); scene.add(w); }
 // window frames + sills
 const frameM = M(0xe9e6dc);
-for (let x = -14; x <= 14; x += 4) {
+for (let x = -14; x <= 6; x += 4) {
   box(x, 1.18, B.minZ + 0.09, 3.2, 0.06, 0.2, frameM, false); box(x, 2.52, B.minZ + 0.03, 3.2, 0.06, 0.08, frameM, false);
   box(x - 1.53, 1.85, B.minZ + 0.03, 0.06, 1.36, 0.08, frameM, false); box(x + 1.53, 1.85, B.minZ + 0.03, 0.06, 1.36, 0.08, frameM, false);
   box(x, 1.85, B.minZ + 0.025, 0.04, 1.3, 0.05, frameM, false);
@@ -451,7 +455,8 @@ box(0, 0.06, B.maxZ - 0.02, 32, 0.12, 0.04, baseM, false); box(0, 0.06, B.minZ +
 box(B.minX + 0.02, 0.06, 0, 0.04, 0.12, 28, baseM, false); box(B.maxX - 0.02, 0.06, 0, 0.04, 0.12, 28, baseM, false);
 
 const leafA = M(0x2f6b2c), leafB = M(0x4c8f3a), leafC = M(0x6aa84a);
-function plant(x, z) {
+function plant(x, z) { place('plant', x, 0, z, Math.random() * 6); captureOld('plant', () => plant0(x, z)); }
+function plant0(x, z) {
   box(x, 0.22, z, 0.46, 0.44, 0.46, mats.pot); box(x, 0.45, z, 0.5, 0.04, 0.5, mats.pot, false);
   box(x, 0.47, z, 0.42, 0.02, 0.42, M(0x3a2a1a), false);
   const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.035, 0.7, 6), M(0x5a4228)); stem.position.set(x, 0.8, z); scene.add(stem);
@@ -488,13 +493,19 @@ ROWS.forEach((cz, ri) => COLS.forEach((cx, ci) => {
   box(cx, 0.74, cz - 1.05, 2.7, 0.06, 0.8, mats.desk);
   box(cx - 1.2, 0.36, cz - 1.05, 0.06, 0.72, 0.76, mats.deskDark, false);
   box(cx + 1.2, 0.36, cz - 1.05, 0.06, 0.72, 0.76, mats.deskDark, false);
-  box(cx, 1.0, cz - 1.15, 0.5, 0.42, 0.42, mats.beige, false);
-  const sc = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.3), mats.screen); sc.position.set(cx, 1.02, cz - 0.935); scene.add(sc);
-  box(cx, 0.785, cz - 0.82, 0.5, 0.03, 0.16, mats.beige, false);
-  box(cx + 0.6, 0.86, cz - 1.15, 0.36, 0.2, 0.28, mats.white, false); // in-tray / papers
+  captureOld('pc', () => {
+    box(cx, 1.0, cz - 1.15, 0.5, 0.42, 0.42, mats.beige, false);
+    const sc = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.3), mats.screen); sc.position.set(cx, 1.02, cz - 0.935); scene.add(sc);
+    box(cx, 0.785, cz - 0.82, 0.5, 0.03, 0.16, mats.beige, false);
+  });
+  place('pc', cx - 0.05, 0.77, cz - 1.06, 0);
+  captureOld('tray', () => box(cx + 0.6, 0.86, cz - 1.15, 0.36, 0.2, 0.28, mats.white, false)); // in-tray / papers
+  place('tray', cx + 0.62, 0.77, cz - 1.2, rnd(-0.2, 0.2)); place('paper', cx + 0.62, 0.79, cz - 1.2, rnd(-0.3, 0.3));
+  if (Math.random() < 0.65) place('mug', cx + 0.72, 0.77, cz - 0.74, Math.random() * 6);
   // chair
-  box(cx, 0.45, cz - 0.2, 0.5, 0.08, 0.5, mats.chair, false); chairBase(cx, cz - 0.2);
-  box(cx, 0.75, cz + 0.05, 0.5, 0.55, 0.06, mats.chair, false);
+  captureOld('chair', () => { box(cx, 0.45, cz - 0.2, 0.5, 0.08, 0.5, mats.chair, false); chairBase(cx, cz - 0.2);
+  box(cx, 0.75, cz + 0.05, 0.5, 0.55, 0.06, mats.chair, false); });
+  place('chair', cx, 0, cz - 0.15, Math.PI + rnd(-0.12, 0.12));
   const num = 100 + ri * 4 + ci + 1;
   desks.push({ x: cx, z: cz, row: ri, num, home: { x: cx, z: cz - 0.15 } });
 }));
@@ -502,18 +513,22 @@ ROWS.forEach((cz, ri) => COLS.forEach((cx, ci) => {
 // CEO office (north-east), glass partition
 box(10, 1.2, -12.5, 0.06, 2.4, 3, mats.glass); box(13, 1.2, -6, 6, 2.4, 0.06, mats.glass);
 box(10, 2.42, -12.5, 0.1, 0.06, 3, mats.deskDark, false); box(13, 2.42, -6, 6, 0.06, 0.1, mats.deskDark, false);
-const rug = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 5), mats.rug); rug.userData.noCast = true; rug.rotation.x = -Math.PI / 2; rug.position.set(13, 0.01, -10.5); scene.add(rug);
-box(13, 0.76, -11.5, 2.6, 0.08, 1.1, mats.deskDark); box(13, 0.38, -10.98, 2.5, 0.68, 0.06, mats.deskDark, false);
-box(11.75, 0.36, -11.5, 0.08, 0.72, 1.05, mats.deskDark, false); box(14.25, 0.36, -11.5, 0.08, 0.72, 1.05, mats.deskDark, false);
+captureOld('rug', () => { const rug = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 5), mats.rug); rug.userData.noCast = true; rug.rotation.x = -Math.PI / 2; rug.position.set(13, 0.01, -10.5); scene.add(rug); });
+captureOld('ceoDesk', () => { box(13, 0.76, -11.5, 2.6, 0.08, 1.1, mats.deskDark);
+box(11.75, 0.36, -11.5, 0.08, 0.72, 1.05, mats.deskDark, false); box(14.25, 0.36, -11.5, 0.08, 0.72, 1.05, mats.deskDark, false); });
+buildModernCeoOffice();
 // the secret under-desk bed
 box(13, 0.07, -11.5, 2.3, 0.12, 0.9, M(0xe9e4d6), false);
 box(13.25, 0.15, -11.5, 1.7, 0.05, 0.92, M(0x6a2a3a), false);
 box(12.1, 0.17, -11.5, 0.42, 0.1, 0.62, M(0xf6f3ea), false);
 box(14.05, 0.52, -11.12, 0.3, 0.03, 0.2, mats.deskDark, false); box(14.05, 0.59, -11.12, 0.12, 0.1, 0.08, M(0x222222), false);
 const clockLed = new THREE.Mesh(new THREE.PlaneGeometry(0.09, 0.04), mats.red); clockLed.position.set(14.05, 0.6, -11.17); clockLed.rotation.y = Math.PI; scene.add(clockLed);
-box(13, 1.0, -11.7, 0.5, 0.42, 0.42, mats.beige, false);
-box(13, 0.6, -12.6, 0.7, 1.2, 0.6, mats.black, false);
-plant(15.3, -13.3); plant(10.6, -13.3);
+captureOld('pc', () => box(13, 1.0, -11.7, 0.5, 0.42, 0.42, mats.beige, false));
+captureOld('execChair', () => box(13, 0.6, -12.6, 0.7, 1.2, 0.6, mats.black, false));
+place('pc', 13, CEO_DESK_H, -11.5, Math.PI); place('ceoChair', 13, 0, -12.45, 0);
+place('ceoDesk', 13, 0, -11.5, Math.PI / 2); place('rug', 13, 0.006, -11.4, 0);
+place('rolodex', 13.9, CEO_DESK_H, -11.6, Math.PI + 0.3); place('mug', 12.25, CEO_DESK_H, -11.75, 1.2);
+captureOld('mplant', () => { plant0(15.3, -13.3); plant0(10.55, -13.3); }); place('mplant', 15.35, 0, -13.35, 0.4); place('mplant', 10.6, 0, -13.35, 2.2);
 const ceoSign = makeLabel('CHIEF EXECUTIVE', 'Office of the CEO', 256, 72); ceoSign.position.set(13, 2.3, -5.9); scene.add(ceoSign);
 
 // Server room (north-west) with door gap at z -11..-9.5 on x=-10
@@ -527,9 +542,11 @@ for (let i = 0; i < 4; i++) {
 const srvSign = makeLabel('SERVER ROOM', 'Authorized staff only'); srvSign.position.set(-9.85, 2.35, -10.25); scene.add(srvSign);
 
 // break area east wall
-box(15.4, 0.5, 6, 0.5, 1.0, 0.5, mats.white); const bottle = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.5, 12), mats.water); bottle.position.set(15.4, 1.25, 6); scene.add(bottle);
-box(15.3, 0.45, 9, 0.8, 0.9, 1.6, mats.deskDark); box(15.3, 1.2, 9, 0.5, 0.6, 0.4, mats.black, false);
-const coffeeLight = new THREE.Mesh(new THREE.PlaneGeometry(0.06, 0.06), mats.red); coffeeLight.position.set(15.04, 1.3, 9); coffeeLight.rotation.y = -Math.PI / 2; scene.add(coffeeLight);
+captureOld('cooler', () => { box(15.4, 0.5, 6, 0.5, 1.0, 0.5, mats.white); const bottle = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.5, 12), mats.water); bottle.position.set(15.4, 1.25, 6); scene.add(bottle); });
+place('cooler', 15.45, 0, 6, -Math.PI / 2); place('cork', 15.97, 1.45, 4.65, -Math.PI / 2); place('clock', 15.96, 2.15, 7.6, -Math.PI / 2);
+box(15.3, 0.45, 9, 0.8, 0.9, 1.6, mats.deskDark);
+captureOld('coffee', () => { box(15.3, 1.2, 9, 0.5, 0.6, 0.4, mats.black, false); const coffeeLight = new THREE.Mesh(new THREE.PlaneGeometry(0.06, 0.06), mats.red); coffeeLight.position.set(15.04, 1.3, 9); coffeeLight.rotation.y = -Math.PI / 2; scene.add(coffeeLight); });
+place('coffee', 15.35, 0.9, 9.1, -Math.PI / 2); place('mug', 15.2, 0.9, 8.45, 2); place('mug', 15.25, 0.9, 8.3, 4);
 plant(15.3, 12.8); plant(-15.3, 12.8); plant(-15.3, 1.5); plant(9, 12.8);
 // vending machines (fronts face -x)
 const vendTex = (soda) => canvasTex(128, 256, (g, w, h) => {
@@ -559,6 +576,9 @@ box(-15.3, 0.4, 5, 0.6, 0.8, 1.2, mats.deskDark); box(-15.3, 0.92, 5, 0.45, 0.24
 // supply closet door south wall
 box(0, 1.05, B.maxZ - 0.02, 1.1, 2.1, 0.05, mats.deskDark, false);
 box(-8, 1.05, B.maxZ - 0.02, 1.1, 2.1, 0.05, M(0x7a2a1a), false);
+place('exit', -8, 2.62, B.maxZ - 0.04, Math.PI);
+place('cabinet', -15.62, 0, 10.75, Math.PI / 2); place('cabinet', -15.62, 0, 11.45, Math.PI / 2); place('paper', -15.62, 1.33, 11.45, 1.4);
+place('tape', -15.55, 0, -10.9, Math.PI / 2); place('tape2', -15.55, 0, -10.0, Math.PI / 2); colliders.push({ minX: -16, maxX: -15.15, minZ: -11.4, maxZ: -9.5 });
 const swSign = makeLabel('STAIRWELL', 'Fire exit only'); swSign.position.set(-8, 2.35, B.maxZ - 0.15); scene.add(swSign);
 box(-15.35, 0.4, 7.0, 0.5, 0.8, 0.5, M(0x34363c)); box(-15.35, 0.82, 7.0, 0.42, 0.05, 0.3, M(0x111111), false);
 const shSign = makeLabel('SHREDDER', 'Confidential only'); shSign.scale.set(0.8, 0.22, 1); shSign.position.set(-15.3, 1.15, 7.0); scene.add(shSign);
@@ -566,6 +586,40 @@ box(-4, 1.35, B.maxZ - 0.1, 0.4, 0.62, 0.16, M(0x8a8f96), false); box(-4.1, 1.38
 const ppSign = makeLabel('PAYPHONE', '25¢ local calls'); ppSign.scale.set(0.8, 0.22, 1); ppSign.position.set(-4, 1.9, B.maxZ - 0.15); scene.add(ppSign);
 const scSign = makeLabel('SUPPLY CLOSET'); scSign.position.set(0, 2.35, B.maxZ - 0.15); scene.add(scSign);
 
+function buildModernCeoOffice() {
+  const X0 = 10.05, X1 = 15.97, Z0 = -13.97, Z1 = -6.03;
+  // polished pale concrete floor
+  const fl = canvasTex(512, 512, (g, w, h) => { g.fillStyle = '#c9cbcc'; g.fillRect(0, 0, w, h); for (let i = 0; i < 9000; i++) { g.fillStyle = `rgba(${Math.random() < .5 ? '255,255,255' : '60,62,66'},${Math.random() * .05})`; g.fillRect(Math.random() * w, Math.random() * h, 2 + Math.random() * 6, 2 + Math.random() * 6); } g.strokeStyle = 'rgba(0,0,0,.08)'; g.lineWidth = 2; for (let k = 0; k <= 4; k++) { g.beginPath(); g.moveTo(k * w / 4, 0); g.lineTo(k * w / 4, h); g.stroke(); g.beginPath(); g.moveTo(0, k * h / 4); g.lineTo(w, k * h / 4); g.stroke(); } });
+  const floorM = new THREE.MeshPhongMaterial({ map: fl, shininess: 70, specular: 0x333333 });
+  const f = new THREE.Mesh(new THREE.PlaneGeometry(X1 - X0, Z1 - Z0), floorM); f.rotation.x = -Math.PI / 2; f.position.set((X0 + X1) / 2, 0.004, (Z0 + Z1) / 2); f.userData.noCast = true; scene.add(f);
+  // floor-to-ceiling window wall with the skyline 31 floors down
+  const city = canvasTex(1024, 512, (g, w, h) => {
+    const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#6fa6d6'); gr.addColorStop(.55, '#cfe1ee'); gr.addColorStop(1, '#e9eef0'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+    g.fillStyle = 'rgba(255,255,255,.7)'; for (let i = 0; i < 7; i++) { g.beginPath(); g.ellipse(rnd(0, w), rnd(30, 150), rnd(40, 110), rnd(8, 18), 0, 0, 7); g.fill(); }
+    for (const [base, col, a] of [[h * .62, '#9fb0bf', .8], [h * .72, '#7d8fa0', .9], [h * .86, '#5c6c7c', 1]]) for (let x = -10; x < w;) {
+      const bw = 18 + Math.random() * 46, bh = 40 + Math.random() * (base * .55); g.globalAlpha = a; g.fillStyle = col; g.fillRect(x, base - bh, bw, h - base + bh);
+      g.fillStyle = 'rgba(255,240,190,.55)'; for (let yy = base - bh + 6; yy < h; yy += 9) for (let xx = x + 4; xx < x + bw - 4; xx += 7) if (Math.random() < .3) g.fillRect(xx, yy, 3, 4);
+      x += bw + 2 + Math.random() * 10; }
+    g.globalAlpha = 1; g.fillStyle = 'rgba(230,236,240,.25)'; g.fillRect(0, 0, w, h);
+  });
+  const view = new THREE.Mesh(new THREE.PlaneGeometry(X1 - X0, 3), new THREE.MeshBasicMaterial({ map: city, toneMapped: false })); view.position.set((X0 + X1) / 2, 1.5, -13.985); scene.add(view);
+  const blk = new THREE.MeshPhongMaterial({ color: 0x141517, shininess: 30, specular: 0x222222 });
+  const bar = (x, y, z, w, h, d) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), blk); m.position.set(x, y, z); scene.add(m); return m; };
+  for (let i = 0; i <= 5; i++) bar(X0 + (X1 - X0) * i / 5, 1.5, -13.95, 0.06, 3, 0.08);
+  bar((X0 + X1) / 2, 0.03, -13.95, X1 - X0, 0.06, 0.1); bar((X0 + X1) / 2, 2.97, -13.95, X1 - X0, 0.06, 0.1); bar((X0 + X1) / 2, 2.2, -13.95, X1 - X0, 0.04, 0.06);
+  // black frames on the glass partitions (west and south sides)
+  for (let z = -14; z <= -11.0; z += 1) bar(10, 1.22, z, 0.07, 2.44, 0.07);
+  for (let x = 10; x <= 16; x += 1.2) bar(x, 1.22, -6, 0.07, 2.44, 0.07);
+  bar(10, 2.43, -12.5, 0.12, 0.08, 3.02); bar(13, 2.43, -6, 6.02, 0.08, 0.12); bar(10, 0.025, -12.5, 0.1, 0.05, 3.0); bar(13, 0.025, -6, 6.0, 0.05, 0.1);
+  // charcoal concrete feature wall on the east side
+  const conc = canvasTex(512, 256, (g, w, h) => { g.fillStyle = '#3b3d40'; g.fillRect(0, 0, w, h); for (let i = 0; i < 7000; i++) { g.fillStyle = `rgba(${Math.random() < .5 ? '255,255,255' : '0,0,0'},${Math.random() * .06})`; g.fillRect(Math.random() * w, Math.random() * h, 1 + Math.random() * 4, 1 + Math.random() * 4); } g.strokeStyle = 'rgba(0,0,0,.25)'; g.lineWidth = 2; for (let k = 1; k < 4; k++) { g.beginPath(); g.moveTo(k * w / 4, 0); g.lineTo(k * w / 4, h); g.stroke(); } g.beginPath(); g.moveTo(0, h / 2); g.lineTo(w, h / 2); g.stroke(); });
+  const fw = new THREE.Mesh(new THREE.PlaneGeometry(Z1 - Z0, 3), new THREE.MeshLambertMaterial({ map: conc })); fw.rotation.y = -Math.PI / 2; fw.position.set(15.975, 1.5, (Z0 + Z1) / 2); scene.add(fw);
+  // linear pendant over the desk
+  const pend = bar(13, 2.35, -11.5, 1.8, 0.05, 0.12); const glow = new THREE.Mesh(new THREE.PlaneGeometry(1.74, 0.07), new THREE.MeshBasicMaterial({ color: 0xfff3dd, toneMapped: false })); glow.rotation.x = Math.PI / 2; glow.position.set(13, 2.322, -11.5); scene.add(glow);
+  for (const dx of [-0.8, 0.8]) bar(13 + dx, 2.68, -11.5, 0.01, 0.62, 0.01);
+  // modesty panel so the secret bed stays secret behind the open waterfall desk
+  bar(13, 0.4, -11.0, 2.05, 0.62, 0.03);
+}
 /* ---------------- draw-call merging ---------------- */
 function mergeGeos(list) {
   const parts = list.map(({ geo, matrix }) => { const g = geo.index ? geo.toNonIndexed() : geo.clone(); g.applyMatrix4(matrix); return g; });
@@ -607,14 +661,14 @@ for (const z of [-4.6, -2.25, 0.1]) { box(15.75, 1.1, z, 0.45, 2.2, 2.2, M(0x4a2
 // General Counsel's desk (she faces the door, -x)
 box(14.3, 0.76, -3.8, 0.9, 0.06, 1.9, mats.deskDark); box(14.3, 0.37, -4.7, 0.86, 0.74, 0.06, mats.deskDark, false); box(14.3, 0.37, -2.9, 0.86, 0.74, 0.06, mats.deskDark, false);
 colliders.push({ minX: 13.85, maxX: 14.75, minZ: -4.75, maxZ: -2.85 });
-box(14.35, 0.98, -4.35, 0.4, 0.36, 0.4, mats.beige, false);
+captureOld('pc', () => box(14.35, 0.98, -4.35, 0.4, 0.36, 0.4, mats.beige, false)); place('pc', 14.3, 0.79, -4.1, Math.PI / 2); place('mug', 14.0, 0.79, -3.0, 1);
 box(14.1, 0.82, -3.4, 0.3, 0.06, 0.4, mats.white, false); box(14.1, 0.88, -3.35, 0.28, 0.06, 0.38, M(0xe8d9a0), false);
-box(15.25, 0.45, -3.8, 0.5, 0.08, 0.5, mats.chair, false); chairBase(15.25, -3.8); box(15.5, 0.8, -3.8, 0.06, 0.65, 0.5, mats.chair, false);
+captureOld('execChair', () => { box(15.25, 0.45, -3.8, 0.5, 0.08, 0.5, mats.chair, false); chairBase(15.25, -3.8); box(15.5, 0.8, -3.8, 0.06, 0.65, 0.5, mats.chair, false); }); place('execChair', 15.2, 0, -3.8, -Math.PI / 2);
 // paralegal desk against the south glass
-box(12.4, 0.74, 0.95, 1.8, 0.06, 0.7, mats.desk); box(12.4, 1.0, 1.05, 0.5, 0.42, 0.42, mats.beige, false);
+box(12.4, 0.74, 0.95, 1.8, 0.06, 0.7, mats.desk); captureOld('pc', () => box(12.4, 1.0, 1.05, 0.5, 0.42, 0.42, mats.beige, false)); place('pc', 12.4, 0.77, 0.98, Math.PI); place('binder', 13.05, 0.77, 1.15, 0.1); place('binder', 13.12, 0.77, 1.15, 0.1);
 box(11.6, 0.6, 0.95, 0.04, 1.2, 0.6, mats.white, false); // stack of binders
-box(12.4, 0.45, 0.2, 0.5, 0.08, 0.5, mats.chair, false); chairBase(12.4, 0.2); box(12.4, 0.75, -0.05, 0.5, 0.55, 0.06, mats.chair, false);
-box(10.6, 0.65, -5.5, 0.6, 1.3, 0.6, mats.grey); box(11.3, 0.65, -5.5, 0.6, 1.3, 0.6, mats.grey);
+captureOld('chair', () => { box(12.4, 0.45, 0.2, 0.5, 0.08, 0.5, mats.chair, false); chairBase(12.4, 0.2); box(12.4, 0.75, -0.05, 0.5, 0.55, 0.06, mats.chair, false); }); place('chair', 12.4, 0, 0.15, 0);
+captureOld('cabinet', () => { box(10.6, 0.65, -5.5, 0.6, 1.3, 0.6, mats.grey); box(11.3, 0.65, -5.5, 0.6, 1.3, 0.6, mats.grey); }); place('cabinet', 10.6, 0, -5.55, 0); place('cabinet', 11.3, 0, -5.55, 0);
 const pfSign = makeLabel('PERSONNEL FILES', 'Confidential'); pfSign.scale.set(0.8, 0.22, 1); pfSign.position.set(10.95, 1.5, -5.5); scene.add(pfSign);
 const legalSign = makeLabel('LEGAL', 'Office of the General Counsel'); legalSign.position.set(9.9, 2.35, -2.25); scene.add(legalSign);
 const legalPlaque = makeLabel('M. THORNBURY, ESQ.', 'General Counsel', 256, 72); legalPlaque.scale.set(0.9, 0.25, 1); legalPlaque.position.set(13.8, 0.9, -3.8); scene.add(legalPlaque);
@@ -653,7 +707,7 @@ const sky = new THREE.Mesh(new THREE.PlaneGeometry(3, 1.3), new THREE.MeshBasicM
 box(2, 1.18, -13.85, 3.1, 0.06, 0.32, mats.white, false); box(2, 2.53, -13.95, 3.1, 0.06, 0.1, mats.white, false);
 const ledgeSign = makeLabel('WINDOW', 'Opens for "maintenance"'); ledgeSign.scale.set(0.9, 0.25, 1); ledgeSign.position.set(2, 2.75, -13.8); scene.add(ledgeSign);
 
-mergeChildren(scene, new Set(leds));
+mergeChildren(scene, new Set([...leds, ...OLD_ALL]));
 const LIN = new WeakSet();
 function finishMaterials(root) {
   root.traverse(o => {
@@ -1021,6 +1075,70 @@ function prepModel(def, gltfScene) {
     o.userData.shad = true;
   });
   return { def, scene: outer, ankle, toeH, rest, roles: Object.fromEntries(Object.entries(roles).map(([r, b]) => [r, b.name])), side, down, hipH };
+}
+/* ---------------- imported furniture & computers ---------------- */
+// kind: [file, node name in the file (null = whole scene), size target {h|w|d: metres}]
+const PROP_DEFS = {
+  pc: ['pc95', null, { w: 0.84 }], chair: ['props60s', 'Cube004', { h: 0.95 }], execChair: ['props60s', 'Cube021', { h: 1.15 }],
+  plant: ['props60s', 'Cylinder003', { h: 1.25 }], cooler: ['props60s', 'Cube023', { h: 1.28 }], coffee: ['props60s', 'Cube015', { h: 0.4 }],
+  tape: ['props60s', 'Cube022', { h: 1.78 }], tape2: ['props60s', 'Cube000', { h: 1.78 }], cabinet: ['props60s', 'Cube003', { h: 1.32 }],
+  clock: ['props60s', 'Cylinder', { w: 0.42 }], cork: ['props60s', 'Cube11647', { w: 0.8 }], exit: ['props60s', 'Cube006', { w: 0.42 }],
+  mug: ['props60s', 'Cylinder006', { h: 0.1 }], rolodex: ['props60s', 'Cube019', { h: 0.15 }], penset: ['props60s', 'Cube025', { h: 0.2 }],
+  ceoDesk: ['ceooffice', 'mat:Table', { d: 2.5 }], ceoChair: ['ceooffice', 'mat:Chair', { h: 1.02 }], mplant: ['ceooffice', 'mat:Plants', { h: 1.3, half: true }], rug: ['ceooffice', 'mat:Carpet', { w: 3.4 }],
+  tray: ['props60s', 'Cube014', { w: 0.3 }], paper: ['props60s', 'Cube011', { w: 0.21 }], binder: ['props60s', 'Cube001', { h: 0.3 }],
+};
+let propsReady = false;
+function normProp(src, size) {
+  // bake the node's world transform, sit it on y=0 centred on x/z, scale to a real-world size
+  src.updateMatrixWorld(true);
+  const g = new THREE.Group(), meshes = [];
+  src.traverse(o => { if (o.isMesh) { const m = new THREE.Mesh(o.geometry, o.material); m.matrix.copy(o.matrixWorld); m.matrix.decompose(m.position, m.quaternion, m.scale); g.add(m); meshes.push(m); } });
+  if (size.half) { // the file holds two copies far apart: keep the triangles on one side
+    g.updateMatrixWorld(true); const bb0 = new THREE.Box3().setFromObject(g), sz0 = bb0.getSize(new THREE.Vector3()), ax = sz0.x > sz0.z ? 'x' : 'z', mid = (bb0.min[ax] + bb0.max[ax]) / 2, v = new THREE.Vector3();
+    for (const m of meshes) {
+      const geo = m.geometry.index ? m.geometry.toNonIndexed() : m.geometry.clone(), pos = geo.attributes.position, keep = [];
+      for (let t = 0; t < pos.count; t += 3) { let c = 0; for (let k = 0; k < 3; k++) c += v.fromBufferAttribute(pos, t + k).applyMatrix4(m.matrixWorld)[ax]; if (c / 3 < mid) keep.push(t); }
+      const out = new THREE.BufferGeometry();
+      for (const name in geo.attributes) { const a = geo.attributes[name], arr = new a.array.constructor(keep.length * 3 * a.itemSize); keep.forEach((t, i) => { for (let k = 0; k < 3 * a.itemSize; k++) arr[i * 3 * a.itemSize + k] = a.array[t * a.itemSize + k]; }); out.setAttribute(name, new THREE.BufferAttribute(arr, a.itemSize, a.normalized)); }
+      m.geometry = out;
+    }
+  }
+  g.updateMatrixWorld(true);
+  const bb = new THREE.Box3().setFromObject(g), sz = bb.getSize(new THREE.Vector3()), c = bb.getCenter(new THREE.Vector3());
+  const k = size.h ? size.h / sz.y : size.w ? size.w / sz.x : size.d / sz.z;
+  const T = new THREE.Matrix4().makeScale(k, k, k).multiply(new THREE.Matrix4().makeTranslation(-c.x, -bb.min.y, -c.z));
+  return meshes.map(m => { m.updateMatrix(); return { geo: m.geometry, mat: m.material, local: T.clone().multiply(m.matrix) }; });
+}
+function buildProps(sources) {
+  const _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _p = new THREE.Vector3(), _s = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+  for (const kind in PLACE) {
+    const def = PROP_DEFS[kind], file = def && sources[def[0]]; if (!file) continue;
+    file.updateMatrixWorld(true);
+    let src = file;
+    if (def[1] && def[1].startsWith('mat:')) { // every mesh with that material, frozen at its world placement
+      src = new THREE.Group(); let n = 0;
+      file.traverse(o => { if (o.isMesh && o.material && o.material.name === def[1].slice(4)) { const c = new THREE.Mesh(o.geometry, o.material); c.matrixAutoUpdate = false; c.matrix.copy(o.matrixWorld); src.add(c); n++; } });
+      if (!n) src = null;
+    } else if (def[1]) src = file.getObjectByName(def[1]);
+    if (!src) { console.warn('prop missing', kind); continue; }
+    const parts = normProp(src, def[2]), list = PLACE[kind];
+    for (const pt of parts) {
+      const mats = Array.isArray(pt.mat) ? pt.mat : [pt.mat];
+      for (const m of mats) { LIN.add(m); if (m.map) m.map.anisotropy = 4; if (m.transparent && m.opacity > 0.95) { m.transparent = false; m.alphaTest = 0.5; } }
+      const im = new THREE.InstancedMesh(pt.geo, pt.mat, list.length);
+      list.forEach((p, i) => { _q.setFromAxisAngle(up, p.ry); _p.set(p.x, p.y, p.z); _s.setScalar(p.s); _m.compose(_p, _q, _s).multiply(pt.local); im.setMatrixAt(i, _m); });
+      im.instanceMatrix.needsUpdate = true; im.frustumCulled = false; im.castShadow = !isTouch && kind !== 'paper'; im.receiveShadow = true; im.userData.shad = true;
+      scene.add(im);
+    }
+    for (const o of OLD[kind] || []) o.visible = false;
+  }
+  propsReady = true;
+}
+function loadProps() {
+  if (!THREE.GLTFLoader) return Promise.resolve();
+  const loader = new THREE.GLTFLoader(), files = ['props60s', 'pc95', 'ceooffice'], out = {};
+  const one = (f, exts) => new Promise(res => loader.load(`models/${f}${exts[0]}`, g => res(g.scene), undefined, e => exts.length > 1 ? one(f, exts.slice(1)).then(res) : (console.warn('props', f, e), res(null))));
+  return Promise.all(files.map(f => one(f, ['.glb', '.glb.wasm']).then(sc => { out[f] = sc; }))).then(() => { try { buildProps(out); } catch (e) { console.warn('props', e); } });
 }
 function loadModels(onProgress) {
   if (!THREE.GLTFLoader || !THREE.SkeletonUtils) { modelsFailed = true; return Promise.resolve(); }
@@ -3144,6 +3262,7 @@ $('#startgame').onclick = () => { if (!modelsReady && !modelsFailed) return; $('
   const sb = $('#startgame'), label = sb.textContent; sb.disabled = true; sb.textContent = 'Hiring staff…';
   const finish = () => { sb.disabled = false; sb.textContent = label; dressAll(); };
   const to = setTimeout(() => { if (!modelsReady) { modelsFailed = true; finish(); } }, 25000);
+  loadProps();
   loadModels((d, n) => { if (!modelsReady) sb.textContent = `Hiring staff… ${d}/${n}`; }).then(() => { clearTimeout(to); finish(); });
 }
 
