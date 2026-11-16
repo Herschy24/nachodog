@@ -918,6 +918,7 @@ const ROLE_RX = {
   armB: /^(RightArm|ValveBiped\.?Bip01_R_UpperArm)$/, foreB: /^(RightForeArm|ValveBiped\.?Bip01_R_Forearm)$/, handB: /^(RightHand|ValveBiped\.?Bip01_R_Hand)$/,
   thighA: /^(LeftUpLeg|ValveBiped\.?Bip01_L_Thigh)$/, shinA: /^(LeftLeg|ValveBiped\.?Bip01_L_Calf)$/, footA: /^(LeftFoot|ValveBiped\.?Bip01_L_Foot)$/,
   thighB: /^(RightUpLeg|ValveBiped\.?Bip01_R_Thigh)$/, shinB: /^(RightLeg|ValveBiped\.?Bip01_R_Calf)$/, footB: /^(RightFoot|ValveBiped\.?Bip01_R_Foot)$/,
+  spine: /^(Spine1|ValveBiped\.?Bip01_Spine1)$/,
   eyeA: /^LeftEye$/, eyeB: /^RightEye$/, toeA: /^(LeftToeBase|ValveBiped\.?Bip01_L_Toe0)$/,
 };
 const boneRole = name => { const base = name.replace(/_\d+$/, ''); for (const r in ROLE_RX) if (ROLE_RX[r].test(base)) return r; return null; };
@@ -943,7 +944,8 @@ function prepModel(def, gltfScene) {
   const feet = Math.min(P(roles.footA).y, bb.min.y), hy = P(roles.head).y;
   const H = (hy - feet) / 0.89; // head joint sits ~89% of standing height
   const target = def.g ? 1.7 : 1.78, k = target / H;
-  wrap.scale.setScalar(k); wrap.position.y = -feet * k; wrap.updateMatrixWorld(true);
+  const hp0 = P(roles.hips);
+  wrap.scale.setScalar(k); wrap.position.set(-hp0.x * k, -feet * k, -hp0.z * k); wrap.updateMatrixWorld(true);
   const outer = new THREE.Group(); outer.add(wrap); outer.updateMatrixWorld(true);
   // rest frames in character space
   const rest = {}, inv = new THREE.Quaternion();
@@ -956,8 +958,12 @@ function prepModel(def, gltfScene) {
   const down = {};
   for (const s of ['A', 'B']) {
     const a = P(roles['arm' + s]), f = P(roles['fore' + s]), dir = f.sub(a).normalize(), sx = Math.sign(a.x);
-    down[s] = new THREE.Quaternion().setFromUnitVectors(dir, new THREE.Vector3(sx * 0.06, -1, 0.01).normalize());
+    const hang = new THREE.Vector3(sx * 0.06, -1, 0.01).normalize();
+    down[s] = new THREE.Quaternion().setFromUnitVectors(dir, hang);
+    const h = roles['hand' + s] ? P(roles['hand' + s]) : null, fdir = h ? h.sub(P(roles['fore' + s])).normalize().applyQuaternion(down[s]) : hang.clone();
+    down['f' + s] = new THREE.Quaternion().setFromUnitVectors(fdir, hang);
   }
+  const ankle = Math.min(P(roles.footA).y, roles.footB ? P(roles.footB).y : 9);
   const hipH = P(roles.thighA).y;
   root.traverse(o => {
     if (!o.isMesh) return;
@@ -966,7 +972,7 @@ function prepModel(def, gltfScene) {
     for (const m of ms) { LIN.add(m); if (m.map) m.map.anisotropy = 4; if (m.transparent && m.opacity > 0.95 && !/glass/i.test(m.name)) { m.transparent = false; m.alphaTest = 0.5; } }
     o.userData.shad = true;
   });
-  return { def, scene: outer, rest, roles: Object.fromEntries(Object.entries(roles).map(([r, b]) => [r, b.name])), side, down, hipH };
+  return { def, scene: outer, ankle, rest, roles: Object.fromEntries(Object.entries(roles).map(([r, b]) => [r, b.name])), side, down, hipH };
 }
 function loadModels(onProgress) {
   if (!THREE.GLTFLoader || !THREE.SkeletonUtils) { modelsFailed = true; return Promise.resolve(); }
@@ -987,7 +993,19 @@ function pickModel(gender, special) {
   const least = Math.min(...pool.map(k => MODEL_USES[k] || 0));
   return pick(pool.filter(k => (MODEL_USES[k] || 0) === least));
 }
-const TINTABLE = /outfit_top|outfit_bottom|suit|shirt|pants|top|bottom/i;
+const TINTABLE = /outfit_top|outfit_bottom|suit|shirt|pants|skirt|top|bottom/i, LOWER = /bottom|pants|skirt/i;
+// strong, clearly different outfit colours for people who share a model: [top, bottom]
+const OUTFITS = [[0x2e5c9e, 0x2a2a30], [0x8e1f2c, 0x33302c], [0x2f6b45, 0x3a3a40], [0xd8c9a8, 0x5a4632], [0x6a3f8a, 0x26262c], [0xc77b2a, 0x3c3226], [0x3a8f95, 0x2c3440], [0xb84f7a, 0x2b2b33], [0x5b6470, 0x1e2230], [0xe2e2dc, 0x4a5568]];
+// recolour: desaturate the original texture (keeps folds, buttons and seams) and paint it with the new colour
+function recolorMat(m, hex) {
+  const c = m.clone(); c.color.set(hex).convertSRGBToLinear(); LIN.add(c);
+  c.onBeforeCompile = sh => { sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>', `#ifdef USE_MAP
+  vec4 texelColor = mapTexelToLinear( texture2D( map, vUv ) );
+  float lum = dot( texelColor.rgb, vec3( 0.2126, 0.7152, 0.0722 ) );
+  diffuseColor *= vec4( vec3( clamp( pow( lum, 0.55 ) * 1.35, 0.0, 1.4 ) ), texelColor.a );
+#endif`); };
+  c.customProgramCacheKey = () => 'recolor'; return c;
+}
 function dressPerson(mesh, opts = {}) {
   const u = mesh.userData; if (!modelsReady || u.model) return;
   const key = opts.key && MODELS[opts.key] ? opts.key : pickModel(u.look ? u.look.gender : 0, opts.special); if (!key) return;
@@ -996,9 +1014,9 @@ function dressPerson(mesh, opts = {}) {
   const bones = {}; inst.traverse(o => { if (o.isBone) for (const r in proto.roles) if (proto.roles[r] === o.name) bones[r] = o; });
   // repeat wearers get a different coloured outfit
   if (uses > 1) {
-    const tint = new THREE.Color(u.look ? u.look.suit : 0x334455).lerp(new THREE.Color(0xffffff), 0.35).convertSRGBToLinear(), seen = new Map();
-    inst.traverse(o => { if (!o.isMesh) return; const m = o.material; if (!m || !TINTABLE.test(m.name) || /skin|hair|eye|face|hand|body|teeth/i.test(m.name)) return;
-      if (!seen.has(m)) { const c = m.clone(); c.color.multiply(tint).multiplyScalar(1.25); LIN.add(c); seen.set(m, c); } o.material = seen.get(m); });
+    const fit = OUTFITS[(uses - 2 + Object.keys(MODELS).indexOf(key) * 3) % OUTFITS.length], seen = new Map();
+    inst.traverse(o => { if (!o.isMesh) return; const m = o.material; if (!m || !TINTABLE.test(m.name) || /skin|hair|eye|face|hand|body|teeth|button|buckle|tie/i.test(m.name)) return;
+      if (!seen.has(m)) seen.set(m, recolorMat(m, LOWER.test(m.name) ? fit[1] : fit[0])); o.material = seen.get(m); });
   }
   mesh.traverse(o => { if (o.isMesh) o.visible = false; });
   mesh.add(inst);
@@ -1015,16 +1033,69 @@ function syncModel(mesh, s) {
   const p = md.proto, A = p.side > 0 ? 'B' : 'A', B = p.side > 0 ? 'A' : 'B'; // driver "L" arm sits at -x
   if (s === undefined) s = clamp((-mesh.position.y) / 0.33, 0, 1);
   md.inst.position.y = -(p.hipH - 0.82) * s;
+  md.inst.position.z += ((u.kbdOn ? 0.14 : 0) - md.inst.position.z) * 0.15;
   setBone(md, 'thigh' + A, u.legL.hip.quaternion); setBone(md, 'thigh' + B, u.legR.hip.quaternion);
   setBone(md, 'shin' + A, u.legL.knee.quaternion); setBone(md, 'shin' + B, u.legR.knee.quaternion);
   for (const [S, arm, el] of [[A, u.armL, u.elbowL], [B, u.armR, u.elbowR]]) {
     const D = p.down[S];
     setBone(md, 'arm' + S, _q.copy(arm.quaternion).multiply(D));
-    setBone(md, 'fore' + S, _q.copy(D).invert().multiply(el.quaternion).multiply(D));
+    setBone(md, 'fore' + S, _q.copy(D).invert().multiply(el.quaternion).multiply(p.down['f' + S]).multiply(D));
   }
   const now = performance.now(), talk = u.talkNod && now < u.talkNod ? Math.sin(now / 95) * 0.035 : 0;
   _e.set(u.head.rotation.x + talk, u.head.rotation.y, u.head.rotation.z); setBone(md, 'head', _q.setFromEuler(_e));
   if (u.eyes && md.bones.eyeA) { _q.setFromEuler(_e.set(0, u.eyes[0].rotation.y * 0.8, 0)); setBone(md, 'eyeA', _q); setBone(md, 'eyeB', _q); }
+  const typing = u.kbdOn && u.kbd && md.bones.handA && md.bones.handB;
+  if (md.bones.spine) setBone(md, 'spine', _q.setFromEuler(_e.set(typing ? 0.28 : 0, 0, 0)));
+  // plant the lower foot on the floor while standing or walking (no hovering)
+  if (s < 0.5) {
+    mesh.updateMatrixWorld(true);
+    const fa = md.bones.footA.getWorldPosition(_v1).y, fb = md.bones.footB ? md.bones.footB.getWorldPosition(_v2).y : fa;
+    const lift = Math.min(fa, fb) - mesh.parent.position.y * 0 - p.ankle;
+    md.inst.position.y -= lift * (1 - s * 2);
+  }
+  if (typing) typeIK(mesh, md, u);
+}
+const _v1 = new THREE.Vector3(), _v2 = new THREE.Vector3(), _v3 = new THREE.Vector3(), _v4 = new THREE.Vector3(), _v5 = new THREE.Vector3(), _qa = new THREE.Quaternion(), _qb = new THREE.Quaternion();
+function aimBone(bone, from, to, child) {
+  // rotate bone (in world space) so the direction bone->child points from 'from' to 'to'
+  const cur = _v4.copy(child).sub(from).normalize(), want = _v5.copy(to).sub(from).normalize();
+  _qa.setFromUnitVectors(cur, want);
+  bone.getWorldQuaternion(_qb); _qb.premultiply(_qa);
+  bone.parent.getWorldQuaternion(_qa).invert(); bone.quaternion.copy(_qa.multiply(_qb));
+  bone.updateMatrixWorld(true);
+}
+function typeIK(mesh, md, u) {
+  mesh.updateMatrixWorld(true);
+  const p = md.proto, ry = mesh.rotation.y, cs = Math.cos(ry), sn = Math.sin(ry), t = performance.now() / 1000;
+  const A = p.side > 0 ? 'B' : 'A', B = p.side > 0 ? 'A' : 'B';
+  for (const [S, sx, ph] of [[A, -1, 0], [B, 1, 1.9]]) {
+    const sh = md.bones['arm' + S], el = md.bones['fore' + S], hd = md.bones['hand' + S]; if (!sh || !el || !hd) continue;
+    // keyboard in front of the chair: local (x, z) relative to the seat, y on the key tops
+    const lx = sx * 0.12 + Math.sin(t * 7 + ph + u.kbdSeed) * 0.012, lz = 0.56, ty = 0.84 + Math.max(0, Math.sin(t * 13 + ph * 2 + u.kbdSeed)) * 0.018;
+    const T = _v3.set(mesh.position.x + lx * cs + lz * sn, ty, mesh.position.z - lx * sn + lz * cs);
+    const S0 = sh.getWorldPosition(new THREE.Vector3()), E0 = el.getWorldPosition(new THREE.Vector3()), W0 = hd.getWorldPosition(new THREE.Vector3());
+    const a = S0.distanceTo(E0), b = E0.distanceTo(W0);
+    const d = clamp(S0.distanceTo(T), Math.abs(a - b) + 0.01, a + b - 0.005), dir = T.clone().sub(S0).normalize();
+    const T2 = S0.clone().addScaledVector(dir, d);
+    // elbows point down, out and a little back
+    const pole = new THREE.Vector3(sx * 0.7, -1, -0.35); pole.set(pole.x * cs + pole.z * sn, pole.y, -pole.x * sn + pole.z * cs);
+    const perp = pole.sub(dir.clone().multiplyScalar(pole.dot(dir))).normalize();
+    const al = Math.acos(clamp((a * a + d * d - b * b) / (2 * a * d), -1, 1));
+    const E1 = S0.clone().addScaledVector(dir, a * Math.cos(al)).addScaledVector(perp, a * Math.sin(al));
+    aimBone(sh, S0, E1, E0);
+    const E2 = el.getWorldPosition(new THREE.Vector3()), W2 = hd.getWorldPosition(new THREE.Vector3());
+    aimBone(el, E2, T2, W2);
+    // roll the hand about the forearm so the palm faces the keys
+    const rw = p.rest['hand' + S]; if (!rw) continue;
+    const ax = W2.copy(hd.getWorldPosition(_v1)).sub(el.getWorldPosition(_v2)).normalize();
+    hd.getWorldQuaternion(_qb); mesh.getWorldQuaternion(_qa);
+    const palm = new THREE.Vector3(0, -1, 0).applyQuaternion(rw.Winv).applyQuaternion(_qb);
+    const down = new THREE.Vector3(0, -1, 0);
+    palm.addScaledVector(ax, -palm.dot(ax)).normalize(); down.addScaledVector(ax, -down.dot(ax)).normalize();
+    let ang = Math.acos(clamp(palm.dot(down), -1, 1)); if (new THREE.Vector3().crossVectors(palm, down).dot(ax) < 0) ang = -ang;
+    _qa.setFromAxisAngle(ax, ang * 0.85); _qb.premultiply(_qa);
+    hd.parent.getWorldQuaternion(_qa).invert(); hd.quaternion.copy(_qa.multiply(_qb)); hd.updateMatrixWorld(true);
+  }
 }
 function syncAllModels() {
   for (const m of DRESSED) { if (!m.parent) { DRESSED.delete(m); continue; } syncModel(m); }
@@ -1324,7 +1395,7 @@ function newGame() {
   const mkStaff = (id, name, title, home, rotY, suit) => {
     const mesh = makePerson({ angry: true, suit, name }); mesh.position.set(home.x, 0, home.z); mesh.rotation.y = rotY; scene.add(mesh);
     const tag = makeLabel(name, title); tag.visible = false; scene.add(tag);
-    const o = { id, name, first: name.split(' ')[0], dept: 'Legal', title, mesh, tag, pos: mesh.position, home, rotY, status: 'active', state: 'desk', path: [], sit: 1, walkT: 0, walkAmp: 0, sip: 0, talking: false, angry: false };
+    const o = { id, name, first: name.split(' ')[0], dept: 'Legal', title, mesh, tag, pos: mesh.position, home, rotY, desk: home, status: 'active', state: 'desk', path: [], sit: 1, walkT: 0, walkAmp: 0, sip: 0, talking: false, angry: false };
     pose(o, 0); return o;
   };
   gc = mkStaff(100, 'Margaret Thornbury', 'General Counsel', { x: 15.0, z: -3.8 }, -Math.PI / 2, 0x2b2b3a);
@@ -1487,7 +1558,7 @@ function steer(n, dt) {
     if (!blockedStatic(n.pos.x, n.pos.z + mz, 0.18)) n.pos.z += mz;
   } else n.speed *= 0.6;
   n.mesh.rotation.y = n.heading;
-  n.walkT += dt * n.speed * 6.3;
+  n.walkT += dt * n.speed * 4.9;
   n.walkAmp += (Math.min(1, n.speed / 1.1) - n.walkAmp) * Math.min(1, dt * 6);
   if (playerBlock && n.speed < 0.15) { n.waitT += dt; if (n.waitT > 2.5) { n.waitT = -6; speak(n, 'scuse me'); toast(n.first, pick(['"\'Scuse me, boss."', '"Coming through!"', '"Can I just… squeeze past?"'])); } } else if (n.waitT > 0) n.waitT = 0;
   return true;
@@ -1499,7 +1570,7 @@ function arrive(n) {
 }
 function pose(n, t) {
   const u = n.mesh.userData, s = n.sit, w = n.walkAmp * (1 - s), ph = n.walkT;
-  const sw = Math.sin(ph) * 0.55 * w;
+  const sw = Math.sin(ph) * 0.46 * w;
   u.legL.hip.rotation.x = -Math.PI / 2 * s + sw;
   u.legR.hip.rotation.x = -Math.PI / 2 * s - sw;
   u.legL.knee.rotation.x = Math.PI / 2 * s + Math.max(0, Math.sin(ph)) * 0.8 * w;
@@ -1507,6 +1578,7 @@ function pose(n, t) {
   const typing = s > 0.85 && !n.talking ? Math.sin(t * 13 + n.id * 1.7) * 0.07 : 0;
   const talkArm = n.talking || (n.speakUntil && performance.now() < n.speakUntil) ? Math.sin(t * 3 + n.id) * 0.12 - 0.15 : 0;
   u.talkNod = talkArm ? performance.now() + 150 : 0;
+  u.kbdOn = n.state === 'desk' && s > 0.85 && !n.talking && n.desk ? 1 : 0; if (u.kbdOn) { u.kbd = n.desk; if (u.kbdSeed === undefined) u.kbdSeed = Math.random() * 6; }
   u.armL.rotation.set(-0.5 * s + typing - sw * 0.8 + talkArm * (1 - s), 0, -0.09 + 0.05 * s);
   u.armR.rotation.set(-0.5 * s - typing + sw * 0.8 + n.sip * 0.45, 0, 0.09 - 0.05 * s);
   if (u.elbowL) {
