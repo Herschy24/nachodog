@@ -921,7 +921,7 @@ const ROLE_RX = {
   spine: /^(Spine1|ValveBiped\.?Bip01_Spine1)$/,
   idxA: /^(LeftHandIndex1|ValveBiped\.?Bip01_L_Finger1)$/, pnkA: /^(LeftHandPinky1|ValveBiped\.?Bip01_L_Finger4)$/,
   idxB: /^(RightHandIndex1|ValveBiped\.?Bip01_R_Finger1)$/, pnkB: /^(RightHandPinky1|ValveBiped\.?Bip01_R_Finger4)$/,
-  eyeA: /^LeftEye$/, eyeB: /^RightEye$/, toeA: /^(LeftToeBase|ValveBiped\.?Bip01_L_Toe0)$/,
+  eyeA: /^LeftEye$/, eyeB: /^RightEye$/, toeA: /^(LeftToeBase|ValveBiped\.?Bip01_L_Toe0)$/, toeB: /^(RightToeBase|ValveBiped\.?Bip01_R_Toe0)$/,
 };
 const boneRole = name => { const base = name.replace(/_\d+$/, ''); for (const r in ROLE_RX) if (ROLE_RX[r].test(base)) return r; return null; };
 function prepModel(def, gltfScene) {
@@ -964,6 +964,12 @@ function prepModel(def, gltfScene) {
   const target = def.g ? 1.7 : 1.78, k = target / H;
   const hp0 = P(roles.hips);
   wrap.scale.setScalar(k); wrap.position.set(-hp0.x * k, -feet * k, -hp0.z * k); wrap.updateMatrixWorld(true);
+  { // stand the real soles on the floor: lowest skinned vertex of the posed mesh
+    let low = Infinity; const v = new THREE.Vector3();
+    root.traverse(o => { if (!o.isSkinnedMesh) return; o.skeleton.update(); const pos = o.geometry.attributes.position, step = Math.max(1, Math.floor(pos.count / 6000));
+      for (let i = 0; i < pos.count; i += step) { o.boneTransform(i, v); v.applyMatrix4(o.matrixWorld); if (v.y < low) low = v.y; } });
+    if (isFinite(low) && Math.abs(low) < 0.3) { wrap.position.y -= low; wrap.updateMatrixWorld(true); }
+  }
   const outer = new THREE.Group(); outer.add(wrap); outer.updateMatrixWorld(true);
   // rest frames in character space
   const rest = {}, inv = new THREE.Quaternion();
@@ -990,7 +996,7 @@ function prepModel(def, gltfScene) {
       down[s].premultiply(Rt); down['f' + s] = Rt.clone().multiply(down['f' + s]).multiply(Rt.clone().invert());
     }
   }
-  const ankle = Math.min(P(roles.footA).y, roles.footB ? P(roles.footB).y : 9);
+  const ankle = Math.min(P(roles.footA).y, roles.footB ? P(roles.footB).y : 9), toeH = roles.toeA ? P(roles.toeA).y : null;
   const hipH = P(roles.thighA).y;
   root.traverse(o => {
     if (!o.isMesh) return;
@@ -999,7 +1005,7 @@ function prepModel(def, gltfScene) {
     for (const m of ms) { LIN.add(m); if (m.map) m.map.anisotropy = 4; if (m.transparent && m.opacity > 0.95 && !/glass/i.test(m.name)) { m.transparent = false; m.alphaTest = 0.5; } }
     o.userData.shad = true;
   });
-  return { def, scene: outer, ankle, rest, roles: Object.fromEntries(Object.entries(roles).map(([r, b]) => [r, b.name])), side, down, hipH };
+  return { def, scene: outer, ankle, toeH, rest, roles: Object.fromEntries(Object.entries(roles).map(([r, b]) => [r, b.name])), side, down, hipH };
 }
 function loadModels(onProgress) {
   if (!THREE.GLTFLoader || !THREE.SkeletonUtils) { modelsFailed = true; return Promise.resolve(); }
@@ -1076,8 +1082,9 @@ function syncModel(mesh, s) {
   // plant the lower foot on the floor while standing or walking (no hovering)
   if (s < 0.5) {
     mesh.updateMatrixWorld(true);
-    const fa = md.bones.footA.getWorldPosition(_v1).y, fb = md.bones.footB ? md.bones.footB.getWorldPosition(_v2).y : fa;
-    const lift = Math.min(fa, fb) - mesh.parent.position.y * 0 - p.ankle;
+    let lift = Infinity;
+    for (const r of ['footA', 'footB']) if (md.bones[r]) lift = Math.min(lift, md.bones[r].getWorldPosition(_v1).y - p.ankle);
+    if (p.toeH !== null) for (const r of ['toeA', 'toeB']) if (md.bones[r]) lift = Math.min(lift, md.bones[r].getWorldPosition(_v1).y - p.toeH);
     md.inst.position.y -= lift * (1 - s * 2);
   }
   if (typing) typeIK(mesh, md, u);
