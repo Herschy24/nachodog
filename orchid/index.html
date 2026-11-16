@@ -3071,7 +3071,7 @@ $('#coverbtn').onclick = () => { if (G.lastCover && !G.paused && !G.ui) showCove
 $('#prompt').addEventListener('click', () => { if (isTouch) interact(); });
 $('#brokerbtn').onclick = () => { if (!G.paused && !G.ui) openBroker('phone'); }; $('#heldbtn').onclick = consume;
 $('#dlg-x').onclick = closeDialog; $('#dos-x').onclick = closeDossier; $('#dosbtn').onclick = () => $('#dossier').hidden ? openDossier() : closeDossier();
-$('#startbtn').onclick = () => { if ($('#intro').hidden) dialog('Orchid Microsystems', `<div class="memo" style="font-size:14px">ORCHID 56K-on-a-chip. Est. 1991. Mountain View, CA.<br><br>Day: ${DAYS[G.day]}. Agents caught: ${G.arrests}/3. Wrong calls: ${G.wrong}.</div>`, [{ label: 'Resume' }, { label: 'Change your look', fn: () => openCreator('edit') }, { label: 'Play the anthem again', fn: playAnthem }, { label: 'Quit and start over', cls: 'danger', fn: () => { newGame(); G.paused = false; } }]); };
+$('#startbtn').onclick = () => { if ($('#intro').hidden) dialog('Orchid Microsystems', `<div class="memo" style="font-size:14px">ORCHID 56K-on-a-chip. Est. 1991. Mountain View, CA.<br><br>Day: ${DAYS[G.day]}. Agents caught: ${G.arrests}/3. Wrong calls: ${G.wrong}.</div>`, [{ label: 'Resume' }, { label: 'Change your look', fn: () => openCreator('edit') }, { label: 'Quit and start over', cls: 'danger', fn: () => { newGame(); G.paused = false; } }]); };
 if (isTouch) { $('#touchkeys').hidden = false; $('#deskkeys').hidden = true; }
 let actx = null;
 function playAnthem() {
