@@ -3103,7 +3103,7 @@ function playAnthem() {
   toast('Over the PA', 'The Star-Spangled Banner crackles through the ceiling speakers. Somebody in Sales salutes.');
 }
 function beginGame() {
-  playAnthem(); $('#intro').hidden = true; G.ui = false; G.paused = false; toast('Welcome', 'Walk the floor. Talk to people. Trust nobody completely.'); if (isTouch && innerHeight > innerWidth) toast('Tip', 'Turn your phone sideways for a better view.'); if (!isTouch) canvas.click();
+  $('#intro').hidden = true; G.ui = false; G.paused = false; toast('Welcome', 'Walk the floor. Talk to people. Trust nobody completely.'); if (isTouch && innerHeight > innerWidth) toast('Tip', 'Turn your phone sideways for a better view.'); if (!isTouch) canvas.click();
 }
 $('#startgame').onclick = () => { if (!modelsReady && !modelsFailed) return; $('#intro').hidden = true; openCreator('start'); };
 {
