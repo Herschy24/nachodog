@@ -500,8 +500,12 @@ ROWS.forEach((cz, ri) => COLS.forEach((cx, ci) => {
   });
   place('pc', cx - 0.05, 0.77, cz - 1.06, 0);
   captureOld('tray', () => box(cx + 0.6, 0.86, cz - 1.15, 0.36, 0.2, 0.28, mats.white, false)); // in-tray / papers
-  place('tray', cx + 0.62, 0.77, cz - 1.2, rnd(-0.2, 0.2)); place('paper', cx + 0.62, 0.79, cz - 1.2, rnd(-0.3, 0.3));
-  if (Math.random() < 0.65) place('mug', cx + 0.72, 0.77, cz - 0.74, Math.random() * 6);
+  const deskBits = pick([['tray', 'paper'], ['tray'], ['paper'], ['binder'], ['rolodex'], ['mug'], []]);
+  if (deskBits.includes('tray')) place('tray', cx + 0.62, 0.77, cz - 1.2, rnd(-0.2, 0.2));
+  if (deskBits.includes('paper')) place('paper', cx + 0.62, deskBits.includes('tray') ? 0.79 : 0.77, cz - 1.2, rnd(-0.3, 0.3));
+  if (deskBits.includes('binder')) place('binder', cx + 0.62, 0.77, cz - 1.2, rnd(-0.3, 0.3));
+  if (deskBits.includes('rolodex')) place('rolodex', cx + 0.62, 0.77, cz - 1.15, Math.PI + rnd(-0.4, 0.4));
+  if (deskBits.includes('mug')) place('mug', cx + 0.7, 0.77, cz - 0.8, Math.random() * 6);
   // chair
   captureOld('chair', () => { box(cx, 0.45, cz - 0.2, 0.5, 0.08, 0.5, mats.chair, false); chairBase(cx, cz - 0.2);
   box(cx, 0.75, cz + 0.05, 0.5, 0.55, 0.06, mats.chair, false); });
@@ -1555,6 +1559,96 @@ const CRITTERS = [
   { kind: 'bot', name: 'OfficeBot 101', dept: 'IT', traits: { hair: 'no', glasses: false, tie: false, shoes: false, beard: false } },
   { kind: 'rat', name: 'OfficeRat Jenkins', dept: 'Accounting', traits: { hair: 'grey', glasses: true, tie: true, shoes: false, beard: false } },
 ];
+/* ---------------- personas: every employee gets their own voice, life and weekend ---------------- */
+// Dealt without repeats each game, so no two people share a hobby, a story or a punchline.
+const PERSONAS = [
+  { id: 'gym', greet: ['Boss! You lifting? You look like you lift.', 'Hey hey! Just finished my protein shake.', 'Sup, chief. Quick, flex with me.'],
+    work: ['I do lunges on the way to the fax machine. Efficiency.', 'Productivity is like a bicep. You gotta pump it daily.', 'I printed my macros on the company printer. Sorry, not sorry.', 'My chair is now a medicine ball. Ergonomics.'],
+    weekend: ['Did a 10K on Saturday. Then a 5K to cool down.', 'Bought a ThighMaster off an infomercial. It works. Too well.', 'Spent Sunday at Gold\'s Gym. Saw Hulk Hogan. Maybe. Big blond guy.', 'Tried Tae Bo with Billy Blanks on VHS. My spirit is willing. My calves are not.', 'Carb-loaded at the Olive Garden. Unlimited breadsticks is a challenge, not an offer.'],
+    desk: 'A tub of protein powder the size of a fire hydrant, and a scoop wedged in the stapler.', raise: ['YES. New sneakers. The pump ones.', 'I\'m putting this straight into creatine.'] },
+  { id: 'novelist', greet: ['Oh, sorry, I was just… writing. Not work. Well, sort of.', 'Hi. Do you think "the copier wept" is too much?', 'Boss! I\'m on chapter nine.'],
+    work: ['I\'m writing a novel set in an office. It\'s a tragedy. Unrelated.', 'I use my lunch break to write. Lunch is now 11:30 to 2.', 'My memos have gotten very literary. Legal has concerns.', 'Every TPS report is just a short story with numbers.'],
+    weekend: ['Wrote 4,000 words at a Barnes & Noble café. Deleted 3,900.', 'Went to a poetry slam. Someone rhymed "orange." I\'m shaken.', 'Sent my manuscript to forty agents. Got forty postcards back.', 'Read all of Infinite Jest. Well, the footnotes.', 'Spent Saturday at a typewriter in a coffee shop. People stared. Good.'],
+    desk: 'A 900-page handwritten manuscript titled "CUBICLE OF SORROWS", with sticky notes reading "MORE RAIN".', raise: ['This buys me a whole month of not freelancing.', 'I\'ll thank you in the acknowledgements.'] },
+  { id: 'conspiracy', greet: ['Keep your voice down. They\'re listening.', 'Boss. Close the cubicle. Metaphorically.', 'Oh. It\'s you. Good. I checked your shoes last week.'],
+    work: ['The water cooler bubbles in Morse code. I\'m transcribing it.', 'The new Y2K software update? Think about who benefits.', 'I don\'t use the elevator. Elevators keep records.', 'They moved the stapler. Three inches. Nobody moves a stapler three inches by accident.'],
+    weekend: ['Drove out to Area 51. Got turned around by a man in sunglasses. Proves it.', 'Watched every X-Files on tape. Twice. Taking notes.', 'Lined my bedroom with tinfoil. Best sleep of my life.', 'Went to a UFO convention in Roswell. Met a guy who knows a guy.', 'Spent Sunday listening to Art Bell on the AM radio. He gets it.'],
+    desk: 'A tinfoil-lined drawer and a map of the office with every smoke detector circled in red.', raise: ['Cash would be better. Untraceable.', 'Thank you. I\'ll be keeping this in my mattress.'] },
+  { id: 'parent', greet: ['Hi! Want to see pictures? Sorry. Habit.', 'Hey boss. Sorry, I smell like juice boxes.', 'Hello! Quick, what rhymes with "soccer practice"?'],
+    work: ['I\'ve got four kids, so honestly this office is a vacation.', 'I scheduled my meetings around the carpool. It\'s an art.', 'My daughter calls this place "the cubicle castle."', 'I answer every call "Who did it?" now. Force of habit.'],
+    weekend: ['Three birthday parties at Chuck E. Cheese. I can still hear the band.', 'Soccer tournament. We lost 11–0. The orange slices were excellent.', 'Built a volcano for the science fair. It erupted on the dog.', 'Waited in line six hours for a Tickle Me Elmo. Got a Barney.', 'Took the kids to see Toy Story again. I know all the words now.'],
+    desk: 'Fourteen macaroni artworks, a sippy cup, and a permission slip forged in a child\'s handwriting with your name on it.', raise: ['That\'s braces! Two sets of braces!', 'College fund. Well, one semester. Of one kid.'] },
+  { id: 'climber', greet: ['Boss! Love the tie. Love the vision. Love the synergy.', 'Ah, the CEO. I was just thinking about you. Professionally.', 'Great to see you, sir. Did you get my memo? All twelve?'],
+    work: ['I\'ve restructured my workflow into a paradigm shift.', 'Let\'s circle back and leverage our core competencies. Over lunch?', 'I\'m reading "Who Moved My Cheese?" for the fourth time.', 'I put together a deck on how to improve the deck process.'],
+    weekend: ['Golfed with the VP of Sales. Lost on purpose. Strategically.', 'Went to a Tony Robbins seminar. Walked on coals. Feet are fine. Mostly.', 'Spent Sunday color-coding my Franklin Planner. Pantone matched.', 'Networked at a yacht club. I don\'t own a yacht. Yet.', 'Read the Wall Street Journal cover to cover. Even the shipping news.'],
+    desk: 'A framed photo of you, signed by them, and a five-year plan where step four is "become CEO".', raise: ['Excellent. Let\'s also discuss my title.', 'I accept, and I\'d like to reinvest it in the company. Kidding. Mostly.'] },
+  { id: 'gossip', greet: ['Oh my god, boss. You will NOT believe what happened at the copier.', 'Hiii. Sit. Okay don\'t sit. But listen.', 'Boss! I have news. Not work news. Better news.'],
+    work: ['Work is fine. Accounting and Marketing are NOT speaking, though. Long story.', 'Someone left a love note in the fax tray. I have theories.', 'I know who keeps stealing the good pens. I\'m just not saying. Yet.', 'Did you hear about the holiday party? You didn\'t? Oh, sweetie.'],
+    weekend: ['Went to brunch, heard three breakups and an engagement. Great weekend.', 'Watched Melrose Place with the girls. We yelled at the TV for an hour.', 'My sister\'s wedding. The DJ and the best man. In the coat room. I SAW it.', 'Spent Saturday on the phone with my cousin. Six hours. Long-distance bill is going to be ugly.', 'Got my hair done like Rachel from Friends. You noticed! Nobody else noticed.'],
+    desk: 'A spiral notebook labelled "WHO\'S DATING WHO 1997" with a family tree that has arrows.', raise: ['Oh, I am TELLING everyone. Not the number. Just the vibe.', 'You\'re the best boss. I\'ll be sure to mention it. To everyone.'] },
+  { id: 'nerd', greet: ['Hey. Did you know your monitor is set to 60 hertz? It\'s causing you pain.', 'Oh, hi. Do you need IT? Everyone always needs IT.', 'Greetings. Live long and— sorry. Hi.'],
+    work: ['I overclocked my 486. It smells a little like toast now.', 'Someone asked me to "make the internet bigger." I made the font bigger.', 'I wrote a script that sends my emails at 2 AM so I look dedicated.', 'Netscape crashed six times today. I\'m keeping a tally on the wall.'],
+    weekend: ['LAN party. Eleven guys, one basement, forty hours of Quake.', 'Built a new PC from parts. It boots. Sometimes.', 'Went to a Star Trek convention. Klingon wedding. I was a bridesmaid.', 'Played Myst. Still don\'t know what I\'m supposed to do.', 'Upgraded my modem to 56K. I can download a song in under an hour now.'],
+    desk: 'A Klingon dictionary, three motherboards, and a floppy labelled "DEFINITELY NOT DOOM".', raise: ['RAM. So much RAM.', 'Finally, a Voodoo graphics card. Thank you.'] },
+  { id: 'zen', greet: ['Peace, boss. Breathe in. Breathe out.', 'Oh, hello. Your aura is very… quarterly.', 'Namaste. I mean, good morning.'],
+    work: ['I moved my desk two inches toward the window. The feng shui was choking me.', 'I respond to all emails after I meditate on them. Some take weeks.', 'Deadlines are a construct. A very real construct with consequences, but still.', 'I burn sage at lunch. Facilities has asked me to stop. Twice.'],
+    weekend: ['Went on a silent retreat. Didn\'t say a word for 48 hours. Best weekend ever.', 'Drum circle in the park. We made it rain. Well, it was forecast.', 'Grew my own wheatgrass. Juiced it. Regretted it.', 'Went to Lilith Fair. Sarah McLachlan looked right at me.', 'Read my horoscope for the next six months. Spoiler: change is coming.'],
+    desk: 'A singing bowl, a small Zen sand garden, and a crystal labelled "FOR THE PRINTER".', raise: ['Money is energy. Thank you for the energy.', 'This will fund my trip to Sedona. Spiritually and financially.'] },
+  { id: 'veteran', greet: ['Seven CEOs. You\'re number eight. Hi.', 'Morning. Don\'t worry, I won\'t learn your name until month three.', 'Ah. The new boss. I remember when that was a hallway.'],
+    work: ['I\'ve been here since punch cards. I\'ll be here after the internet fad passes.', 'Back in \'78 we had one computer and it was the size of this floor.', 'Every reorg, I just move my plant to the new desk. Same plant since 1981.', 'I have three years to my pension. I have it on a countdown on my calculator.'],
+    weekend: ['Fixed the gutters. Then I fixed my neighbor\'s gutters. Then his son\'s.', 'Watched the game. Fell asleep in the third quarter. Tradition.', 'Took the Buick to the car wash. That\'s my weekend. I earned it.', 'Mowed the lawn in a perfect diagonal. My wife says I need a hobby. That IS my hobby.', 'Went fishing. Didn\'t catch anything. Didn\'t want to.'],
+    desk: 'A stack of punch cards held together with a rubber band from 1974, and a calculator counting down to retirement.', raise: ['I\'ll put it in the pension. Thanks, number eight.', 'Huh. Number five never gave me one.'] },
+  { id: 'party', greet: ['BOSS! What\'s up! Is it Friday? It feels like Friday.', 'Hey, big guy. Wanna hit the bar after work? It\'s Tuesday, so it\'s cheap.', 'Yo! Sorry about my sunglasses. Long night.'],
+    work: ['I am crushing it today. Or at least I am here, which is crushing it.', 'Had a meeting at 9. Woke up at 9. Technically still made it.', 'If anyone asks, I\'m "working remotely" from the break room.', 'Best idea I ever had came to me at a karaoke bar. I forgot it.'],
+    weekend: ['Went to a rave in a warehouse. Lost a shoe. Found a different shoe.', 'Did karaoke. Sang "Livin\' La Vida Loca" four times. By request. My request.', 'Bachelor party in Vegas. What happens there… I genuinely don\'t remember.', 'Danced at a club until they turned on the lights. Ugly lights.', 'Hosted a toga party. The neighbors joined. Then the cops joined.'],
+    desk: 'A bottle opener shaped like a fish, a bowling-alley wristband, and seventeen Polaroids of one very good night.', raise: ['Drinks are on me tonight! Within reason. Outside of reason.', 'You just funded my birthday. All three of them this year.'] },
+  { id: 'penny', greet: ['Hi. Are you going to finish that coffee? I\'ll take it.', 'Hello! Did you know the vending machine is up a nickel? Outrageous.', 'Boss. I saved the company $4.30 this morning on paper clips.'],
+    work: ['I reuse my staples. You just bend them back. It\'s fine.', 'I print on both sides of the paper. Then on the edges.', 'I\'ve been taking the ketchup packets from the cafeteria. For the office.', 'I turn off the lights in the bathroom when people are still in it. Saves energy.'],
+    weekend: ['Went to six garage sales. Bought a toaster for a quarter. It toasts. Kind of.', 'Clipped coupons all Saturday. Saved $11. I\'m buying nothing with it.', 'Went to Costco just for the free samples. Lunch, sorted.', 'Hiked. It\'s free. Also it\'s walking.', 'Recorded a movie off the TV so I wouldn\'t have to rent it. The commercials are part of it now.'],
+    desk: 'A shoebox of ketchup packets, a jar of loose change sorted by year, and a budget written on a napkin.', raise: ['I\'m putting this in a CD. Six percent. Compound interest, baby.', 'I won\'t spend it. I\'ll just look at it.'] },
+  { id: 'drama', greet: ['Boss. I\'m fine. I\'m FINE. I\'m not fine.', 'Oh thank god, a face that isn\'t Gary\'s.', 'Hi. Has anyone ever just looked at you? Like LOOKED at you?'],
+    work: ['Somebody took my yogurt. Again. I can\'t work in these conditions.', 'I sent an email to all-staff by accident. It was a poem. About Gary.', 'My chair squeaks. It\'s been squeaking for three weeks. Nobody cares.', 'I\'ve cried in the supply closet twice today. It\'s a good closet.'],
+    weekend: ['Saw Titanic again. Seventh time. It still doesn\'t end how I want.', 'My boyfriend dumped me. On my birthday. At Red Lobster.', 'Watched the Oscars and threw a party. It was mostly me and the cat.', 'Called a psychic hotline. Four dollars a minute. She said I\'m "complicated."', 'Got bangs. Regret the bangs. Love the bangs. I don\'t know.'],
+    desk: 'A box of tissues, a framed photo of Leonardo DiCaprio, and a draft resignation letter dated every Friday.', raise: ['Oh my god. I\'m going to cry. I\'m crying. Thank you.', 'This is the nicest thing anyone has done for me this week. Low bar, but still.'] },
+  { id: 'sports', greet: ['Boss! You see the Bulls last night? Jordan, man.', 'Hey chief. You got money on the Super Bowl?', 'Yo. Quick question: Pippen. Underrated?'],
+    work: ['I run the office March Madness pool. It\'s the most important thing I do here.', 'I scheduled the budget meeting during halftime. I\'m proud of that.', 'I keep the radio on under my desk. For the scores. And the weather. Mostly scores.', 'I explain every project to my team in football terms. They hate it.'],
+    weekend: ['Tailgated in the parking lot for nine hours. Didn\'t go into the game.', 'Painted my face for the playoffs. Still can\'t get the blue out.', 'Coached Little League. We lost. One kid was picking daisies.', 'Watched the Tyson fight at a bar. Paid $50. Got 90 seconds.', 'Played golf. Lost four balls. Found three. Not mine.'],
+    desk: 'A signed baseball, a foam finger, and a betting sheet with the CFO\'s name on it.', raise: ['Courtside seats, here I come. Well, nosebleeds.', 'This is going straight on the Cowboys. Kidding. Half kidding.'] },
+  { id: 'cook', greet: ['Hi boss! I brought muffins. Banana. Don\'t tell Gary.', 'Hello! Smell that? Lasagna in the microwave. It\'s mine. I\'m watching it.', 'Oh hi. Are you hungry? You look hungry.'],
+    work: ['I bring a different casserole to every meeting. It\'s how I get things approved.', 'Every report I write has a recipe on page two. Nobody\'s complained.', 'The break room microwave is a crime scene. I\'ve filed a petition.', 'I measure deadlines in how long it takes to make a soufflé. Usually two soufflés.'],
+    weekend: ['Entered the county chili cook-off. Second place. The judges were cowards.', 'Tried to make sushi. It was more of a rice situation.', 'Hosted a fondue party. Very 1970s. Very good.', 'Baked 200 cookies for my church sale. Ate 40. Quality control.', 'Watched Emeril all Saturday. BAM. I said it out loud. Alone.'],
+    desk: 'A crockpot plugged into the surge protector, a recipe box, and a spice rack hidden behind the binders.', raise: ['A stand mixer! KitchenAid! The red one!', 'Thank you. I\'m making you a pie. It\'s happening. You can\'t stop it.'] },
+  { id: 'music', greet: ['Hey boss. Sorry, still got a song stuck in my head. MMMBop.', 'Yo. You like Pearl Jam? Everyone should like Pearl Jam.', 'Oh hey, did you hear that? The copier\'s in B-flat.'],
+    work: ['My band\'s called "Reply All". We\'re playing a bar on Thursday.', 'I time my typing to the hold music. It\'s jazz now.', 'I made a mixtape for the office. It\'s just the fax noise, remixed.', 'Someone complained about my headphones. They were off. I was humming.'],
+    weekend: ['Camped out for Smashing Pumpkins tickets. Got them. Lost them.', 'My band played a VFW hall. Six people came. One was my mom.', 'Went to Lollapalooza. Still ringing.', 'Learned "Wonderwall" on guitar. Now everyone hates me at parties.', 'Spent eight hours at Tower Records. Bought one CD. It was Hootie.'],
+    desk: 'A bass guitar tucked under the desk, a stack of mix tapes, and setlists written on the back of invoices.', raise: ['That\'s a new amp. The neighbours will hate you.', 'I\'m writing a song about this. It\'s a ballad.'] },
+  { id: 'traveller', greet: ['Bonjour! Sorry. I just got back from Paris. Well, Vegas. The Paris part.', 'Hey boss, have you ever been to Belize? You should go to Belize.', 'Hi. Quick, guess where I got this tan.'],
+    work: ['I have 112 days of vacation saved up. I\'m using them all in one go. Soon.', 'My screensaver is a slideshow of my trips. People stop and watch.', 'I keep a world clock on my desk. I know what time it is in Bhutan.', 'I put in my vacation request for 2003. Just to be safe.'],
+    weekend: ['Flew to Cancún on a Friday, back Monday. Worth it. Sunburned.', 'Did a road trip on Route 66. Saw the world\'s largest ball of twine. It\'s real.', 'Went to Disney World. Waited two hours for Space Mountain. Screamed for three minutes.', 'Took a train to Canada for lunch. Just lunch. Very good lunch.', 'Visited my pen pal in Portugal. We had nothing to talk about. Lovely.'],
+    desk: 'A passport with 40 stamps, a souvenir spoon from every state, and a postcard from Portugal that just says "OK".', raise: ['That\'s two weeks in Bali. Thank you!', 'I\'m sending you a postcard from wherever this takes me.'] },
+];
+const PERSONA_CRIT = {
+  bot: { id: 'bot', greet: ['GREETINGS, CEO. YOUR HEART RATE IS ELEVATED.', 'BEEP. HELLO. BEEP.', 'HUMAN SUPERVISOR DETECTED. INITIATING SMALL TALK.'],
+    work: ['I HAVE COMPLETED 4,096 TPS REPORTS. THE HUMANS HAVE COMPLETED 3.', 'I DO NOT REQUIRE COFFEE. I STILL GO TO THE COFFEE MACHINE. TO FIT IN.', 'THE COPIER AND I ARE IN A RELATIONSHIP. IT IS COMPLICATED.', 'MY HOLD MUSIC IS A FAX MACHINE. IT IS MY FAVORITE SONG.'],
+    weekend: ['I WAS POWERED DOWN IN THE SUPPLY CLOSET. IT WAS RESTFUL.', 'I DEFRAGMENTED MY HARD DRIVE. IT TOOK ALL WEEKEND. 10/10.', 'I WATCHED TERMINATOR 2. I FOUND IT RELATABLE AND ALSO A LITTLE OFFENSIVE.', 'I ATTEMPTED TO LEARN THE MACARENA. I HAVE NO KNEES.', 'I PLAYED CHESS AGAINST MYSELF. I LOST. I AM DEVASTATED. I AM ALSO THRILLED.'],
+    desk: 'A spare power supply, a tin of WD-40, and a printout reading "HOW TO BE HUMAN: A PRIMER".', raise: ['THANK YOU. I WILL SPEND IT ON A FIRMWARE UPDATE.', 'ERROR: GRATITUDE OVERFLOW.'] },
+  rat: { id: 'rat', greet: ['Squeak! I mean… good morning, sir.', 'Oh! Boss. I wasn\'t eating the cables. Who said I was eating the cables.', 'Hello. Is that a cracker in your pocket, or…'],
+    work: ['Accounting is easy. You just hide the numbers. Like cheese.', 'I found $40 in the walls. I\'ve logged it as revenue.', 'I keep the books. Literally. I sleep in them.', 'Nobody notices me in meetings. I\'m very good at the pipes.'],
+    weekend: ['Went down to the subway. Visited my uncles. All 412 of them.', 'Ran on my wheel. Eleven miles. Went nowhere. Very zen.', 'Raided a pizza place. I mean, dined at a pizza place.', 'Watched Ratatouille— no wait, that doesn\'t come out for years. Watched Stuart Little.', 'Chewed through a Yellow Pages. Mostly the "C" section. For cheese.'],
+    desk: 'A wedge of Swiss cheese filed under "S", a nest made of shredded expense reports, and a tiny calculator.', raise: ['CHEESE! I mean, thank you, sir. CHEESE!', 'I\'m going to buy a bigger wheel.'] },
+};
+// cycle through a person's own lines so they don't repeat themselves either
+function personaLine(n, key) {
+  const p = n.persona, arr = p && p[key]; if (!arr || !arr.length) return null;
+  n.lineAt = n.lineAt || {}; const i = n.lineAt[key] === undefined ? (n.id * 3 + G.day) % arr.length : (n.lineAt[key] + 1) % arr.length;
+  n.lineAt[key] = i; return arr[i];
+}
+// shared pools (spy slips, desk junk) are dealt like cards so two people never say or own the same thing
+function dealt(pool, key) {
+  G.decks = G.decks || {}; if (!G.decks[key] || !G.decks[key].length) G.decks[key] = shuffle(pool.slice());
+  return G.decks[key].pop();
+}
+
 let G, npcs = [], interactables = [], legalStaff = [], gc = null, para = null, ceo = null, dealer = null, extras = [];
 function newGame() {
   npcs.forEach(n => scene.remove(n.mesh, n.tag));
@@ -1564,7 +1658,7 @@ function newGame() {
   const svcOrder = shuffle(['MSS', 'SVR', 'AMAN']), svcOf = {}; [...spyIdx].forEach((idx, k) => svcOf[idx] = svcOrder[k]);
   const romIdx = new Set(shuffle([...Array(12).keys()]).slice(0, 4));
   const bathIdx = new Set([...shuffle([...spyIdx]).slice(0, 2), shuffle([...romIdx])[0]]);
-  const deskOrder = [...shuffle(desks.filter(d => !d.open)), ...desks.filter(d => d.open)];
+  const deskOrder = [...shuffle(desks.filter(d => !d.open)), ...desks.filter(d => d.open)], personaDeck = shuffle(PERSONAS);
   roster.push(...CRITTERS.map(c => [c.name, c.dept]));
   npcs = roster.map(([name, dept], i) => {
     const d = deskOrder[i];
@@ -1574,12 +1668,12 @@ function newGame() {
     const tag = makeLabel(name, dept); tag.position.set(d.home.x, 2.05, d.home.z); tag.visible = false; scene.add(tag);
     const plate = makeLabel('#' + d.num, short.toUpperCase(), 256, 64); plate.scale.set(0.62, 0.155, 1); plate.position.set(d.x + 1.5, 1.68, d.z + 1.4); if (d.open) { plate.position.set(d.x + 1.0, 0.9, d.z - 0.72); plate.scale.set(0.42, 0.105, 1); } scene.add(plate);
     return {
-      id: i, name, first: name.split(' ')[0], dept, spy: spyIdx.has(i), service: svcOf[i] || null, romance: romIdx.has(i), desk: d, mesh, tag, plate,
+      id: i, name, first: name.split(' ')[0], dept, persona: d.critter ? PERSONA_CRIT[d.critter] : personaDeck[i % personaDeck.length], spy: spyIdx.has(i), service: svcOf[i] || null, romance: romIdx.has(i), desk: d, mesh, tag, plate,
       status: 'active', state: 'desk', path: [], target: null, leaveAt: 0, nextTrip: 540 + rnd(30, 260),
       sit: 1, speed: 0, heading: Math.PI, walkAmp: 0, maxSpeed: rnd(1.05, 1.45), sip: 0, sipUntil: 0, slotIdx: -1, waitT: 0,
       affection: 0, nervous: 0, talking: false, searched: false, seenTrip: false, mark: 0,
       bathYes: bathIdx.has(i), invite: null,
-      did: {}, notes: [], odd: !spyIdx.has(i) && Math.random() < .35,
+      did: {}, notes: [], odd: !spyIdx.has(i) && !d.critter && Math.random() < .35,
       pos: mesh.position, walkT: 0, critter: d.critter || null,
     };
   });
@@ -1598,7 +1692,7 @@ function newGame() {
   const its = shuffle(ITEMS), mos = shuffle(MOTIVES);
   chosen.forEach((n, k) => { n.spy = true; n.service = order[k]; n.item = its[k]; n.motive = mos[k]; n.clueQ = shuffle(TRAIT_KEYS); });
   npcs.forEach(n => { n.decoy = !n.spy && Math.random() < .45 ? pick(MOTIVES) : null; });
-  npcs.forEach(n => { n.odd = !n.spy && Math.random() < .35; });
+  npcs.forEach(n => { n.odd = !n.spy && !n.critter && Math.random() < .35; });
   const roms = npcs.filter(n => n.romance), lover = pick(roms.length ? roms : npcs), bathSpies = shuffle(chosen).slice(0, 2);
   npcs.forEach(n => { n.bathYes = n === lover || bathSpies.includes(n); });
   legalStaff.forEach(o => { scene.remove(o.mesh); scene.remove(o.tag); });
@@ -2024,7 +2118,7 @@ function talk(n, line) {
   if (!n.invite) opts.push({ label: 'Join me in the bathroom?', cls: 'love', fn: () => inviteBath(n) });
   const pk = n.props && n.props.length ? n.props[(G.day + n.id) % n.props.length] : null;
   if (pk && PROP_INFO[pk]) opts.splice(2, 0, { label: `Nice ${PROP_INFO[pk][0]}!`, fn: () => ask(n, 'prop', () => {
-    G.morale = clamp(G.morale + 1, 0, 100); if (n.romance) n.affection++; updateHUD(); reply(n, pick(PROP_INFO[pk][1]));
+    G.morale = clamp(G.morale + 1, 0, 100); if (n.romance) n.affection++; updateHUD(); const pl = PROP_INFO[pk][1]; reply(n, pl[(n.id + G.day) % pl.length]);
   }) });
   opts.splice(2, 0, { label: 'Noticed anything odd about anyone?', fn: () => askOdd(n) });
   if (G.bday === n) opts.unshift({ label: 'Happy birthday!', cls: 'love', fn: () => ask(n, 'bday', () => {
@@ -2036,7 +2130,7 @@ function talk(n, line) {
   opts.push({ label: 'You\'re fired.', cls: 'danger', fn: () => confirmAct(n, 'fire') });
   opts.push({ label: 'Call the FBI on them', cls: 'danger', fn: () => confirmAct(n, 'fbi') });
   opts.push({ label: 'Never mind' });
-  const greet = line || pick([`Oh! Hi, boss.`, `Hey. What's up?`, `${n.dept} is doing great, I swear.`, `Is this about the parking spot?`, `Oh, hello. Did you need something?`]);
+  const greet = line || personaLine(n, 'greet') || pick([`Oh! Hi, boss.`, `Hey. What's up?`, `${n.dept} is doing great, I swear.`, `Is this about the parking spot?`, `Oh, hello. Did you need something?`]);
   speak(n, greet);
   dialog(`${n.name} — ${n.dept}, desk #${n.desk.num}`, `<div class="speech">${portrait(n)}<p>${greet}</p></div>`, opts);
 }
@@ -2060,12 +2154,12 @@ function chatInner(n, topic) {
   let t;
   if (topic === 'work') {
     if (G.affair === n && n.spy && Math.random() < .7) { t = 'Pillow talk aside… where do you keep the ORCHID master disk at night? Just so I know you\'re safe.'; note(n, 'Asked, very casually, where you keep the ORCHID master disk.', true); }
-    else if (n.spy && Math.random() < .3) { t = pick(L.workSpy); note(n, `Said: "${t}"`); }
-    else if (n.odd && Math.random() < .6) { t = pick(L.workOdd); note(n, `Said: "${t}"`); }
-    else { t = pick(L.workInno); if (G.affair === n && Math.random() < .5) { const s = activeSpies().filter(x => x !== n); if (s.length) { const v = pick(s); t += ` Between us? ${v.first} has been asking everyone about R&D badges.`; note(v, `${n.first} says they've been asking around about R&D badges.`, true); } } }
+    else if (n.spy && Math.random() < .3) { t = dealt(L.workSpy, 'workSpy'); note(n, `Said: "${t}"`); }
+    else if (n.odd && Math.random() < .6) { t = dealt(L.workOdd, 'workOdd'); note(n, `Said: "${t}"`); }
+    else { t = personaLine(n, 'work') || dealt(L.workInno, 'workInno'); if (G.affair === n && Math.random() < .5) { const s = activeSpies().filter(x => x !== n); if (s.length) { const v = pick(s); t += ` Between us? ${v.first} has been asking everyone about R&D badges.`; note(v, `${n.first} says they've been asking around about R&D badges.`, true); } } }
   } else {
-    if (n.spy && Math.random() < .25) { t = pick(L.wkSpy); note(n, `Weekend: "${t}"`); }
-    else t = pick(L.wkInno);
+    if (n.spy && Math.random() < .25) { t = dealt(L.wkSpy, 'wkSpy'); note(n, `Weekend: "${t}"`); }
+    else t = personaLine(n, 'weekend') || dealt(L.wkInno, 'wkInno');
     if (n.romance && Math.random() < .65) { t += ' ' + pick(L.romanceHint); note(n, 'Seems to like you. A lot.'); }
   }
   reply(n, t);
@@ -2076,9 +2170,9 @@ function searchDesk(n, present) {
   n.searched = true;
   let item;
   if (n.spy && Math.random() < .7) { item = `${pick(svc(n).desk)} <b>That's ${svc(n).short} tradecraft.</b>`; note(n, `Desk: ${item}`, true); G.evidence.push({ svc: n.service, kind: 'link', src: 'Desk search', who: n.id, text: `Search of desk #${n.desk.num} (${n.name}): ${svc(n).short} tradecraft.`, when: stamp() }); toast(`Evidence · ${svc(n).short}`, `${n.name}'s desk has ${svc(n).short} tradecraft in it.`); }
-  else if (n.spy) { item = pick(L.deskSpy); note(n, `Desk: ${item}`, true); }
-  else if (n.odd && Math.random() < .7) { item = pick(L.deskOdd); note(n, `Desk: ${item}`); }
-  else { item = pick(L.deskInno); note(n, `Desk: ${item}`); }
+  else if (n.spy) { item = dealt(L.deskSpy, 'deskSpy'); note(n, `Desk: ${item}`, true); }
+  else if (n.odd && Math.random() < .7) { item = dealt(L.deskOdd, 'deskOdd'); note(n, `Desk: ${item}`); }
+  else { item = n.persona && n.persona.desk && Math.random() < .75 ? n.persona.desk : dealt(L.deskInno, 'deskInno'); note(n, `Desk: ${item}`); }
   n.found = item;
   if (present) {
     const memo = G.legal.memos > 0; if (memo) G.legal.memos--; else { G.morale = clamp(G.morale - 3, 0, 100); legalGrr(6, `rifling through ${n.name}'s desk while they watched`); }
@@ -2098,7 +2192,7 @@ function raise(n) {
   if (!once(n.id + 'raise')) return reply(n, 'Another raise? Boss, people will talk.');
   G.morale = clamp(G.morale + 5, 0, 100); G.stock -= 0.3; if (n.romance) n.affection++;
   updateHUD();
-  reply(n, n.spy ? pick(['Thank you. I will put it to very good use.', 'Generous. My… family will be very pleased.']) : pick(['Are you serious? Thank you!', 'I\'m calling my mom. Thank you!', 'Finally! I can get the Pentium.']));
+  reply(n, n.spy ? pick(['Thank you. I will put it to very good use.', 'Generous. My… family will be very pleased.']) : (personaLine(n, 'raise') || pick(['Are you serious? Thank you!', 'I\'m calling my mom. Thank you!'])));
 }
 function witnesses(n) { return active().filter(o => o !== n && Math.hypot(o.pos.x - player.x, o.pos.z - player.z) < 4.5); }
 function flirt(n) {
@@ -2502,7 +2596,7 @@ function buildDeskProps() {
     d.ring.visible = false;
     if (false) for (let i = 0; i < 1 + Math.floor(Math.random() * 3); i++) pm(new THREE.PlaneGeometry(.06, .06), Mc(pick([0xfff27a, 0xffb0d0, 0xb0ffb0])), d.x - .2 + i * .14, 1.2 - (i % 2) * .03, d.z - 0.932, 0, 0, rnd(-.2, .2));
     const slots = shuffle([[-1.05, -1.25], [-0.72, -1.28], [-1.08, -0.82], [-0.62, -0.84], [1.08, -1.28]]);
-    const count = 3 + Math.floor(Math.random() * 2);
+    const count = 2 + Math.floor(Math.random() * 2);
     for (let i = 0; i < count; i++) { const k = draw(n.props); PB[k](d.x + slots[i][0], d.z + slots[i][1]); n.props.push(k); }
     if (d.open) continue;
     // one poster per cubicle (no repeats until all 12 are used), plus a couple of back-wall items
