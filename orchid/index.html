@@ -479,7 +479,7 @@ function makeLabel(text, sub, w = 256, h = 72) {
 
 // cubicles: 3 rows x 4 cols, openings face +z
 const ROWS = [-8, -2, 4], COLS = [-4.5, -1.5, 1.5, 4.5];
-const AISLE = [-5, 1, 7];
+const AISLE = [-5, 1, 7, 11.0];
 const desks = [];
 ROWS.forEach((cz, ri) => COLS.forEach((cx, ci) => {
   const H = 1.45, t = 0.08;
@@ -509,6 +509,15 @@ ROWS.forEach((cz, ri) => COLS.forEach((cx, ci) => {
   const num = 100 + ri * 4 + ci + 1;
   desks.push({ x: cx, z: cz, row: ri, num, home: { x: cx, z: cz - 0.15 } });
 }));
+// hot desks by the meeting area for the two newest hires
+for (const [cx, kind, num] of [[-3, 'bot', 113], [3, 'rat', 114]]) {
+  const cz = 10.0;
+  box(cx, 0.74, cz - 1.05, 2.7, 0.06, 0.8, mats.desk);
+  box(cx - 1.2, 0.36, cz - 1.05, 0.06, 0.72, 0.76, mats.deskDark, false); box(cx + 1.2, 0.36, cz - 1.05, 0.06, 0.72, 0.76, mats.deskDark, false);
+  place('pc', cx - 0.05, 0.77, cz - 1.06, 0); place('tray', cx + 0.62, 0.77, cz - 1.2, 0.1); place('paper', cx + 0.62, 0.79, cz - 1.2, -0.2);
+  if (kind === 'rat') place('chair', cx, 0, cz - 0.15, Math.PI); else place('mug', cx + 0.72, 0.77, cz - 0.74, 1);
+  desks.push({ x: cx, z: cz, row: 3, num, home: { x: cx, z: cz - 0.15 }, open: true, critter: kind });
+}
 
 // CEO office (north-east), glass partition
 box(10, 1.2, -12.5, 0.06, 2.4, 3, mats.glass); box(13, 1.2, -6, 6, 2.4, 0.06, mats.glass);
@@ -535,10 +544,11 @@ const ceoSign = makeLabel('CHIEF EXECUTIVE', 'Office of the CEO', 256, 72); ceoS
 box(-10, 1.5, -12.5, 0.2, 3, 3, mats.wall); box(-10, 1.5, -8.75, 0.2, 3, 1.5, mats.wall); box(-13, 1.5, -8, 6.2, 3, 0.2, mats.wall);
 box(-10, 2.6, -10.25, 0.2, 0.8, 1.5, mats.wall, false);
 const leds = [];
-for (let i = 0; i < 4; i++) {
+place('rack', -14.55, 0, -13.35, -Math.PI / 2); place('rack', -12.15, 0, -13.35, -Math.PI / 2);
+for (let i = 0; i < 4; i++) captureOld('rack', () => {
   const rx = -15.2 + i * 1.2; box(rx, 1.05, -13.3, 0.9, 2.1, 0.9, mats.black);
   for (let j = 0; j < 8; j++) { const l = new THREE.Mesh(new THREE.PlaneGeometry(0.05, 0.05), Math.random() < .5 ? mats.green.clone() : mats.red.clone()); l.position.set(rx - 0.3 + (j % 4) * 0.2, 0.6 + Math.floor(j / 4) * 0.8 + Math.random() * 0.4, -12.84); scene.add(l); leds.push(l); }
-}
+});
 const srvSign = makeLabel('SERVER ROOM', 'Authorized staff only'); srvSign.position.set(-9.85, 2.35, -10.25); scene.add(srvSign);
 
 // break area east wall
@@ -574,15 +584,19 @@ for (const [z, soda] of [[3.2, false], [11.4, true]]) {
 box(-15.2, 0.6, 9, 1.0, 1.2, 1.4, mats.grey); box(-15.2, 1.25, 9, 0.9, 0.1, 1.2, mats.beige, false);
 box(-15.3, 0.4, 5, 0.6, 0.8, 1.2, mats.deskDark); box(-15.3, 0.92, 5, 0.45, 0.24, 0.5, mats.beige, false);
 // supply closet door south wall
-box(0, 1.05, B.maxZ - 0.02, 1.1, 2.1, 0.05, mats.deskDark, false);
-box(-8, 1.05, B.maxZ - 0.02, 1.1, 2.1, 0.05, M(0x7a2a1a), false);
+captureOld('door', () => { box(0, 1.05, B.maxZ - 0.02, 1.1, 2.1, 0.05, mats.deskDark, false); box(-8, 1.05, B.maxZ - 0.02, 1.1, 2.1, 0.05, M(0x7a2a1a), false); });
+// real doors: closed on the south wall, swung open against the wall at the server room, Legal and restroom doorways
+place('door2', 0, 0, B.maxZ - 0.08, Math.PI); place('door', -8, 0, B.maxZ - 0.08, Math.PI);
+place('door', -10.56, 0, -10.94, 0, [1.0, 1.0, 1.0]); place('door', 10.56, 0, -2.94, Math.PI); place('door2', -11.56, 0, -3.54, 0);
+colliders.push({ minX: -11.15, maxX: -10.05, minZ: -11.02, maxZ: -10.86 }, { minX: 10.05, maxX: 11.15, minZ: -3.02, maxZ: -2.86 }, { minX: -12.15, maxX: -11.05, minZ: -3.62, maxZ: -3.46 });
 place('exit', -8, 2.62, B.maxZ - 0.04, Math.PI);
 place('cabinet', -15.62, 0, 10.75, Math.PI / 2); place('cabinet', -15.62, 0, 11.45, Math.PI / 2); place('paper', -15.62, 1.33, 11.45, 1.4);
 place('tape', -15.55, 0, -10.9, Math.PI / 2); place('tape2', -15.55, 0, -10.0, Math.PI / 2); colliders.push({ minX: -16, maxX: -15.15, minZ: -11.4, maxZ: -9.5 });
 const swSign = makeLabel('STAIRWELL', 'Fire exit only'); swSign.position.set(-8, 2.35, B.maxZ - 0.15); scene.add(swSign);
 box(-15.35, 0.4, 7.0, 0.5, 0.8, 0.5, M(0x34363c)); box(-15.35, 0.82, 7.0, 0.42, 0.05, 0.3, M(0x111111), false);
 const shSign = makeLabel('SHREDDER', 'Confidential only'); shSign.scale.set(0.8, 0.22, 1); shSign.position.set(-15.3, 1.15, 7.0); scene.add(shSign);
-box(-4, 1.35, B.maxZ - 0.1, 0.4, 0.62, 0.16, M(0x8a8f96), false); box(-4.1, 1.38, B.maxZ - 0.22, 0.08, 0.3, 0.08, M(0x111111), false);
+captureOld('payphone', () => { box(-4, 1.35, B.maxZ - 0.1, 0.4, 0.62, 0.16, M(0x8a8f96), false); box(-4.1, 1.38, B.maxZ - 0.22, 0.08, 0.3, 0.08, M(0x111111), false); });
+place('payphone', -4, 0.83, B.maxZ - 0.09, Math.PI);
 const ppSign = makeLabel('PAYPHONE', '25¢ local calls'); ppSign.scale.set(0.8, 0.22, 1); ppSign.position.set(-4, 1.9, B.maxZ - 0.15); scene.add(ppSign);
 const scSign = makeLabel('SUPPLY CLOSET'); scSign.position.set(0, 2.35, B.maxZ - 0.15); scene.add(scSign);
 
@@ -685,7 +699,8 @@ const stallM = M(0x7a8c9a);
 for (const zc of [-5.1, -3.5]) {
   box(-14.9, 0.95, zc - 0.8, 2.2, 1.7, 0.05, stallM); box(-14.9, 0.95, zc + 0.8, 2.2, 1.7, 0.05, stallM);
   box(-13.85, 0.95, zc - 0.45, 0.05, 1.7, 0.7, stallM);
-  box(-15.55, 0.25, zc, 0.5, 0.5, 0.4, mats.white, false); box(-15.85, 0.6, zc, 0.2, 0.5, 0.4, mats.white, false);
+  captureOld('toilet', () => { box(-15.55, 0.25, zc, 0.5, 0.5, 0.4, mats.white, false); box(-15.85, 0.6, zc, 0.2, 0.5, 0.4, mats.white, false); });
+  place('toilet', -15.5, 0, zc, Math.PI);
 }
 // sinks + mirror along the south wall
 box(-13.2, 0.85, -0.4, 2.6, 0.1, 0.55, M(0xd8d2c4)); box(-13.2, 0.42, -0.4, 2.6, 0.8, 0.5, M(0x8a7a6a));
@@ -978,6 +993,7 @@ const MODEL_DEFS = [
   { key: 'suitgirl', file: 'suitgirl', g: 1 }, { key: 'girl17', file: 'girl17', g: 1 }, { key: 'girl18', file: 'girl18', g: 1 }, { key: 'kanisha', file: 'suitspack', part: /^female_02/, g: 1 },
   { key: 'male7', file: 'male7', g: 0 }, { key: 'officeworker', file: 'officeworker', g: 0 }, { key: 'dad', file: 'dad', g: 0 }, { key: 'elder', file: 'elder', g: 0 },
   { key: 'gallahan', file: 'suitspack', part: /^Gallahan/, g: 0 }, { key: 'gus', file: 'gus', g: 0, special: true },
+  { key: 'bot', file: 'officebot', static: 1.35, special: true }, { key: 'rat', file: 'officerat', static: 0.95, special: true },
 ];
 const MODELS = {}, DRESSED = new Set(), MODEL_USES = {};
 let modelsReady = false, modelsFailed = false;
@@ -993,7 +1009,17 @@ const ROLE_RX = {
   eyeA: /^LeftEye$/, eyeB: /^RightEye$/, toeA: /^(LeftToeBase|ValveBiped\.?Bip01_L_Toe0)$/, toeB: /^(RightToeBase|ValveBiped\.?Bip01_R_Toe0)$/,
 };
 const boneRole = name => { const base = name.replace(/_\d+$/, ''); for (const r in ROLE_RX) if (ROLE_RX[r].test(base)) return r; return null; };
+function prepStatic(def, root) {
+  root.traverse(o => { if (o.isMesh) { if (!o.geometry.attributes.normal) o.geometry.computeVertexNormals(); const ms = Array.isArray(o.material) ? o.material : [o.material]; ms.forEach(m => { LIN.add(m); m.side = THREE.FrontSide; if (o.geometry.attributes.color) m.vertexColors = true; }); o.castShadow = !isTouch; o.receiveShadow = true; o.userData.shad = true; } });
+  const wrap = new THREE.Group(); wrap.add(root); wrap.updateMatrixWorld(true);
+  const bb = new THREE.Box3().setFromObject(wrap), sz = bb.getSize(new THREE.Vector3()), c = bb.getCenter(new THREE.Vector3()), k = def.static / sz.y;
+  wrap.scale.setScalar(k); wrap.position.set(-c.x * k, -bb.min.y * k, -c.z * k);
+  if (def.flip) { wrap.position.x *= -1; wrap.position.z *= -1; wrap.rotation.y = Math.PI; }
+  const outer = new THREE.Group(); outer.add(wrap);
+  return { def, scene: outer, static: true, headY: def.static * 0.85, hipH: def.key === 'rat' ? 0.28 : 0.55 };
+}
 function prepModel(def, gltfScene) {
+  if (def.static) return prepStatic(def, gltfScene);
   let root = gltfScene;
   if (def.part) {
     root = THREE.SkeletonUtils.clone(gltfScene);
@@ -1085,6 +1111,7 @@ const PROP_DEFS = {
   clock: ['props60s', 'Cylinder', { w: 0.42 }], cork: ['props60s', 'Cube11647', { w: 0.8 }], exit: ['props60s', 'Cube006', { w: 0.42 }],
   mug: ['props60s', 'Cylinder006', { h: 0.1 }], rolodex: ['props60s', 'Cube019', { h: 0.15 }], penset: ['props60s', 'Cube025', { h: 0.2 }],
   ceoDesk: ['ceooffice', 'mat:Table', { d: 2.5 }], ceoChair: ['ceooffice', 'mat:Chair', { h: 1.02 }], mplant: ['ceooffice', 'mat:Plants', { h: 1.3, half: true }], rug: ['ceooffice', 'mat:Carpet', { w: 3.4 }],
+  rack: ['rack', null, { h: 2.15 }], door: ['doors', 'SM_meeting_room_door_2', { h: 2.12 }], door2: ['doors', 'SM_meeting_room_door002_5', { h: 2.12 }], payphone: ['payphone', null, { h: 0.78 }], toilet: ['toilet', null, { h: 0.8 }],
   tray: ['props60s', 'Cube014', { w: 0.3 }], paper: ['props60s', 'Cube011', { w: 0.21 }], binder: ['props60s', 'Cube001', { h: 0.3 }],
 };
 let propsReady = false;
@@ -1126,17 +1153,20 @@ function buildProps(sources) {
       const mats = Array.isArray(pt.mat) ? pt.mat : [pt.mat];
       for (const m of mats) { LIN.add(m); if (m.map) m.map.anisotropy = 4; if (m.transparent && m.opacity > 0.95) { m.transparent = false; m.alphaTest = 0.5; } }
       const im = new THREE.InstancedMesh(pt.geo, pt.mat, list.length);
-      list.forEach((p, i) => { _q.setFromAxisAngle(up, p.ry); _p.set(p.x, p.y, p.z); _s.setScalar(p.s); _m.compose(_p, _q, _s).multiply(pt.local); im.setMatrixAt(i, _m); });
+      list.forEach((p, i) => { _q.setFromAxisAngle(up, p.ry); _p.set(p.x, p.y, p.z); Array.isArray(p.s) ? _s.fromArray(p.s) : _s.setScalar(p.s); _m.compose(_p, _q, _s).multiply(pt.local); im.setMatrixAt(i, _m); });
       im.instanceMatrix.needsUpdate = true; im.frustumCulled = false; im.castShadow = !isTouch && kind !== 'paper'; im.receiveShadow = true; im.userData.shad = true;
       scene.add(im);
     }
     for (const o of OLD[kind] || []) o.visible = false;
+    if (kind === 'rack') leds.forEach((l, i) => { // status lights move onto the new rack fronts
+      const p = list[i % list.length]; l.visible = true; l.scale.setScalar(0.6);
+      l.position.set(p.x + rnd(-1.1, 1.1), rnd(0.35, 1.95), p.z + 0.67); });
   }
   propsReady = true;
 }
 function loadProps() {
   if (!THREE.GLTFLoader) return Promise.resolve();
-  const loader = new THREE.GLTFLoader(), files = ['props60s', 'pc95', 'ceooffice'], out = {};
+  const loader = new THREE.GLTFLoader(), files = ['props60s', 'pc95', 'ceooffice', 'rack', 'toilet', 'payphone', 'doors'], out = {};
   const one = (f, exts) => new Promise(res => loader.load(`models/${f}${exts[0]}`, g => res(g.scene), undefined, e => exts.length > 1 ? one(f, exts.slice(1)).then(res) : (console.warn('props', f, e), res(null))));
   return Promise.all(files.map(f => one(f, ['.glb', '.glb.wasm']).then(sc => { out[f] = sc; }))).then(() => { try { buildProps(out); } catch (e) { console.warn('props', e); } });
 }
@@ -1154,7 +1184,7 @@ function loadModels(onProgress) {
 }
 function pickModel(gender, special) {
   if (special && MODELS[special]) return special;
-  const pool = MODEL_DEFS.filter(d => MODELS[d.key] && !d.special && d.g === (gender > 0.5 ? 1 : 0)).map(d => d.key);
+  const pool = MODEL_DEFS.filter(d => MODELS[d.key] && !d.special && !d.static && d.g === (gender > 0.5 ? 1 : 0)).map(d => d.key);
   if (!pool.length) return null;
   const least = Math.min(...pool.map(k => MODEL_USES[k] || 0));
   return pick(pool.filter(k => (MODEL_USES[k] || 0) === least));
@@ -1176,17 +1206,17 @@ function dressPerson(mesh, opts = {}) {
   const u = mesh.userData; if (!modelsReady || u.model) return;
   const key = opts.key && MODELS[opts.key] ? opts.key : pickModel(u.look ? u.look.gender : 0, opts.special); if (!key) return;
   const proto = MODELS[key], uses = MODEL_USES[key] = (MODEL_USES[key] || 0) + 1;
-  const inst = THREE.SkeletonUtils.clone(proto.scene);
-  const bones = {}; inst.traverse(o => { if (o.isBone) for (const r in proto.roles) if (proto.roles[r] === o.name) bones[r] = o; });
+  const inst = proto.static ? proto.scene.clone() : THREE.SkeletonUtils.clone(proto.scene);
+  const bones = {}; if (!proto.static) inst.traverse(o => { if (o.isBone) for (const r in proto.roles) if (proto.roles[r] === o.name) bones[r] = o; });
   // repeat wearers get a different coloured outfit
-  if (uses > 1) {
+  if (uses > 1 && !proto.static) {
     const fit = OUTFITS[(uses - 2 + Object.keys(MODELS).indexOf(key) * 3) % OUTFITS.length], seen = new Map();
     inst.traverse(o => { if (!o.isMesh) return; const m = o.material; if (!m || !TINTABLE.test(m.name) || /skin|hair|eye|face|hand|body|teeth|button|buckle|tie/i.test(m.name)) return;
       if (!seen.has(m)) seen.set(m, recolorMat(m, LOWER.test(m.name) ? fit[1] : fit[0])); o.material = seen.get(m); });
   }
   mesh.traverse(o => { if (o.isMesh) o.visible = false; });
   mesh.add(inst);
-  u.model = { proto, inst, wrap: inst, bones, key };
+  u.model = { proto, inst, wrap: inst, bones, key, static: !!proto.static };
   DRESSED.add(mesh); syncModel(mesh);
 }
 const _q = new THREE.Quaternion(), _q2 = new THREE.Quaternion(), _e = new THREE.Euler();
@@ -1196,8 +1226,15 @@ function setBone(md, role, R) {
 }
 function syncModel(mesh, s) {
   const u = mesh.userData, md = u.model; if (!md) return;
-  const p = md.proto, A = p.side > 0 ? 'B' : 'A', B = p.side > 0 ? 'A' : 'B'; // driver "L" arm sits at -x
   if (s === undefined) s = clamp((-mesh.position.y) / 0.33, 0, 1);
+  if (md.static) { // no skeleton: waddle, hop and nod the whole body
+    const w = (u.walkAmp || 0) * (1 - s), ph = u.walkT || 0, now = performance.now(), talk = u.talkNod && now < u.talkNod ? Math.sin(now / 110) * 0.05 : 0;
+    const seat = md.key === 'rat' ? 0.47 : 0; // the rat stands on its chair to reach the desk
+    if (md.key === 'rat') { md.inst.position.y = (0.33 + seat) * s + Math.abs(Math.sin(ph)) * 0.09 * w; md.inst.rotation.set(0.18 * w + talk, 0, Math.sin(ph) * 0.12 * w); }
+    else { md.inst.position.y = 0.33 * s + Math.abs(Math.sin(ph * 2)) * 0.025 * w; md.inst.rotation.set(0.07 * w + talk, Math.sin(ph) * 0.06 * w, Math.sin(ph) * 0.04 * w); }
+    return;
+  }
+  const p = md.proto, A = p.side > 0 ? 'B' : 'A', B = p.side > 0 ? 'A' : 'B'; // driver "L" arm sits at -x
   md.inst.position.y = -(p.hipH - 0.82) * s;
   md.inst.position.z += ((u.kbdOn ? 0.14 : 0) - md.inst.position.z) * 0.15;
   setBone(md, 'thigh' + A, u.legL.hip.quaternion); setBone(md, 'thigh' + B, u.legR.hip.quaternion);
@@ -1514,6 +1551,10 @@ const L = {
 };
 
 /* ---------------- game state ---------------- */
+const CRITTERS = [
+  { kind: 'bot', name: 'OfficeBot 101', dept: 'IT', traits: { hair: 'no', glasses: false, tie: false, shoes: false, beard: false } },
+  { kind: 'rat', name: 'OfficeRat Jenkins', dept: 'Accounting', traits: { hair: 'grey', glasses: true, tie: true, shoes: false, beard: false } },
+];
 let G, npcs = [], interactables = [], legalStaff = [], gc = null, para = null, ceo = null, dealer = null, extras = [];
 function newGame() {
   npcs.forEach(n => scene.remove(n.mesh, n.tag));
@@ -1523,13 +1564,15 @@ function newGame() {
   const svcOrder = shuffle(['MSS', 'SVR', 'AMAN']), svcOf = {}; [...spyIdx].forEach((idx, k) => svcOf[idx] = svcOrder[k]);
   const romIdx = new Set(shuffle([...Array(12).keys()]).slice(0, 4));
   const bathIdx = new Set([...shuffle([...spyIdx]).slice(0, 2), shuffle([...romIdx])[0]]);
-  const deskOrder = shuffle(desks);
+  const deskOrder = [...shuffle(desks.filter(d => !d.open)), ...desks.filter(d => d.open)];
+  roster.push(...CRITTERS.map(c => [c.name, c.dept]));
   npcs = roster.map(([name, dept], i) => {
     const d = deskOrder[i];
-    const mesh = makePerson({ name }); mesh.position.set(d.home.x, 0, d.home.z); mesh.rotation.y = Math.PI; scene.add(mesh);
+    const mesh = makePerson({ name });
+    if (d.critter) mesh.userData.traits = Object.assign({}, CRITTERS.find(c => c.kind === d.critter).traits); mesh.position.set(d.home.x, 0, d.home.z); mesh.rotation.y = Math.PI; scene.add(mesh);
     const short = name.split(' ')[0][0] + '. ' + name.split(' ').slice(1).join(' ');
     const tag = makeLabel(name, dept); tag.position.set(d.home.x, 2.05, d.home.z); tag.visible = false; scene.add(tag);
-    const plate = makeLabel('#' + d.num, short.toUpperCase(), 256, 64); plate.scale.set(0.62, 0.155, 1); plate.position.set(d.x + 1.5, 1.68, d.z + 1.4); scene.add(plate);
+    const plate = makeLabel('#' + d.num, short.toUpperCase(), 256, 64); plate.scale.set(0.62, 0.155, 1); plate.position.set(d.x + 1.5, 1.68, d.z + 1.4); if (d.open) { plate.position.set(d.x + 1.0, 0.9, d.z - 0.72); plate.scale.set(0.42, 0.105, 1); } scene.add(plate);
     return {
       id: i, name, first: name.split(' ')[0], dept, spy: spyIdx.has(i), service: svcOf[i] || null, romance: romIdx.has(i), desk: d, mesh, tag, plate,
       status: 'active', state: 'desk', path: [], target: null, leaveAt: 0, nextTrip: 540 + rnd(30, 260),
@@ -1537,7 +1580,7 @@ function newGame() {
       affection: 0, nervous: 0, talking: false, searched: false, seenTrip: false, mark: 0,
       bathYes: bathIdx.has(i), invite: null,
       did: {}, notes: [], odd: !spyIdx.has(i) && Math.random() < .35,
-      pos: mesh.position, walkT: 0,
+      pos: mesh.position, walkT: 0, critter: d.critter || null,
     };
   });
   G = { min: 540, day: 0, leaks: 0, scandal: 0, morale: 70, stock: 24, paused: true, over: false, ui: false, affair: null, daily: {}, lastHour: 9, dayStart: { leaks: 0, stock: 24 }, arrests: 0, wrong: 0, said: {}, capture: null, coke: 0,
@@ -1590,7 +1633,7 @@ function dressAll() { try { dressAll0(); } catch (e) { console.warn('dress', e);
 function dressAll0() {
   if (!modelsReady) return;
   if (gc) dressPerson(gc.mesh, { key: 'kanisha' });
-  for (const n of npcs) dressPerson(n.mesh);
+  for (const n of npcs) dressPerson(n.mesh, n.critter ? { key: n.critter } : {});
   for (const o of legalStaff) dressPerson(o.mesh);
   for (const o of extras) dressPerson(o.mesh, { special: 'gus' });
 }
@@ -1745,7 +1788,7 @@ function pose(n, t) {
   u.legR.knee.rotation.x = Math.PI / 2 * s + Math.pow(Math.max(0, Math.cos(ph)), 1.4) * 0.7 * w + 0.06 * w;
   const typing = s > 0.85 && !n.talking ? Math.sin(t * 13 + n.id * 1.7) * 0.07 : 0;
   const talkArm = n.talking || (n.speakUntil && performance.now() < n.speakUntil) ? Math.sin(t * 3 + n.id) * 0.12 - 0.15 : 0;
-  u.talkNod = talkArm ? performance.now() + 150 : 0;
+  u.talkNod = talkArm ? performance.now() + 150 : 0; u.walkAmp = n.walkAmp; u.walkT = n.walkT;
   u.kbdOn = n.state === 'desk' && s > 0.85 && !n.talking && n.desk ? 1 : 0; if (u.kbdOn) { u.kbd = n.desk; if (u.kbdSeed === undefined) u.kbdSeed = Math.random() * 6; }
   u.armL.rotation.set(-0.5 * s + typing - sw * 0.8 + talkArm * (1 - s), 0, -0.09 + 0.05 * s);
   u.armR.rotation.set(-0.5 * s - typing + sw * 0.8 + n.sip * 0.45, 0, 0.09 - 0.05 * s);
@@ -1958,7 +2001,8 @@ function drawPortrait() {
   const n = G.portraitNpc, cv = document.querySelector('#dlg .pcv');
   if (!n || !cv || n.status !== 'active') return;
   const md = n.mesh.userData.model;
-  if (md) { syncModel(n.mesh); n.mesh.updateMatrixWorld(true); md.bones.head.getWorldPosition(hp); hp.y += 0.09; } else n.mesh.userData.head.getWorldPosition(hp);
+  if (md && md.static) { syncModel(n.mesh); n.mesh.updateMatrixWorld(true); md.inst.getWorldPosition(hp); hp.y += md.proto.headY; }
+  else if (md) { syncModel(n.mesh); n.mesh.updateMatrixWorld(true); md.bones.head.getWorldPosition(hp); hp.y += 0.09; } else n.mesh.userData.head.getWorldPosition(hp);
   const a = n.mesh.rotation.y;
   pcam.position.set(hp.x + Math.sin(a) * 0.82, hp.y + 0.03, hp.z + Math.cos(a) * 0.82); pcam.lookAt(hp.x, hp.y - 0.04, hp.z);
   const ppl = [...npcs, ...legalStaff, ...extras], vis = ppl.map(o => o.tag.visible); ppl.forEach(o => o.tag.visible = false);
@@ -2456,10 +2500,11 @@ function buildDeskProps() {
     pm(new THREE.BoxGeometry(.18, .06, .2), Mc(pick([0xd8d0bb, 0x2a2a2a, 0xb8b0a0])), d.x + 1.0, Y + .03, d.z - 0.85); pm(new THREE.BoxGeometry(.2, .04, .05), Mc(0xd8d0bb), d.x + 1.0, Y + .08, d.z - 0.9);
     if (!d.ring) { d.ring = new THREE.Mesh(new THREE.SphereGeometry(.025, 8, 6), new THREE.MeshBasicMaterial({ color: 0xff2020 })); d.ring.position.set(d.x + 1.07, Y + .07, d.z - 0.78); scene.add(d.ring); }
     d.ring.visible = false;
-    if (Math.random() < .5) for (let i = 0; i < 1 + Math.floor(Math.random() * 3); i++) pm(new THREE.PlaneGeometry(.06, .06), Mc(pick([0xfff27a, 0xffb0d0, 0xb0ffb0])), d.x - .2 + i * .14, 1.2 - (i % 2) * .03, d.z - 0.932, 0, 0, rnd(-.2, .2));
+    if (false) for (let i = 0; i < 1 + Math.floor(Math.random() * 3); i++) pm(new THREE.PlaneGeometry(.06, .06), Mc(pick([0xfff27a, 0xffb0d0, 0xb0ffb0])), d.x - .2 + i * .14, 1.2 - (i % 2) * .03, d.z - 0.932, 0, 0, rnd(-.2, .2));
     const slots = shuffle([[-1.05, -1.25], [-0.72, -1.28], [-1.08, -0.82], [-0.62, -0.84], [1.08, -1.28]]);
     const count = 3 + Math.floor(Math.random() * 2);
     for (let i = 0; i < count; i++) { const k = draw(n.props); PB[k](d.x + slots[i][0], d.z + slots[i][1]); n.props.push(k); }
+    if (d.open) continue;
     // one poster per cubicle (no repeats until all 12 are used), plus a couple of back-wall items
     const side = pick([-1, 1]);
     if (!posters.length) posters = shuffle(POSTERS);
@@ -2758,7 +2803,7 @@ function closeDossier() { $('#dossier').hidden = true; G.ui = !$('#dlg').hidden;
 /* ---------------- deduction (Cluedo-style) ---------------- */
 // Every clue reveals ONE true trait of one service's asset, never a name.
 const HAIRCAT = { 0x1b1b1b: 'dark', 0x2a1a10: 'dark', 0x3b2314: 'dark', 0x6a4a2a: 'brown', 0xa0522d: 'brown', 0xb08a4a: 'blond', 0xd9b26a: 'blond', 0x8c8c8c: 'grey', 0xc8c8c8: 'grey' };
-const ROWN = ['window row (desks 101–104)', 'middle row (desks 105–108)', 'break-room row (desks 109–112)'];
+const ROWN = ['window row (desks 101–104)', 'middle row (desks 105–108)', 'break-room row (desks 109–112)', 'hot desks by the meeting area (113–114)'];
 const TRAIT_DESC = {
   hair: v => `has ${v} hair`, glasses: v => v ? 'wears glasses' : 'does not wear glasses', tie: v => v ? 'wears a tie' : 'does not wear a tie',
   shoes: v => v ? 'wears white sneakers' : 'wears dark shoes', beard: v => v ? 'has a beard or mustache' : 'is clean-shaven',
