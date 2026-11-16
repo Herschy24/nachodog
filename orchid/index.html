@@ -34,12 +34,13 @@ button.b95.love{color:#8a1060}
 #prompt{position:absolute;left:50%;top:calc(50% + 28px);transform:translateX(-50%);padding:4px 10px;background:#ffffe1;border:1px solid var(--dark);font-size:13px;pointer-events:none;white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis}
 #prompt kbd{font:bold 12px var(--ui);border:1px solid var(--shadow);background:var(--face);padding:0 4px;margin-right:4px}
 
-#taskbar{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:6px;padding:3px max(4px,env(safe-area-inset-right,0px)) calc(3px + env(safe-area-inset-bottom,0px)) max(4px,env(safe-area-inset-left,0px));background:var(--face);border-top:2px solid var(--hi);box-shadow:0 -1px 0 #dfdfdf;flex-wrap:wrap}
+#taskbar{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:6px;padding:3px max(4px,env(safe-area-inset-right,0px)) calc(3px + env(safe-area-inset-bottom,0px)) max(4px,env(safe-area-inset-left,0px));background:var(--face);border-top:2px solid var(--hi);box-shadow:0 -1px 0 #dfdfdf;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
 #startbtn{font-weight:bold;display:flex;align-items:center;gap:6px;padding:3px 8px}
 #startbtn i{display:inline-block;width:14px;height:14px;background:conic-gradient(#d00 0 25%,#0a0 0 50%,#ffd200 0 75%,#00d 0);transform:skewX(-8deg)}
 .meter{display:flex;align-items:center;gap:5px;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
 .meter .bar{width:72px;height:12px;background:var(--hi);position:relative;overflow:hidden}
-@media (max-width:1440px){.meter .bar{width:50px}}
+@media (max-width:1500px){.meter .bar{width:42px}}
+@media (max-width:1250px){.meter span{font-size:10px;letter-spacing:0}.meter .bar{width:34px}}
 .meter .fill{position:absolute;inset:0 auto 0 0;background:repeating-linear-gradient(90deg,var(--title-a) 0 6px,transparent 6px 8px)}
 .meter.bad .fill{background:repeating-linear-gradient(90deg,var(--red) 0 6px,transparent 6px 8px)}
 #ticker{font:20px/1 var(--crt);background:#000;color:#33ff66;padding:2px 8px;letter-spacing:.04em;min-width:118px;font-variant-numeric:tabular-nums}
@@ -53,6 +54,12 @@ button.b95.love{color:#8a1060}
 .brk b{font-weight:normal;color:#555}
 .secbar{height:12px;background:var(--hi);position:relative}
 .secbar i{position:absolute;inset:0 auto 0 0;background:repeating-linear-gradient(90deg,var(--red) 0 6px,transparent 6px 8px)}
+#sndbtn{margin-left:auto;font-size:14px;padding:2px 8px;min-width:34px}
+#sndbtn + #clock{margin-left:0}
+#sndpop{position:fixed;right:calc(8px + env(safe-area-inset-right,0px));bottom:calc(44px + env(safe-area-inset-bottom,0px));z-index:30;background:var(--face);padding:8px 10px;display:flex;flex-direction:column;gap:6px;font-size:12px;min-width:210px}
+#sndpop .sndtitle{font-weight:bold}
+#sndpop .sndrow{display:flex;align-items:center;gap:6px}
+#sndpop input[type=range]{flex:1;min-width:0}
 #clock{margin-left:auto;padding:3px 10px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .spacer{flex:1}
 
@@ -196,10 +203,17 @@ button{touch-action:manipulation}
     <div id="ticker" class="sunk">ORCH $24.00</div>
     <div id="pl" class="sunk" hidden></div>
     <div id="wired" class="sunk" hidden>WIRED 1.5×</div>
+    <button class="b95" id="sndbtn" title="Music (M to mute)" aria-label="Music volume">🔊</button>
     <div id="clock" class="sunk">Mon 9:00 AM</div>
   </div>
 
   <div id="yell" hidden></div>
+  <div id="sndpop" class="bevel" hidden role="dialog" aria-label="Music">
+    <div class="sndtitle">♪ Corporate Office</div>
+    <label class="sndrow"><input type="checkbox" id="sndmute"> Mute music <small>(M)</small></label>
+    <label class="sndrow">Volume <input type="range" id="sndvol" min="0" max="100" step="1"> <span id="sndval">35%</span></label>
+  </div>
+  <audio id="bgm" src="audio/soundtrack.mp3" loop preload="auto"></audio>
   <div id="touch" hidden>
     <div id="joy"><div id="knob"></div></div>
     <button class="b95" id="tbtn">USE</button>
@@ -245,6 +259,7 @@ button{touch-action:manipulation}
           <kbd>N</kbd><span>Open your dossier (your evidence board)</span>
           <kbd>B</kbd><span>Call your broker (yes, you can short your own company)</span>
           <kbd>Y</kbd><span>Yell at everyone to get back to their desks</span>
+          <kbd>M</kbd><span>Mute the music (volume is the 🔊 button on the taskbar)</span>
           <kbd>T</kbd><span>Read the latest TIMES cover about you (a new one prints every hour)</span>
           <kbd>Q</kbd><span>Eat or drink whatever you bought from the vending machines</span>
           <kbd>E</kbd><span>at your own desk: sit down, trade, or crawl into the bed hidden under it</span>
@@ -3015,6 +3030,7 @@ addEventListener('pointermove', e => {
 });
 addEventListener('keydown', e => {
   if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+  if (e.code === 'Escape' && !$('#sndpop').hidden) { $('#sndpop').hidden = true; return; }
   if (e.code === 'Escape') { if (!$('#dossier').hidden) closeDossier(); else if (!$('#dlg').hidden && !$('#dlg-x').hidden) closeDialog(); return; }
   if (G.ui && e.code !== 'KeyN') return;
   if (e.code === 'KeyN' || e.code === 'Tab') { e.preventDefault(); if (!$('#intro').hidden) return; $('#dossier').hidden ? openDossier() : closeDossier(); return; }
@@ -3023,6 +3039,7 @@ addEventListener('keydown', e => {
   if (e.code === 'KeyQ') { consume(); return; }
   if (e.code === 'KeyT') { if (G.lastCover && !G.paused) showCover(G.lastCover); return; }
   if (e.code === 'KeyY') { yell(); return; }
+  if (e.code === 'KeyM') { setMusic({ muted: !MUSIC.muted }); return; }
   keys[e.code] = true;
 });
 addEventListener('keyup', e => { keys[e.code] = false; });
@@ -3061,6 +3078,23 @@ function shout() {
     bp.type = 'bandpass'; bp.frequency.value = f0; bp.Q.value = q; o.connect(bp); bp.connect(out); o.start(t); o.stop(t + 0.9);
   }
 }
+/* ---------------- soundtrack ---------------- */
+const MUSIC = { vol: 0.35, muted: false };
+try { const m = JSON.parse(localStorage.getItem('orchid.music') || 'null'); if (m) { MUSIC.vol = clamp(+m.vol, 0, 1); MUSIC.muted = !!m.muted; } } catch (e) {}
+const bgm = $('#bgm');
+function applyMusic() {
+  bgm.volume = MUSIC.vol; bgm.muted = MUSIC.muted || MUSIC.vol === 0;
+  $('#sndbtn').textContent = bgm.muted ? '🔇' : MUSIC.vol < 0.4 ? '🔉' : '🔊';
+  $('#sndmute').checked = MUSIC.muted; $('#sndvol').value = Math.round(MUSIC.vol * 100); $('#sndval').textContent = Math.round(MUSIC.vol * 100) + '%';
+  try { localStorage.setItem('orchid.music', JSON.stringify(MUSIC)); } catch (e) {}
+}
+function setMusic(p) { Object.assign(MUSIC, p); applyMusic(); if (!MUSIC.muted && bgm.paused && $('#intro').hidden && G && !G.over) startMusic(); }
+function startMusic() { applyMusic(); const p = bgm.play(); if (p && p.catch) p.catch(() => {}); }
+$('#sndbtn').onclick = e => { e.stopPropagation(); $('#sndpop').hidden = !$('#sndpop').hidden; };
+$('#sndmute').onchange = e => setMusic({ muted: e.target.checked });
+$('#sndvol').oninput = e => setMusic({ vol: e.target.value / 100, muted: e.target.value > 0 ? false : MUSIC.muted });
+addEventListener('pointerdown', e => { if (!$('#sndpop').hidden && !e.target.closest('#sndpop') && e.target.id !== 'sndbtn') $('#sndpop').hidden = true; });
+applyMusic();
 function interact() {
   if (G.seated && !G.ui && !G.paused) return useCeoDesk();
   if (G.ui || G.paused || !current) return;
@@ -3103,7 +3137,7 @@ function playAnthem() {
   toast('Over the PA', 'The Star-Spangled Banner crackles through the ceiling speakers. Somebody in Sales salutes.');
 }
 function beginGame() {
-  $('#intro').hidden = true; G.ui = false; G.paused = false; toast('Welcome', 'Walk the floor. Talk to people. Trust nobody completely.'); if (isTouch && innerHeight > innerWidth) toast('Tip', 'Turn your phone sideways for a better view.'); if (!isTouch) canvas.click();
+  startMusic(); $('#intro').hidden = true; G.ui = false; G.paused = false; toast('Welcome', 'Walk the floor. Talk to people. Trust nobody completely.'); if (isTouch && innerHeight > innerWidth) toast('Tip', 'Turn your phone sideways for a better view.'); if (!isTouch) canvas.click();
 }
 $('#startgame').onclick = () => { if (!modelsReady && !modelsFailed) return; $('#intro').hidden = true; openCreator('start'); };
 {
