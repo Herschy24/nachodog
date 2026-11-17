@@ -1,8 +1,3 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Orchid Microsystems</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -180,8 +175,6 @@ button{touch-action:manipulation}
 @media (prefers-reduced-motion:reduce){.toast{animation:none}#fade{transition:none}}
 </style>
 
-</head>
-<body>
 <div id="app">
   <canvas id="c" aria-label="3D office"></canvas>
   <div id="vignette"></div>
@@ -231,7 +224,7 @@ button{touch-action:manipulation}
   <div id="dossier" class="layer" hidden>
     <div class="win bevel" role="dialog" aria-modal="true">
       <div class="tb"><span>DOSSIER.TXT — Notepad</span><button class="b95" id="dos-x" aria-label="Close">×</button></div>
-      <div class="body"><div style="font-size:12px;color:#333"><b>How to solve it:</b> every clue says which service's spy it describes. Whoever matches all the MSS clues works for the MSS, and so on. To arrest someone the FBI needs three things: <b>who they work for</b> (a direct link, or two descriptions that fit), <b>what they're stealing</b> and <b>why</b>. Click a stamp to mark your hunch.</div><div class="dlist" id="dlist"></div></div>
+      <div class="body"><div style="font-size:12px;color:#333"><b>How to solve it:</b> every clue says which service's spy it describes. Whoever matches all the MSS clues works for the MSS, and so on. To arrest someone the FBI needs three things: <b>who they work for</b> (a direct link, or two descriptions that fit), <b>what they're stealing</b> and <b>why</b>. Click a stamp to mark your hunch. Things get dropped overnight: look for <b>glints on the floor</b> each morning and pick them up.</div><div class="dlist" id="dlist"></div></div>
     </div>
   </div>
 
@@ -1798,6 +1791,7 @@ function setupInteractables() {
     interactables.push({ get name() { return `Answer the ringing phone on desk #${n.desk.num}`; }, x: n.desk.x + 1.0, z: n.desk.z - 0.85, when: () => n.ringUntil > G.min, use: () => answerPhone(n), r: 2.2 });
     interactables.push({ get name() { return `Open the package on desk #${n.desk.num}`; }, x: n.desk.x - 0.85, z: n.desk.z - 1.05, when: () => G.pkg && G.pkg.n === n && !G.pkg.opened, use: openPackage, r: 2.2 });
   });
+  for (let i = 0; i < 5; i++) interactables.push({ get name() { const f = G.finds && G.finds[i]; return f ? `Pick up ${FIND_TYPES[f.t].name}` : ''; }, get x() { const f = G.finds && G.finds[i]; return f ? FIND_SPOTS[f.spot].x : 0; }, get z() { const f = G.finds && G.finds[i]; return f ? FIND_SPOTS[f.spot].z : 0; }, when: () => G.finds && G.finds[i] && !G.finds[i].taken, use: () => pickFind(i), r: 2.0, pri: 0.8 });
   npcs.forEach(n => interactables.push({ desk: n, x: n.desk.x, z: n.desk.z - 1.05, get name() { return `Search desk #${n.desk.num}`; }, use: () => searchDesk(n, false), when: () => n.state !== 'desk' || n.status !== 'active' }));
 }
 function findTarget() {
@@ -1806,7 +1800,7 @@ function findTarget() {
   const consider = (o, x, z, r) => {
     const dx = x - player.x, dz = z - player.z, d = Math.hypot(dx, dz);
     if (d > r || d < 0.01) return; const dot = (dx * fx + dz * fz) / d; if (dot < 0.55) return;
-    const score = d - dot; if (score < bd) { bd = score; best = o; }
+    const score = d - dot - (o.it && o.it.pri || 0); if (score < bd) { bd = score; best = o; }
   };
   for (const n of npcs) if (n.status === 'active') consider({ npc: n }, n.pos.x, n.pos.z, 2.1);
   for (const it of interactables) if (!it.when || it.when()) consider({ it }, it.x, it.z, it.r || 2.0);
@@ -2026,7 +2020,7 @@ function retryDay() {
     Object.assign(n, o, { notes: o.notes.slice() });
     if (n.status === 'active' && wasGone) { scene.add(n.mesh); scene.add(n.tag); n.plate.material.opacity = 1; }
   });
-  resetFloor();
+  resetFloor(); buildFindMeshes();
   G.over = false; G.ui = false; G.paused = false;
   $('#hearts').hidden = true; if (ceo) ceo.mesh.visible = false;
   updateHUD();
@@ -2916,7 +2910,7 @@ const TRAIT_DESC = {
 const TRAIT_SHORT = { hair: v => `${v} hair`, glasses: v => v ? 'glasses' : 'no glasses', tie: v => v ? 'tie' : 'no tie', shoes: v => v ? 'sneakers' : 'dark shoes', beard: v => v ? 'beard/mustache' : 'clean-shaven', row: v => ['window row', 'middle row', 'break row'][v], side: v => `${v} side`, dept: v => v };
 const TRAIT_KEYS = Object.keys(TRAIT_DESC);
 const traitsOf = n => ({ ...n.mesh.userData.traits, row: n.desk.row, side: n.desk.x < 0 ? 'west' : 'east', dept: n.dept });
-function spyClue(source, spy, kind = 'trait') {
+function spyClue(source, spy, kind = 'trait', force = null, defer = false) {
   const pool = activeSpies(); if (!pool.length) return null;
   if (kind !== 'trait') {
     const need = pool.filter(p => !G.evidence.some(e => e.kind === kind && e.svc === p.service));
@@ -2929,12 +2923,13 @@ function spyClue(source, spy, kind = 'trait') {
   const s = spy || pick(pool), known = G.known[s.service];
   // usually reveal the most useful unknown trait (the one that rules out the most people)
   const unknown = TRAIT_KEYS.filter(k => !(k in known)), fits = k => active().filter(o => Object.keys(known).every(q => o.tr[q] === known[q]) && o.tr[k] === s.tr[k]).length;
-  let k = unknown.length ? (Math.random() < .7 ? unknown.sort((a, b) => fits(a) - fits(b) || Math.random() - .5)[0] : pick(unknown)) : pick(TRAIT_KEYS);
+  let k = force || (unknown.length ? (Math.random() < .7 ? unknown.sort((a, b) => fits(a) - fits(b) || Math.random() - .5)[0] : pick(unknown)) : pick(TRAIT_KEYS));
   const v = s.tr[k], desc = TRAIT_DESC[k](v), fresh = !(k in known);
-  known[k] = v;
+  const commit = () => { known[k] = v;
   G.evidence.push({ svc: s.service, kind: 'trait', src: source, k, v, text: `${source}: the ${SVC[s.service].short} asset ${desc}.`, when: stamp() });
-  toast(`Evidence · ${SVC[s.service].short}`, `The ${SVC[s.service].short} asset ${desc}.${fresh ? '' : ' (You knew that already.)'} Logged in your dossier.`);
-  return { s, k, v, desc, svc: SVC[s.service] };
+  toast(`Evidence · ${SVC[s.service].short}`, `The ${SVC[s.service].short} asset ${desc}.${fresh ? '' : ' (You knew that already.)'} Logged in your dossier.`); };
+  if (!defer) commit();
+  return { s, k, v, desc, svc: SVC[s.service], commit };
 }
 function addRumor(source) {
   const s = pick(activeSpies()); if (!s) return null;
@@ -3138,6 +3133,7 @@ function planNight() {
   const pool = active(), spies = activeSpies();
   const N = { day: G.day, heard: {}, badge: false, conf: {}, people: {} };
   G.night = N;
+  scatterFinds();
   if (!spies.length) return;
   const culprit = pick(spies.filter(s => !G.evidence.some(e => e.kind === 'link' && e.who === s.id)).concat(spies).slice(0, Math.max(1, spies.length)));
   const T = hm(18, 20) + Math.floor(Math.random() * 140), a = pick(NIGHT_ACTS);
@@ -3266,6 +3262,88 @@ function investigationHTML() {
   return h;
 }
 
+/* ---------------- clues lying around the office: pick them up, some need working out ---------------- */
+const FIND_SPOTS = [
+  { x: -14.4, y: 0.012, z: 8.1, at: 'under the copier' }, { x: -14.6, y: 0.012, z: 5.7, at: 'next to the fax machine' },
+  { x: -12.4, y: 0.012, z: -10.6, at: 'on the server room floor' }, { x: -11.4, y: 0.012, z: -11.4, at: 'between the server racks' },
+  { x: -13.0, y: 0.012, z: -1.1, at: 'by the restroom sinks' }, { x: -7.0, y: 0.012, z: 12.9, at: 'at the bottom of the stairwell door' },
+  { x: 14.3, y: 0.012, z: 7.3, at: 'by the water cooler' }, { x: 14.4, y: 0.012, z: 2.4, at: 'under the snack machine' },
+  { x: 0.9, y: 0.012, z: 13.2, at: 'outside the supply closet' }, { x: -4.6, y: 0.012, z: 13.1, at: 'under the payphone' },
+  { x: 9.3, y: 0.012, z: -2.0, at: 'just outside Legal' }, { x: -5, y: 0.012, z: -7.0, at: 'in the west aisle' },
+  { x: 7, y: 0.012, z: 2.2, at: 'in the east aisle' }, { x: 1, y: 0.012, z: 7.2, at: 'in the middle aisle' },
+];
+const FIND_TYPES = {
+  hair: { look: 'hair', name: 'a stray hair', key: 'hair', text: (c, at) => `Snagged ${at}: a single hair, about four inches long. ${cap1(c.v)}. The janitor swears the floor was spotless at 6 PM.<br><br>So the ${c.svc.short} asset <b>${c.desc}</b>.` },
+  shoe: { look: 'scuff', name: 'a scuff mark', key: 'shoes', text: (c, at) => c.v ? `A fresh rubber scuff ${at}, the zig-zag tread of a white sneaker. Nobody in a suit leaves a mark like that.<br><br>The ${c.svc.short} asset <b>${c.desc}</b>.` : `A crisp heel mark ${at}: hard leather sole. A dress shoe, not a sneaker.<br><br>The ${c.svc.short} asset <b>${c.desc}</b>.` },
+  lens: { look: 'lens', name: 'something glinting', key: 'glasses', text: (c, at) => c.v ? `A cracked eyeglass lens ${at}, the kind that pops out of a cheap frame when you're in a hurry.<br><br>The ${c.svc.short} asset <b>${c.desc}</b>.` : `A contact-lens case ${at}, left open. Whoever was here doesn't need frames.<br><br>The ${c.svc.short} asset <b>${c.desc}</b>.` },
+  tie: { look: 'clip', name: 'a small metal clip', key: 'tie', text: (c, at) => c.v ? `A gold-plated tie clip ${at}, still warm from the radiator. Monogrammed, but the initials have been filed off.<br><br>The ${c.svc.short} asset <b>${c.desc}</b>.` : `A shirt button ${at}, from an open collar. No tie clip, no tie bar, no tie.<br><br>The ${c.svc.short} asset <b>${c.desc}</b>.` },
+  razor: { look: 'paper', name: 'a crumpled receipt', key: 'beard', text: (c, at) => c.v ? `A drugstore receipt ${at}: beard oil, mustache wax, and a comb. Paid in cash at 11 PM.<br><br>The ${c.svc.short} asset <b>${c.desc}</b>.` : `A drugstore receipt ${at}: a 10-pack of disposable razors and shaving cream. Paid in cash at 11 PM.<br><br>The ${c.svc.short} asset <b>${c.desc}</b>.` },
+  map: { look: 'paper', name: 'a folded floor plan', key: 'row', text: (c, at) => `A photocopied floor plan ${at}. Someone has drawn routes from one desk to the server room and the fax in pencil. The starting X is in the <b>${ROWN[c.v]}</b>.<br><br>The ${c.svc.short} asset <b>${c.desc}</b>.` },
+  side: { look: 'paper', name: 'a sticky note', key: 'side', text: (c, at) => `A sticky note ${at}: "Exit by the ${c.v === 'west' ? 'WEST' : 'EAST'} aisle. Closer to my desk." Pencil, block capitals.<br><br>The ${c.svc.short} asset <b>${c.desc}</b>.` },
+  match: { look: 'match', name: 'a matchbook', kind: 'item', text: (c, at) => `A matchbook ${at} from a bar in ${c.svc.city}. Inside the flap, in tiny writing: <b>"${c.val.toUpperCase()}. FRIDAY."</b><br><br>Now you know what the ${c.svc.short} asset is after.` },
+  chip: { look: 'chip', name: 'a casino chip', kind: 'motive', text: (c, at) => `Not a casino chip after all: a folded note ${at}, wrapped round a coin. "${c.svc.city} has been patient. Remember why you're doing this: <b>${c.val}</b>."<br><br>That's the ${c.svc.short} asset's motive.` },
+  cipher: { look: 'paper', name: 'a scrap of coded paper', cipher: true },
+  junk: { look: 'paper', name: 'a scrap of paper', junk: true },
+};
+const JUNK = ['A grocery list: "milk, eggs, Snackwells, DON\'T FORGET MOM\'S BIRTHDAY". Not a clue. Probably.', 'A love note addressed to "the copier repair guy". Unsigned. Unrelated. Adorable.', 'A Tamagotchi. It is dead. Someone should be told.', 'A losing scratch-off ticket and half a Fruit Roll-Up.', 'A Pog with a picture of Shaq on it.', 'A flyer for a lost cat named Mr. Bigglesworth.', 'A Blockbuster card. It\'s overdue on Jumanji.'];
+let FIND_MESHES = [];
+const findMat = { paper: M(0xf3efe2), match: M(0xb3122a), chip: M(0x1f5f2a), clip: new THREE.MeshPhongMaterial({ color: 0xd4af37, shininess: 90 }), lens: new THREE.MeshPhongMaterial({ color: 0xbfe3ff, transparent: true, opacity: 0.7, shininess: 120 }), hair: M(0x3b2314), scuff: M(0x2a2a2a) };
+const GLINT = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,220,1)'); gr.addColorStop(0.25, 'rgba(255,240,150,.6)'); gr.addColorStop(1, 'rgba(255,240,150,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); g.fillStyle = 'rgba(255,255,255,.9)'; g.fillRect(30, 4, 4, 56); g.fillRect(4, 30, 56, 4); const t = new THREE.CanvasTexture(c); return t; })();
+function findMesh(look) {
+  const g = new THREE.Group(); let m;
+  if (look === 'paper') { m = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.11), findMat.paper); m.rotation.x = -Math.PI / 2; m.rotation.z = Math.random() * 3; }
+  else if (look === 'match') { m = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.012, 0.04), findMat.match); }
+  else if (look === 'chip') { m = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.006, 16), findMat.chip); }
+  else if (look === 'clip') { m = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.004, 0.01), findMat.clip); }
+  else if (look === 'lens') { m = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.004, 16), findMat.lens); }
+  else if (look === 'hair') { m = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.0015, 3, 18, Math.PI * 1.2), findMat.hair); m.rotation.x = -Math.PI / 2; }
+  else { m = new THREE.Mesh(new THREE.PlaneGeometry(0.14, 0.06), findMat.scuff); m.rotation.x = -Math.PI / 2; m.rotation.z = Math.random() * 3; }
+  m.position.y = 0.004; g.add(m);
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: GLINT, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
+  s.scale.setScalar(0.18); s.position.y = 0.09; s.userData.glint = true; g.add(s);
+  return g;
+}
+function scatterFinds() {
+  const spots = shuffle(FIND_SPOTS.map((s, i) => i)), have = activeSpies().length;
+  const types = have ? shuffle(['hair', 'shoe', 'lens', 'tie', 'razor', 'map', 'side', 'match', 'chip']).slice(0, 2).concat(['cipher', 'junk']) : ['junk'];
+  if (have && Math.random() < .5) types.push(pick(['match', 'chip', 'hair', 'lens']));
+  G.finds = types.map((t, i) => ({ t, spot: spots[i], taken: false, junk: t === 'junk' ? pick(JUNK) : null }));
+  buildFindMeshes();
+}
+function buildFindMeshes() {
+  FIND_MESHES.forEach(m => scene.remove(m)); FIND_MESHES = [];
+  (G.finds || []).forEach(f => { const s = FIND_SPOTS[f.spot], m = findMesh(FIND_TYPES[f.t].look); m.position.set(s.x, s.y, s.z); m.visible = !f.taken; scene.add(m); FIND_MESHES.push(m); });
+}
+function pickFind(i) {
+  const f = G.finds[i], T = FIND_TYPES[f.t], at = FIND_SPOTS[f.spot].at;
+  f.taken = true; if (FIND_MESHES[i]) FIND_MESHES[i].visible = false;
+  const bag = t => (G.bag = G.bag || []).push({ text: t.replace(/<[^>]+>/g, ''), when: stamp() });
+  if (T.junk) { bag(`Found ${at}: ${f.junk}`); return say('You pick it up', `Found ${at}.<br><br>${f.junk}`); }
+  if (T.cipher) return openCipher(at);
+  const c = T.kind ? spyClue(`Found ${at}`, null, T.kind) : spyClue(`Found ${at}`, null, 'trait', T.key);
+  if (!c) { bag(`Found ${at}: nothing useful.`); return say('You pick it up', 'Nothing useful after all.'); }
+  const txt = T.text(c, at); bag(txt); say('Evidence', txt + '<br><br><small>Bagged and logged in your dossier.</small>');
+}
+// a Caesar-shifted note: turn the dial until it reads as English
+function openCipher(at) {
+  const c = spyClue(`Coded note found ${at}`, null, 'trait', null, true); // reveal decided now, logged only once solved
+  if (!c) return say('Coded note', 'The ink has run. Unreadable.');
+  const plain = `THE ${c.svc.short} FRIEND ${c.desc.toUpperCase()}. DROP IS THURSDAY.`, shift = 3 + Math.floor(Math.random() * 20);
+  const enc = (t, k) => t.replace(/[A-Z]/g, ch => String.fromCharCode((ch.charCodeAt(0) - 65 + k + 26) % 26 + 65));
+  const code = enc(plain, shift);
+  let k = 0;
+  const draw = () => { $('#ciph-out').textContent = enc(code, -k); $('#ciph-k').textContent = k; };
+  dialog('Coded note', `<div class="memo" style="font-size:13px">A scrap of graph paper ${at}, in neat block capitals:<div style="font:bold 15px/1.4 monospace;margin:8px 0;letter-spacing:1px;word-break:break-word">${code}</div>Every letter has been shifted along the alphabet by the same amount. Turn the dial until it makes sense.<div style="display:flex;align-items:center;gap:8px;margin:10px 0"><button class="b95" id="ciph-l">◀</button><span>Shift: <b id="ciph-k">0</b></span><button class="b95" id="ciph-r">▶</button></div><div id="ciph-out" style="font:bold 15px/1.4 monospace;letter-spacing:1px;background:#fff;border:1px inset #999;padding:6px;word-break:break-word"></div></div>`,
+    [{ label: 'That\'s it, file it', fn: () => {
+      if ((k % 26 + 26) % 26 !== shift) { (G.bag = G.bag || []).push({ text: `Coded note found ${at}: ${code} (unsolved)`, when: stamp() }); G.finds.find(f => f.t === 'cipher').taken = false; const i = G.finds.findIndex(f => f.t === 'cipher'); if (FIND_MESHES[i]) FIND_MESHES[i].visible = true; return say('Coded note', 'That still reads like alphabet soup. You put the note back where you found it to try again later.'); }
+      c.commit(); (G.bag = G.bag || []).push({ text: `Coded note found ${at}, decoded: ${plain}`, when: stamp() });
+      say('Decoded', `<div class="memo" style="font-size:14px"><b>${plain}</b></div><br>So the ${c.svc.short} asset <b>${c.desc}</b>. Logged in your dossier.`);
+    } }, { label: 'Put it in my pocket for later', fn: () => { const i = G.finds.findIndex(f => f.t === 'cipher'); G.finds[i].taken = false; if (FIND_MESHES[i]) FIND_MESHES[i].visible = true; } }]);
+  setTimeout(() => { $('#ciph-l').onclick = () => { k = (k + 25) % 26; draw(); }; $('#ciph-r').onclick = () => { k = (k + 1) % 26; draw(); }; draw(); }, 0);
+}
+
+(function glintLoop() { const t = performance.now() / 1000; FIND_MESHES.forEach((m, i) => { const s = m.children[1]; if (s) { s.material.opacity = 0.35 + 0.65 * Math.max(0, Math.sin(t * 2.2 + i * 1.7)); s.scale.setScalar(0.14 + 0.06 * Math.sin(t * 2.2 + i * 1.7)); } }); requestAnimationFrame(glintLoop); })();
+
 const MARKS = [['UNSURE', ''], ['MSS?', 's1'], ['SVR?', 's1'], ['IDF?', 's1'], ['CLEAR', 's2']];
 function openDossier() {
   G.ui = true; releaseLock();
@@ -3282,6 +3360,7 @@ function openDossier() {
        <div class="caseln"><b>Motive:</b> ${(() => { const v = [...new Set(G.evidence.filter(e => e.kind === 'motive' && e.svc === k).map(e => e.val))]; return v.length ? v.join(' / ') : '?'; })()}</div>`}</div>`;
   }).join('');
   list.appendChild(board);
+  if ((G.bag || []).length) { const d = document.createElement('details'); d.className = 'rumors'; d.innerHTML = `<summary>Evidence bag (${G.bag.length})</summary><ul>${G.bag.slice().reverse().map(b => `<li><small>${b.when}</small> ${b.text}</li>`).join('')}</ul>`; list.appendChild(d); }
   { const inv = investigationHTML(); if (inv) { const d = document.createElement('details'); d.className = 'rumors'; d.open = true; d.innerHTML = `<summary>Last night & the canary trap</summary><div class="inv">${inv}</div>`; list.appendChild(d); } }
   if (G.rumors.length) { const r = document.createElement('details'); r.className = 'rumors'; r.innerHTML = `<summary>Rumors (${G.rumors.length}) — unreliable</summary><ul>${G.rumors.slice(-12).reverse().map(x => `<li>${x.text} <small>${x.when}</small></li>`).join('')}</ul>`; list.appendChild(r); }
   if (G.evidence.length) { const r = document.createElement('details'); r.className = 'rumors'; r.innerHTML = `<summary>Evidence log (${G.evidence.length})</summary><ul>${G.evidence.slice().reverse().map(x => `<li>${x.text} <small>${x.when}</small></li>`).join('')}</ul>`; list.appendChild(r); }
@@ -3660,6 +3739,3 @@ G.ui = true;
 requestAnimationFrame(frame);
 })();
 </script>
-
-</body>
-</html>
