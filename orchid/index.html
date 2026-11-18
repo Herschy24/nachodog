@@ -59,6 +59,11 @@ button.b95.love{color:#8a1060}
 #clock{margin-left:auto;padding:3px 10px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .spacer{flex:1}
 
+#lorectr{position:absolute;left:max(10px,env(safe-area-inset-left,0px));top:calc(10px + env(safe-area-inset-top,0px));z-index:5;font-size:13px;padding:4px 10px;background:#c0c0c0;color:#000}
+#lorectr b{color:#0a6b0a}
+#lorectr.bump{animation:lbump .6s ease-out}
+@keyframes lbump{0%{transform:scale(1)}30%{transform:scale(1.35);background:#b8ffb8}100%{transform:scale(1)}}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:99}
 #toasts{position:absolute;right:max(10px,env(safe-area-inset-right,0px));bottom:calc(48px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:6px;align-items:flex-end;pointer-events:none;max-width:min(340px,80vw)}
 .toast{background:#ffffe1;border:1px solid var(--dark);padding:6px 10px;font-size:12.5px;box-shadow:2px 2px 0 rgba(0,0,0,.35);animation:pop .2s ease-out}
 .toast b{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px}
@@ -181,6 +186,7 @@ button{touch-action:manipulation}
   <div id="crosshair"></div>
   <div id="prompt" hidden></div>
   <div id="toasts" aria-live="polite"></div>
+  <button id="lorectr" class="b95" hidden title="Alien lore found — collect them all for the secret ending">👽 <b>0</b>/9 alien lore</button>
 
   <div id="taskbar">
     <button class="b95" id="startbtn"><i></i>Orchid</button>
@@ -614,7 +620,7 @@ function buildModernCeoOffice() {
       x += bw + 2 + Math.random() * 10; }
     g.globalAlpha = 1; g.fillStyle = 'rgba(230,236,240,.25)'; g.fillRect(0, 0, w, h);
   });
-  const view = new THREE.Mesh(new THREE.PlaneGeometry(X1 - X0, 3), new THREE.MeshBasicMaterial({ map: city, toneMapped: false })); view.position.set((X0 + X1) / 2, 1.5, -13.985); scene.add(view);
+  const view = new THREE.Mesh(new THREE.PlaneGeometry(X1 - X0, 3), new THREE.MeshBasicMaterial({ map: city, toneMapped: false })); view.position.set((X0 + X1) / 2, 1.5, -13.985); scene.add(view); CEO_VIEW = view;
   const blk = new THREE.MeshPhongMaterial({ color: 0x141517, shininess: 30, specular: 0x222222 });
   const bar = (x, y, z, w, h, d) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), blk); m.position.set(x, y, z); scene.add(m); return m; };
   for (let i = 0; i <= 5; i++) bar(X0 + (X1 - X0) * i / 5, 1.5, -13.95, 0.06, 3, 0.08);
@@ -1706,7 +1712,7 @@ function newGame() {
     const br = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.008, 0.01), shades); br.position.set(0, 0.03, 0.17); h.add(br);
     const tag = makeLabel('Vinnie', '"Courier"'); tag.visible = false; scene.add(tag);
     dealer = { id: 102, name: 'Vinnie', first: 'Vinnie', dept: 'Courier', mesh, tag, pos: mesh.position, status: 'active', state: 'idle', sit: 0, walkT: 0, walkAmp: 0, sip: 0, talking: false };
-    pose(dealer, 0); extras = [dealer]; }
+    pose(dealer, 0); extras = [dealer, makeFrank()]; }
   rebuildCeo();
   buildDeskProps(); clearEvents(); G.cut = null; $('#hearts').hidden = true;
   setupInteractables();
@@ -1724,7 +1730,7 @@ function dressAll0() {
   if (gc) dressPerson(gc.mesh, { key: 'kanisha' });
   for (const n of npcs) dressPerson(n.mesh, n.critter ? { key: n.critter } : {});
   for (const o of legalStaff) dressPerson(o.mesh);
-  for (const o of extras) dressPerson(o.mesh, { special: 'gus' });
+  for (const o of extras) dressPerson(o.mesh, o.model ? { key: o.model } : { special: 'gus' });
 }
 const note = (n, text, strong = false) => { if (!n.notes.some(x => x.text === text)) n.notes.push({ text, strong, when: stamp() }); };
 const stamp = () => DAYS[G.day].slice(0, 3) + ' ' + fmtTime(G.min);
@@ -1785,6 +1791,8 @@ function setupInteractables() {
     { name: 'Dig through the shredder bin', x: -15.35, z: 7.0, r: 2.0, use: () => checkOnce('shred', 'Shredder', () => { const c = spyClue('Shredder bin', null, 'item'); return c ? `You spend twenty minutes taping strips back together. It's an ${c.svc.short} shopping list. One line is circled twice: <b>${c.val}</b>.` : 'Just shredded lunch menus.'; }) },
     { name: 'Press redial on the payphone', x: -4, z: 13.8, r: 2.0, use: () => checkOnce('payphone', 'Payphone', () => { const c = spyClue('Payphone redial'); return c ? `You drop in a quarter and hit redial. An ${c.svc.short} handler answers: "You're early. Is this the one who <b>${c.desc}</b>?" You hang up fast.` : 'Redial reaches a pizza place. You order a large.'; }) },
     { name: 'Read last night\'s badge-out log', x: -6.9, z: 13.7, r: 1.6, use: readBadgeLog },
+    { name: 'Talk to Frank (hot dogs)', x: STAND.x + 0.6, z: STAND.z, use: () => talkFrank(), r: 2.2 },
+    ...LORE.filter(l => !l.hidden).map(l => ({ name: `Inspect ${l.name}`, x: l.x, z: l.z, r: 1.7, pri: 0.9, when: () => !loreFound.includes(l.id), use: () => collectLore(l.id) })),
     { name: 'Supply closet', x: 0, z: 13.9, use: () => say('Supply closet', 'It smells like toner and bad decisions. Someone has been hoarding the good pens.') },
   ];
   npcs.forEach(n => {
@@ -3344,6 +3352,210 @@ function openCipher(at) {
 
 (function glintLoop() { const t = performance.now() / 1000; FIND_MESHES.forEach((m, i) => { const s = m.children[1]; if (s) { s.material.opacity = 0.35 + 0.65 * Math.max(0, Math.sin(t * 2.2 + i * 1.7)); s.scale.setScalar(0.14 + 0.06 * Math.sin(t * 2.2 + i * 1.7)); } }); requestAnimationFrame(glintLoop); })();
 
+var CEO_VIEW;
+/* ---------------- alien lore: hidden easter eggs → secret ending ---------------- */
+const LORE = [
+  { id: 'floppy', look: 'floppy', x: 11.6, y: 0.012, z: -12.6, name: 'a floppy disk with a green label', title: 'ORCHID_SRC.DAT',
+    text: 'A 3.5" floppy, label handwritten in green marker: <b>ORCHID — SOURCE: DEBRIS FIELD, ROSWELL NM, JULY 1947. REVERSE-ENGINEERED 1994.</b><br><br>The company founder didn\'t invent ORCHID. He found it.' },
+  { id: 'heatsink', look: 'carrot', x: -10.75, y: 0.012, z: -13.0, name: 'a carrot-shaped heatsink', title: 'Part LEP-0001',
+    text: 'A heatsink that fell out of a prototype board. It is shaped exactly like a carrot, fins and all. The serial number is stamped on the side: <b>LEP-0001</b>.<br><br>Whoever designed this chip really, really liked carrots.' },
+  { id: 'hat', look: 'hat', x: -15.0, y: 0.012, z: -12.5, name: 'a tinfoil hat', title: 'Doug from IT\'s hat',
+    text: 'A carefully crimped tinfoil hat. Inside the brim, in ballpoint: <b>"IT\'S NOT THE CHINESE. IT\'S NOT THE RUSSIANS. LOOK UP. — Doug, IT"</b><br><br>Nobody has seen Doug since the Christmas party.' },
+  { id: 'polaroid', look: 'photo', x: -12.2, y: 0.012, z: -1.6, name: 'a Polaroid', title: 'Crop circle, Iowa 1989',
+    text: 'A Polaroid of a cornfield from the air. The crop circle is unmistakably the shape of a rabbit\'s head, ears and all. On the back: <b>"Iowa, Aug \'89. It\'s a MAP."</b>' },
+  { id: 'egg', look: 'egg', x: -15.0, y: 0.012, z: 13.45, name: 'a glowing pastel egg', title: 'The egg',
+    text: 'A pastel-striped egg, warm to the touch, glowing faintly from the inside. If you hold it to your ear it hums "Here Comes Peter Cottontail". Backwards.<br><br>An actual Easter egg. Of course.' },
+  { id: 'nda', look: 'paper', x: 14.8, y: 0.012, z: 0.6, name: 'a document with a paw print', title: 'Mutual NDA',
+    text: 'A Mutual Non-Disclosure Agreement between Orchid Microsystems Inc. and <b>"THE WARREN"</b>, dated 1994. Margaret\'s signature is on the left. On the right, instead of a signature: a paw print the size of a dinner plate.' },
+  { id: 'ufo', look: 'ufo', x: -15.2, y: 0.012, z: 2.4, name: 'a toy flying saucer', title: 'Scale model',
+    text: 'A die-cast flying saucer. The tiny pilot in the cockpit has long floppy ears. Stamped underneath: <b>SCALE 1:1,000,000</b>.<br><br>One. Million.' },
+  { id: 'zorp', look: 'zorp', x: 15.2, y: 0.012, z: 13.4, name: 'a little green figurine', title: 'Zorp',
+    text: 'A little green alien figurine, wedged behind the soda machine. Somebody has stuck a Post-it to his back: <b>"Zorp is a DECOY. They are not little. They are not green. They are FLUFFY."</b>' },
+  { id: 'frank', title: 'The Carrot Dog', hidden: true,
+    text: 'Frank slides a hot dog across the cart. It is a carrot. In a bun. With relish.<br><br>"Listen, kid. That chip was never yours. They\'re coming back for it. When they do, don\'t panic. Bring carrots."' },
+];
+const LORE_N = LORE.length;
+let loreFound = (() => { try { return JSON.parse(localStorage.getItem('orchid.lore') || '[]').filter(id => LORE.some(l => l.id === id)); } catch (e) { return []; } })();
+let frankRegular = (() => { try { return localStorage.getItem('orchid.frank') === '1'; } catch (e) { return false; } })();
+const saveLore = () => { try { localStorage.setItem('orchid.lore', JSON.stringify(loreFound)); localStorage.setItem('orchid.frank', frankRegular ? '1' : '0'); } catch (e) {} };
+const LORE_MESHES = {};
+const LORE_GLOW = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const g = c.getContext('2d'), gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(140,255,140,.9)'); gr.addColorStop(.4, 'rgba(90,255,120,.35)'); gr.addColorStop(1, 'rgba(90,255,120,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c); })();
+function loreMesh(look) {
+  const g = new THREE.Group(), add = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); g.add(m); return m; };
+  const green = M(0x6fdc6f), white = M(0xf2efe6);
+  if (look === 'floppy') { add(new THREE.BoxGeometry(0.09, 0.004, 0.094), M(0x222428), 0, 0.002, 0); add(new THREE.BoxGeometry(0.06, 0.001, 0.03), M(0x7dff7d), 0, 0.0045, 0.025); add(new THREE.BoxGeometry(0.05, 0.001, 0.025), M(0xb8bcc0), 0, 0.0045, -0.03); g.rotation.y = 0.5; }
+  else if (look === 'carrot') { const c = add(new THREE.ConeGeometry(0.03, 0.16, 10), M(0xf07a1a), 0, 0.03, 0); c.rotation.z = Math.PI / 2; add(new THREE.ConeGeometry(0.02, 0.05, 5), M(0x3aa03a), -0.1, 0.03, 0).rotation.z = Math.PI / 2; g.rotation.y = 1.1; }
+  else if (look === 'hat') { const h = add(new THREE.ConeGeometry(0.11, 0.2, 7), new THREE.MeshPhongMaterial({ color: 0xd8dce0, shininess: 120, specular: 0xffffff, flatShading: true }), 0, 0.1, 0); h.rotation.z = 0.25; }
+  else if (look === 'photo') { add(new THREE.BoxGeometry(0.09, 0.003, 0.108), white, 0, 0.0015, 0); const p = add(new THREE.PlaneGeometry(0.078, 0.078), M(0xc9b25a), 0, 0.0035, -0.008); p.rotation.x = -Math.PI / 2; g.rotation.y = -0.7; }
+  else if (look === 'egg') { const e = add(new THREE.SphereGeometry(0.05, 16, 12), new THREE.MeshLambertMaterial({ color: 0xf6c6ea, emissive: 0x6a3a5a }), 0, 0.06, 0); e.scale.set(1, 1.3, 1); [[0.02, 0x9fe8ff], [0.06, 0xfff19a], [0.1, 0xb8ffb8]].forEach(([y, c]) => { const r = add(new THREE.TorusGeometry(0.047 * Math.sin(Math.acos((y - 0.06) / 0.065)), 0.006, 6, 20), M(c), 0, y, 0); r.rotation.x = Math.PI / 2; }); }
+  else if (look === 'paper') { const p = add(new THREE.PlaneGeometry(0.21, 0.28), white, 0, 0.002, 0); p.rotation.x = -Math.PI / 2; const paw = add(new THREE.CircleGeometry(0.035, 12), M(0x5a3b2a), 0.04, 0.003, 0.08); paw.rotation.x = -Math.PI / 2; [[-0.03, 0.05], [0, 0.06], [0.03, 0.05]].forEach(([dx, dz]) => { const t = add(new THREE.CircleGeometry(0.012, 8), M(0x5a3b2a), 0.04 + dx, 0.003, 0.08 - dz); t.rotation.x = -Math.PI / 2; }); g.rotation.y = 0.3; }
+  else if (look === 'ufo') { const s = add(new THREE.SphereGeometry(0.08, 18, 8), new THREE.MeshPhongMaterial({ color: 0xb8bec6, shininess: 100 }), 0, 0.03, 0); s.scale.set(1, 0.28, 1); const d = add(new THREE.SphereGeometry(0.035, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshPhongMaterial({ color: 0x9fe0ff, transparent: true, opacity: 0.75, shininess: 120 }), 0, 0.045, 0); [-1, 1].forEach(sx => add(new THREE.BoxGeometry(0.006, 0.03, 0.004), white, sx * 0.008, 0.065, 0)); }
+  else if (look === 'zorp') { add(new THREE.CylinderGeometry(0.025, 0.035, 0.08, 8), green, 0, 0.04, 0); const h = add(new THREE.SphereGeometry(0.04, 12, 10), green, 0, 0.11, 0); h.scale.set(1, 1.2, 0.9); [-0.017, 0.017].forEach(o => { const e = add(new THREE.SphereGeometry(0.011, 6, 4), M(0x111111), o, 0.115, 0.03); e.scale.set(1, 1.6, 0.4); }); add(new THREE.PlaneGeometry(0.04, 0.04), M(0xfff27a, { side: THREE.DoubleSide }), 0, 0.05, -0.036); g.rotation.y = Math.PI * 0.8; }
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: LORE_GLOW, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.5 })); s.scale.setScalar(0.32); s.position.y = 0.06; s.userData.glow = true; g.add(s);
+  return g;
+}
+function buildLore() {
+  for (const l of LORE) if (!l.hidden) { const m = loreMesh(l.look); m.position.set(l.x, l.y, l.z); scene.add(m); LORE_MESHES[l.id] = m; }
+  refreshLore();
+}
+function refreshLore() {
+  for (const id in LORE_MESHES) LORE_MESHES[id].visible = !loreFound.includes(id);
+  const el = $('#lorectr'); if (!el) return;
+  el.hidden = !loreFound.length; el.querySelector('b').textContent = loreFound.length;
+}
+function collectLore(id) {
+  if (loreFound.includes(id)) return;
+  const l = LORE.find(x => x.id === id); loreFound.push(id); saveLore(); refreshLore();
+  confetti(); const el = $('#lorectr'); el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
+  const left = LORE_N - loreFound.length;
+  dialog(`👽 Alien lore ${loreFound.length}/${LORE_N} — ${l.title}`, `<div class="memo" style="font-size:14px">${l.text}<br><br><small>${left ? `${left} more piece${left === 1 ? '' : 's'} of alien lore hidden somewhere. Find them all for the secret ending.` : '<b>That\'s all of them.</b> Something very large is coming.'}</small></div>`,
+    [{ label: left ? 'Pocket it' : 'Uh oh', fn: () => { if (!left) setTimeout(startBunny, 400); } }]);
+}
+function loreLog() {
+  dialog(`Alien lore — ${loreFound.length}/${LORE_N} found`, `<div class="memo" style="font-size:13px">${LORE.map((l, i) => loreFound.includes(l.id) ? `<p><b>${i + 1}. ${l.title}</b><br>${l.text}</p>` : `<p style="color:#888"><b>${i + 1}. ???</b></p>`).join('')}<small>Hidden all over the floor, and one is on a menu. Find all ${LORE_N} for the secret ending.</small></div>`, [{ label: 'Close' }]);
+}
+
+// confetti burst over the whole screen
+function confetti(n) {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  n = n || (reduce ? 40 : 170);
+  let c = $('#confetti'); if (!c) { c = document.createElement('canvas'); c.id = 'confetti'; document.body.appendChild(c); }
+  const W = c.width = innerWidth, H = c.height = innerHeight, g = c.getContext('2d');
+  const cols = ['#6fdc6f', '#ff7ac8', '#ffd200', '#5ac8ff', '#ffffff', '#ff8a3d', '#b48cff'];
+  const P = c.__p = (c.__p || []).concat(Array.from({ length: n }, () => ({ x: W / 2 + rnd(-W * .15, W * .15), y: H * .45 + rnd(-20, 20), vx: rnd(-9, 9), vy: rnd(-17, -6), w: rnd(5, 10), h: rnd(8, 15), r: rnd(0, 6), vr: rnd(-.3, .3), col: pick(cols), life: 0 })));
+  if (c.__run) return; c.__run = true;
+  const step = () => {
+    g.clearRect(0, 0, W, H);
+    for (const p of P) { p.vy += 0.42; p.vx *= 0.985; p.x += p.vx; p.y += p.vy; p.r += p.vr; p.life++; g.save(); g.translate(p.x, p.y); g.rotate(p.r); g.scale(1, Math.cos(p.life * 0.18)); g.fillStyle = p.col; g.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); g.restore(); }
+    for (let i = P.length - 1; i >= 0; i--) if (P[i].y > H + 30) P.splice(i, 1);
+    if (P.length) requestAnimationFrame(step); else { c.__run = false; g.clearRect(0, 0, W, H); }
+  };
+  requestAnimationFrame(step);
+}
+
+/* ---------------- Frank's Franks: the hot dog stand ---------------- */
+const STAND = { x: -12, z: 11.8 };
+let frank = null;
+function buildHotDogStand() {
+  const g = new THREE.Group(); g.position.set(STAND.x, 0, STAND.z);
+  const steel = new THREE.MeshPhongMaterial({ color: 0xc9ced3, shininess: 90, specular: 0x666666 }), dark = M(0x222222);
+  const add = (geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; g.add(m); return m; };
+  add(new THREE.BoxGeometry(0.75, 0.62, 1.55), steel, 0, 0.5, 0);
+  add(new THREE.BoxGeometry(0.8, 0.04, 1.62), steel, 0, 0.83, 0);
+  // front signage panel
+  const sign = canvasTex(512, 256, (c, w, h) => { c.fillStyle = '#c8102e'; c.fillRect(0, 0, w, h); c.fillStyle = '#ffd200'; c.fillRect(0, h * .72, w, h * .28); c.fillStyle = '#ffd200'; c.font = 'bold 64px Georgia, serif'; c.textAlign = 'center'; c.fillText("FRANK'S FRANKS", w / 2, 92); c.fillStyle = '#fff'; c.font = 'bold 34px Arial, sans-serif'; c.fillText('ALL-BEEF  ·  $1.50', w / 2, 150); c.fillStyle = '#c8102e'; c.font = 'bold 30px Arial, sans-serif'; c.fillText('KRAUT · RELISH · ONIONS · SINCE 1971', w / 2, h * .9); });
+  const sp = add(new THREE.PlaneGeometry(1.5, 0.56), new THREE.MeshLambertMaterial({ map: sign }), 0.381, 0.5, 0); sp.rotation.y = Math.PI / 2;
+  // wheels
+  [-0.62, 0.62].forEach(z => { const w = add(new THREE.CylinderGeometry(0.18, 0.18, 0.06, 18), dark, 0.25, 0.18, z); w.rotation.x = Math.PI / 2; const hub = add(new THREE.CylinderGeometry(0.06, 0.06, 0.07, 10), steel, 0.25, 0.18, z); hub.rotation.x = Math.PI / 2; });
+  add(new THREE.BoxGeometry(0.05, 0.25, 0.05), steel, -0.3, 0.13, -0.7); add(new THREE.BoxGeometry(0.05, 0.25, 0.05), steel, -0.3, 0.13, 0.7);
+  // grill + hot dogs, condiment bottles, napkins
+  add(new THREE.BoxGeometry(0.5, 0.02, 0.6), dark, -0.05, 0.86, -0.35);
+  for (let i = 0; i < 6; i++) { const d = add(new THREE.CylinderGeometry(0.018, 0.018, 0.16, 8), M(0xa0442a), -0.05 + (i % 2 ? .1 : -.1), 0.885, -0.6 + i * 0.1); d.rotation.x = Math.PI / 2; d.rotation.z = Math.PI / 2; }
+  [[0xd8261f, 0.15], [0xf2c200, 0.25], [0x3d8b2f, 0.35]].forEach(([c, z]) => { add(new THREE.CylinderGeometry(0.03, 0.035, 0.18, 10), M(c), 0.2, 0.94, z); add(new THREE.ConeGeometry(0.015, 0.05, 8), M(c), 0.2, 1.055, z); });
+  add(new THREE.BoxGeometry(0.16, 0.08, 0.12), M(0xf4f1ea), 0.18, 0.89, 0.6);
+  // a bun stack + a pan of kraut
+  add(new THREE.BoxGeometry(0.22, 0.06, 0.18), M(0xd9a35c), -0.12, 0.88, 0.45); add(new THREE.BoxGeometry(0.18, 0.03, 0.16), M(0xe8e0a6), -0.12, 0.88, 0.15);
+  // umbrella
+  add(new THREE.CylinderGeometry(0.02, 0.02, 1.55, 8), steel, -0.22, 1.6, 0);
+  for (let i = 0; i < 12; i++) { const u = new THREE.Mesh(new THREE.ConeGeometry(1.05, 0.38, 12, 1, true, i * Math.PI / 6, Math.PI / 6), new THREE.MeshLambertMaterial({ color: i % 2 ? 0xffd200 : 0xd8261f, side: THREE.DoubleSide })); u.position.set(-0.22, 2.42, 0); g.add(u); }
+  add(new THREE.SphereGeometry(0.035, 8, 6), steel, -0.22, 2.62, 0);
+  scene.add(g);
+  colliders.push({ minX: STAND.x - 0.42, maxX: STAND.x + 0.42, minZ: STAND.z - 0.82, maxZ: STAND.z + 0.82 });
+}
+function makeFrank() {
+  const mesh = makePerson({ suit: 0xf4f1ea, name: 'Frank' }); mesh.position.set(STAND.x - 0.85, 0, STAND.z + 0.38); mesh.rotation.y = Math.PI / 2; scene.add(mesh);
+  const tag = makeLabel('Frank', '"Frank\'s Franks"'); tag.visible = false; scene.add(tag);
+  frank = { id: 103, name: 'Frank', first: 'Frank', dept: 'Hot dogs', mesh, tag, pos: mesh.position, status: 'active', state: 'idle', sit: 0, walkT: 0, walkAmp: 0, sip: 0, talking: false, model: 'dad' };
+  pose(frank, 0); return frank;
+}
+function updateFrank(dt) {
+  if (!frank) return;
+  const t = performance.now() / 1000, d = Math.hypot(player.x - frank.pos.x, player.z - frank.pos.z);
+  if (frank.talking || d < 4) faceToward(frank, player.x, player.z, dt * 0.6); else frank.mesh.rotation.y = lerpAngle(frank.mesh.rotation.y, Math.PI / 2, dt * 2);
+  frank.sit = 0; frank.walkAmp = 0; pose(frank, t);
+  const u = frank.mesh.userData; if (!frank.talking) { const k = Math.sin(t * 2.1) * 0.15; u.armL.rotation.set(-0.7 + k, 0, 0.1); u.armR.rotation.set(-0.7 - k, 0, -0.1); u.elbowL.rotation.set(-0.6, 0.3, 0); u.elbowR.rotation.set(-0.6, -0.3, 0); }
+  frank.mesh.position.y = 0; frank.tag.position.set(frank.pos.x, 2.05, frank.pos.z);
+}
+const FRANK_LINES = ['Frank\'s Franks, since 1971. Health inspector\'s a personal friend.', 'Hey, the big boss! Don\'t ask how I got a permit for the 31st floor. I got a cousin.', 'Everything on it? Kraut, relish, onions. Life\'s short, kid.', 'I see everything from this cart. Who goes to the server room, who comes back with ketchup on their badge…', 'Lotta people asking about that ORCHID chip lately. Lotta people.', 'You look like a man who skipped breakfast and lunch. Classic CEO.'];
+function talkFrank() {
+  frank.talking = true;
+  const line = pick(FRANK_LINES); if (typeof speak === 'function') speak(frank, line);
+  const opts = [
+    { label: 'One with everything ($1.50)', fn: () => { G.cash -= 1.5; G.held = { n: 'Frank\'s hot dog', kind: 'snack', line: 'Snap of the casing, a mountain of kraut, relish down your tie. Perfect.' }; if (!frankRegular) { frankRegular = true; saveLore(); } updateHUD(); toast("Frank's Franks", 'Frank hands you a hot dog wrapped in wax paper. Press Q to eat it, or offer it to someone.'); } },
+    { label: 'Hot dogs for the whole floor ($42)', fn: () => {
+      if (!once('frankfloor')) return say("Frank's Franks", '"Again? I\'m outta buns, kid. Come back tomorrow."');
+      G.cash -= 42; G.morale = clamp(G.morale + 8, 0, 100); updateHUD();
+      say("Frank's Franks", 'Frank rings a little bell. The whole floor drifts over like moths. Morale is up.<br><br><small>Morale +8</small>'); } },
+  ];
+  if (frankRegular && !loreFound.includes('frank')) opts.push({ label: 'Ask about the secret menu', fn: () => collectLore('frank') });
+  else if (!frankRegular) opts.push({ label: 'Ask about the secret menu', fn: () => say("Frank's Franks", '"Secret menu? Regulars only, pal. Buy a dog first."') });
+  opts.push({ label: 'Walk away' });
+  dialog('Frank — "Frank\'s Franks"', `<div class="speech">${portrait(frank)}<p>${line}</p></div>`, opts);
+}
+
+/* ---------------- secret ending: the Warren comes for ORCHID ---------------- */
+const BUNNY = { on: false, t0: 0, g: null, bits: {} };
+function buildBunny() {
+  const g = new THREE.Group(), L = (c, o = {}) => new THREE.MeshLambertMaterial(Object.assign({ color: c, fog: false }, o));
+  const fur = L(0xf6f2ec, { emissive: 0x2a2826 }), pink = L(0xf4a6b8, { emissive: 0x3a1a22 }), blk = new THREE.MeshPhongMaterial({ color: 0x0b0b0e, shininess: 140, specular: 0xffffff, fog: false }), wht = L(0xffffff, { emissive: 0x666666 });
+  const add = (geo, mat, x, y, z, sx = 1, sy = 1, sz = 1, par = g) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.scale.set(sx, sy, sz); par.add(m); return m; };
+  const S = n => new THREE.SphereGeometry(1, n || 32, Math.round((n || 32) * .75));
+  add(S(), fur, 0, -11, -3, 9, 9, 8);                       // body
+  add(S(), fur, 0, 0, 0, 6, 5.5, 5.4);                      // head
+  add(S(), fur, -2.5, -2.1, 2.9, 2.9, 2.5, 2.5); add(S(), fur, 2.5, -2.1, 2.9, 2.9, 2.5, 2.5); // cheeks
+  const nose = add(S(16), pink, 0, -0.7, 5.25, 0.8, 0.55, 0.5);
+  add(new THREE.BoxGeometry(0.55, 0.9, 0.2), wht, -0.3, -3.0, 5.0); add(new THREE.BoxGeometry(0.55, 0.9, 0.2), wht, 0.3, -3.0, 5.0); // buck teeth
+  const eyes = [-1, 1].map(sx => { const e = add(S(20), blk, sx * 2.5, 1.0, 4.35, 1.05, 1.25, 0.7); add(S(10), wht, 0.3, 0.38, 0.75, 0.28, 0.24, 0.2, e); return e; });
+  [-1, 1].forEach(sx => add(S(12), pink, sx * 3.6, -1.0, 3.6, 0.9, 0.55, 0.3));     // blush
+  [-1, 1].forEach(sx => [-0.25, 0, 0.25].forEach(a => { const w = add(new THREE.BoxGeometry(3.4, 0.05, 0.05), L(0x444444), sx * 3.0, -1.2 + a * 1.2, 5.0); w.rotation.z = sx * a; }));
+  const ears = [-1, 1].map(sx => { const p = new THREE.Group(); p.position.set(sx * 2.3, 4.2, -0.5); p.rotation.z = -sx * 0.18; g.add(p); add(S(), fur, 0, 5, 0, 1.6, 5.2, 0.9, p); add(S(), pink, 0, 5, 0.55, 1.0, 4.4, 0.45, p); return p; });
+  const paws = [-1, 1].map(sx => add(S(), fur, sx * 4.2, -5.6, 5.4, 2.1, 1.5, 2.1));
+  BUNNY.bits = { nose, eyes, ears, paws };
+  return g;
+}
+function startBunny() {
+  if (BUNNY.on) return;
+  closeDialog(); releaseLock(); G.paused = true; G.ui = true;
+  if (!BUNNY.g) {
+    BUNNY.scene = new THREE.Scene(); const bs = BUNNY.scene;
+    bs.add(new THREE.HemisphereLight(0xfff0f6, 0x6a4a6a, 0.9)); const dl = new THREE.DirectionalLight(0xffd6a8, 0.8); dl.position.set(30, 20, 20); bs.add(dl);
+    BUNNY.g = buildBunny(); bs.add(BUNNY.g);
+    BUNNY.rt = (THREE.WebGLMultisampleRenderTarget && renderer.capabilities.isWebGL2) ? new THREE.WebGLMultisampleRenderTarget(4, 4) : new THREE.WebGLRenderTarget(4, 4);
+    BUNNY.portal = new THREE.ShaderMaterial({ uniforms: { map: { value: BUNNY.rt.texture }, res: { value: new THREE.Vector2(1, 1) } }, vertexShader: 'void main(){ gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }', fragmentShader: 'uniform sampler2D map; uniform vec2 res; void main(){ gl_FragColor = linearToOutputTexel(texture2D(map, gl_FragCoord.xy / res)); }' });
+    const sky = canvasTex(1024, 512, (c, w, h) => { const gr = c.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#1b1446'); gr.addColorStop(.45, '#c2577a'); gr.addColorStop(.75, '#ffb36b'); gr.addColorStop(1, '#ffe2a8'); c.fillStyle = gr; c.fillRect(0, 0, w, h); c.fillStyle = 'rgba(255,255,255,.8)'; for (let i = 0; i < 120; i++) c.fillRect(Math.random() * w, Math.random() * h * .35, 2, 2); });
+    BUNNY.sky = new THREE.Mesh(new THREE.PlaneGeometry(220, 110), new THREE.MeshBasicMaterial({ map: sky, fog: false, toneMapped: false })); BUNNY.sky.position.set(13, 10, -90); bs.add(BUNNY.sky);
+    const city = canvasTex(1024, 256, (c, w, h) => { c.clearRect(0, 0, w, h); for (let x = 0; x < w;) { const bw = 20 + Math.random() * 50, bh = 60 + Math.random() * 170; c.fillStyle = pick(['#2a2340', '#33294d', '#3d3157']); c.fillRect(x, h - bh, bw, bh); c.fillStyle = 'rgba(255,220,140,.7)'; for (let y = h - bh + 6; y < h; y += 10) for (let xx = x + 4; xx < x + bw - 4; xx += 8) if (Math.random() < .35) c.fillRect(xx, y, 3, 5); x += bw + 3; } });
+    BUNNY.city = new THREE.Mesh(new THREE.PlaneGeometry(90, 22), new THREE.MeshBasicMaterial({ map: city, transparent: true, fog: false, toneMapped: false })); BUNNY.city.position.set(13, -9, -24); bs.add(BUNNY.city);
+  }
+  if (CEO_VIEW) { BUNNY.oldMat = CEO_VIEW.material; CEO_VIEW.material = BUNNY.portal; }
+  BUNNY.g.visible = BUNNY.sky.visible = BUNNY.city.visible = true;
+  BUNNY.on = true; BUNNY.t0 = performance.now(); BUNNY.ended = false;
+  toast('???', 'The floor shakes. Every phone on the floor starts ringing at once.');
+}
+function updateBunny() {
+  const t = (performance.now() - BUNNY.t0) / 1000, B = BUNNY.bits;
+  const k = Math.min(1, t / 6), e = 1 - Math.pow(1 - k, 3);
+  BUNNY.g.position.set(13, -24 + 24.5 * e + Math.sin(t * 1.4) * 0.15, -34);
+  BUNNY.g.rotation.z = Math.sin(t * 0.7) * 0.06 * e;
+  B.ears.forEach((p, i) => p.rotation.x = Math.max(0, Math.sin(t * 3 + i * 1.3)) ** 6 * -0.35);
+  B.nose.scale.set(0.8 + Math.sin(t * 14) * 0.06, 0.55 + Math.sin(t * 14) * 0.05, 0.5);
+  const blink = (t % 3.3) < 0.14 ? 0.12 : 1; B.eyes.forEach(ey => ey.scale.y = 1.25 * blink);
+  B.paws.forEach((p, i) => p.position.y = -5.6 + Math.max(0, Math.sin(t * 2.4 + i * Math.PI)) * 0.5 * (k >= 1 ? 1 : 0));
+  camera.position.set(13, 1.62, -9.4 + Math.sin(t * 22) * 0.02 * (1 - k)); camera.rotation.set(0.13 * e, Math.sin(t * 19) * 0.006 * (1 - k), 0, 'YXZ');
+  const sz = renderer.getDrawingBufferSize(new THREE.Vector2()); if (BUNNY.rt.width !== sz.x || BUNNY.rt.height !== sz.y) BUNNY.rt.setSize(sz.x, sz.y); BUNNY.portal.uniforms.res.value.copy(sz);
+  camera.updateMatrixWorld(); renderer.setRenderTarget(BUNNY.rt); renderer.render(BUNNY.scene, camera); renderer.setRenderTarget(null);
+  if (t > 6.2 && !BUNNY.confetti) { BUNNY.confetti = true; confetti(260); }
+  if (t > 11 && !BUNNY.ended) { BUNNY.ended = true; secretEnding(); }
+}
+function secretEnding() {
+  G.over = true;
+  const body = `<div class="memo"><h2>SECRET ENDING: THE WARREN</h2><p>A rabbit roughly the size of the Sears Tower rises over the skyline, presses its nose to your 31st-floor window, and twitches it twice.</p><p>Then a paw the size of a city bus very gently reaches in, lifts the ORCHID prototype off your desk, and leaves a single carrot in its place.</p><p>Across the floor, agents of the MSS, the SVR and IDF Military Intelligence watch it hop away into the sunset. None of them will ever be able to explain this to their handlers. Neither will you, to the board.</p><p>Frank, at the hot dog cart, salutes.</p><p><b>All ${LORE_N} pieces of alien lore found.</b></p></div>`;
+  dialog('🐰 Secret ending', body, [{ label: 'Play a new week (the lore resets)', fn: () => { endBunny(); loreFound = []; saveLore(); newGame(); G.paused = false; refreshLore(); } }], true);
+}
+function endBunny() { BUNNY.on = false; BUNNY.confetti = false; if (BUNNY.g) BUNNY.g.visible = BUNNY.sky.visible = BUNNY.city.visible = false; if (CEO_VIEW && BUNNY.oldMat) CEO_VIEW.material = BUNNY.oldMat; }
+
+(function loreGlow() { const t = performance.now() / 1000; let i = 0; for (const id in LORE_MESHES) { const g = LORE_MESHES[id], sp = g.children.find(c => c.userData.glow); if (sp) sp.material.opacity = 0.22 + 0.3 * (0.5 + 0.5 * Math.sin(t * 1.3 + i * 2.1)); i++; } requestAnimationFrame(loreGlow); })();
+
 const MARKS = [['UNSURE', ''], ['MSS?', 's1'], ['SVR?', 's1'], ['IDF?', 's1'], ['CLEAR', 's2']];
 function openDossier() {
   G.ui = true; releaseLock();
@@ -3690,7 +3902,7 @@ function frame(now) {
     if (G.min >= 17 * 60 && !G.over) endOfDay();
     if (movePlayer(dt)) bob += dt * 9;
     for (const n of npcs) updateNPC(n, dt);
-    updateLegal(dt); updateDealer(dt);
+    updateLegal(dt); updateDealer(dt); updateFrank(dt);
     if (!G.seated) for (const o of [...npcs, ...legalStaff, ...extras]) { if (o.status !== 'active') continue; const dx = player.x - o.pos.x, dz = player.z - o.pos.z, d = Math.hypot(dx, dz); if (d < 0.56 && d > 1e-4) { const push = (0.56 - d) * 0.6, nx = player.x + dx / d * push, nz = player.z + dz / d * push; if (!blockedStatic(nx, nz, 0.3)) { player.x = nx; player.z = nz; } } }
     for (const n of npcs) if (n.desk.ring) n.desk.ring.visible = n.ringUntil > G.min && (now % 700) < 350;
     if (Math.floor(now / 500) !== Math.floor((now - dt * 1000) / 500)) updateHUD();
@@ -3719,7 +3931,8 @@ function frame(now) {
   // camera
   const fl = (G.flickerUntil || 0) - now, flick = fl > 0 ? 1 - 0.55 * Math.pow(Math.max(0, Math.sin((1 - fl / 3500) * Math.PI * 2)), 2) : 1; hemi.intensity = HEMI * flick; sun.intensity = SUN * flick;
   if ((++matTick % 30) === 0) finishMaterials(scene);
-  if (G.cut) updateCut(now);
+  if (BUNNY.on) updateBunny(now);
+  else if (G.cut) updateCut(now);
   else { camera.position.set(player.x, G.seated ? 1.18 : 1.62 + Math.sin(bob) * 0.025, player.z); camera.rotation.set(pitch, yaw, 0, 'YXZ'); }
   // target prompt
   current = (!G.ui && !G.paused && !G.seated) ? findTarget() : null;
@@ -3734,6 +3947,8 @@ function frame(now) {
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
 }
+buildHotDogStand(); buildLore();
+$('#lorectr').onclick = () => { if (!G.over) { releaseLock(); loreLog(); } };
 newGame();
 G.ui = true;
 requestAnimationFrame(frame);
