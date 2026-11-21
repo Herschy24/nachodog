@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pool Shark</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  :root{
+    --felt:#0f4d34; --felt-dark:#0a3523; --felt-deep:#072619;
+    --rail:#3b2416; --chalk:#f3ecdc; --chalk-dim:#cfc6b2;
+    --cue-blue:#5ab0e6; --ball-yellow:#f2c230; --ball-red:#d9432f;
+    --ink:#0b1a13; --line:rgba(243,236,220,.14);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    font-family:"Work Sans",system-ui,sans-serif; color:var(--chalk);
+    background:
+      radial-gradient(1200px 600px at 50% -10%, #17694a 0%, transparent 60%),
+      repeating-linear-gradient(45deg, rgba(255,255,255,.012) 0 2px, transparent 2px 5px),
+      var(--felt-deep);
+    min-height:100vh;
+  }
+  a{color:inherit}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+
+  /* Header */
+  header{padding:48px 0 28px;text-align:center}
+  .logo{display:inline-flex;align-items:center;gap:16px}
+  .logo svg{width:64px;height:64px;flex:none;filter:drop-shadow(0 6px 10px rgba(0,0,0,.45))}
+  h1{font-family:"Alfa Slab One",serif;font-weight:400;font-size:clamp(44px,8vw,84px);
+     line-height:.95;margin:0;letter-spacing:.5px;color:var(--chalk);
+     text-shadow:0 3px 0 var(--rail),0 8px 20px rgba(0,0,0,.45)}
+  .tag{margin:14px auto 0;max-width:560px;color:var(--chalk-dim);font-size:17px;line-height:1.5}
+  .stats{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:22px}
+  .stat{border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:14px;color:var(--chalk-dim);background:rgba(0,0,0,.18)}
+  .stat b{color:var(--chalk);font-weight:700}
+
+  /* Controls */
+  .controls{position:sticky;top:0;z-index:5;padding:14px 0;margin-bottom:8px;
+    background:linear-gradient(var(--felt-deep) 70%, rgba(7,38,25,0));}
+  .bar{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+  .search{display:flex;align-items:center;gap:10px;background:var(--chalk);color:var(--ink);
+    border-radius:12px;padding:0 14px;height:48px;box-shadow:0 0 0 4px var(--rail)}
+  .search svg{width:18px;height:18px;opacity:.6;flex:none}
+  .search input{border:0;outline:0;background:transparent;font:inherit;font-size:16px;width:100%;color:var(--ink)}
+  select{height:48px;border-radius:12px;border:0;padding:0 14px;font:inherit;font-size:15px;
+    background:var(--chalk);color:var(--ink);box-shadow:0 0 0 4px var(--rail);cursor:pointer}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+  .chip{font:inherit;font-size:14px;font-weight:600;border:1px solid var(--line);color:var(--chalk);
+    background:rgba(0,0,0,.2);padding:8px 14px;border-radius:999px;cursor:pointer;display:inline-flex;gap:8px;align-items:center}
+  .chip .dot{width:10px;height:10px;border-radius:50%}
+  .chip[aria-pressed="true"]{background:var(--chalk);color:var(--ink);border-color:var(--chalk)}
+  .chip:focus-visible,select:focus-visible,.search:focus-within{outline:3px solid var(--ball-yellow);outline-offset:2px}
+
+  /* Results */
+  .count{color:var(--chalk-dim);font-size:14px;margin:6px 0 14px}
+  .region{margin:30px 0 12px;display:flex;align-items:baseline;gap:12px}
+  .region h2{font-family:"Alfa Slab One",serif;font-weight:400;font-size:26px;margin:0}
+  .region span{color:var(--chalk-dim);font-size:14px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+  .card{position:relative;background:linear-gradient(180deg,var(--felt) 0%,var(--felt-dark) 100%);
+    border-radius:16px;padding:18px 18px 16px;border:6px solid var(--rail);
+    box-shadow:inset 0 0 30px rgba(0,0,0,.35),0 10px 24px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:10px}
+  .card::before,.card::after{content:"";position:absolute;width:14px;height:14px;border-radius:50%;background:#050d09;top:-3px}
+  .card::before{left:-3px}.card::after{right:-3px}
+  .top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+  .name{font-weight:700;font-size:19px;line-height:1.2;margin:0}
+  .suburb{color:var(--chalk-dim);font-size:13.5px;margin-top:3px}
+  .ball{flex:none;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;
+    box-shadow:inset -4px -5px 8px rgba(0,0,0,.35),inset 3px 3px 6px rgba(255,255,255,.25)}
+  .ball i{width:18px;height:18px;border-radius:50%;background:#fff;color:#111;font-style:normal;
+    font-size:10px;font-weight:700;display:grid;place-items:center}
+  .ball.pub{background:var(--ball-red)} .ball.bar{background:var(--cue-blue)} .ball.hall{background:#111}
+  .note{font-size:14.5px;line-height:1.5;margin:0;color:#e8e1cf}
+  .tags{display:flex;gap:6px;flex-wrap:wrap}
+  .t{font-size:12px;font-weight:600;padding:4px 9px;border-radius:999px;background:rgba(0,0,0,.28);color:var(--chalk)}
+  .t.free{background:var(--ball-yellow);color:#2a1d00}
+  .t.comp{background:var(--chalk);color:var(--ink)}
+  .t.check{background:transparent;border:1px dashed var(--chalk-dim);color:var(--chalk-dim)}
+  .foot{margin-top:auto;padding-top:10px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .addr{font-size:13.5px;color:var(--chalk-dim)}
+  .map{font-size:13.5px;font-weight:700;text-decoration:none;white-space:nowrap;background:var(--chalk);color:var(--ink);
+    padding:7px 12px;border-radius:999px}
+  .map:hover{background:var(--ball-yellow)}
+  .empty{text-align:center;padding:60px 20px;color:var(--chalk-dim)}
+  .empty b{display:block;font-family:"Alfa Slab One",serif;font-weight:400;font-size:26px;color:var(--chalk);margin-bottom:6px}
+
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--chalk-dim);margin-top:4px}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend .ball{width:14px;height:14px}
+
+  /* Near me + map */
+  .near{margin:8px 0 18px;border:6px solid var(--rail);border-radius:18px;overflow:hidden;
+    background:var(--felt-dark);box-shadow:0 10px 24px rgba(0,0,0,.35)}
+  .near-head{padding:16px 16px 14px;display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:center}
+  .near-head h2{grid-column:1/-1;margin:0 0 2px;font-family:"Alfa Slab One",serif;font-weight:400;font-size:24px}
+  .addr-in{display:flex;align-items:center;background:var(--chalk);border-radius:12px;height:46px;padding:0 12px}
+  .addr-in input{border:0;outline:0;background:transparent;font:inherit;font-size:16px;width:100%;color:var(--ink)}
+  .btn{height:46px;border:0;border-radius:12px;padding:0 16px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;
+    background:var(--ball-yellow);color:#2a1d00;white-space:nowrap}
+  .btn.ghost{background:rgba(0,0,0,.25);color:var(--chalk);border:1px solid var(--line)}
+  .btn:hover{filter:brightness(1.08)}
+  .near select{height:46px;box-shadow:none}
+  .near-msg{grid-column:1/-1;font-size:14px;color:var(--chalk-dim);min-height:1.2em;margin:0}
+  .near-msg.err{color:#ffb4a6}
+  #map{height:440px;background:#cfd8d3}
+  .leaflet-container{font-family:"Work Sans",system-ui,sans-serif}
+  .pin{width:22px;height:22px;border-radius:50%;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5),inset -3px -4px 6px rgba(0,0,0,.3)}
+  .pin.pub{background:var(--ball-red)} .pin.bar{background:var(--cue-blue)} .pin.hall{background:#111}
+  .me{width:18px;height:18px;border-radius:50%;background:var(--ball-yellow);border:3px solid #fff;box-shadow:0 0 0 6px rgba(242,194,48,.35)}
+  .pop b{display:block;font-size:15px;margin-bottom:2px}
+  .pop span{color:#555;font-size:13px}
+  .pop a{display:inline-block;margin-top:6px;font-weight:700;color:#0f4d34}
+  .dist{font-size:12px;font-weight:700;padding:4px 9px;border-radius:999px;background:var(--ball-yellow);color:#2a1d00;white-space:nowrap}
+  .showmap{font:inherit;font-size:13.5px;font-weight:600;background:none;border:0;color:var(--chalk-dim);cursor:pointer;text-decoration:underline;padding:0}
+  .foot-r{display:flex;gap:12px;align-items:center}
+  @media (max-width:720px){
+    .near-head{grid-template-columns:1fr 1fr}
+    .addr-in{grid-column:1/-1}
+    #map{height:360px}
+  }
+
+  footer{margin:56px 0 40px;padding-top:22px;border-top:1px solid var(--line);color:var(--chalk-dim);font-size:13.5px;line-height:1.6}
+  footer strong{color:var(--chalk)}
+
+  @media (max-width:560px){
+    .bar{grid-template-columns:1fr}
+    header{padding-top:32px}
+    .logo svg{width:48px;height:48px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">
+      <svg viewBox="0 0 64 64" aria-hidden="true">
+        <defs><radialGradient id="g" cx="35%" cy="30%" r="70%"><stop offset="0" stop-color="#444"/><stop offset=".6" stop-color="#111"/><stop offset="1" stop-color="#000"/></radialGradient></defs>
+        <circle cx="32" cy="32" r="30" fill="url(#g)"/>
+        <circle cx="32" cy="30" r="13" fill="#f7f3e8"/>
+        <text x="32" y="36" text-anchor="middle" font-family="Work Sans, sans-serif" font-weight="700" font-size="17" fill="#111">8</text>
+        <path d="M8 48 C 20 40, 28 52, 40 44 L 56 54 L 38 52 C 28 58, 16 52, 8 48 Z" fill="#5ab0e6" opacity=".95"/>
+      </svg>
+      <h1>Pool Shark</h1>
+    </div>
+    <p class="tag">Melbourne pubs, bars and pool halls where you can rack 'em up. Find a table, grab a pot, call your shot.</p>
+    <div class="stats" id="stats"></div>
+  </header>
+
+  <section class="near" aria-label="Find tables near you">
+    <form class="near-head" id="nearForm">
+      <h2>🎱 Tables near me</h2>
+      <label class="addr-in"><input id="addr" type="text" autocomplete="street-address" placeholder="Enter your address or suburb, e.g. 12 Smith St, Fitzroy" aria-label="Your address"></label>
+      <button class="btn" type="submit">Find tables</button>
+      <button class="btn ghost" type="button" id="locate">📍 Use my location</button>
+      <select id="radius" aria-label="Distance">
+        <option value="1">Within 1 km</option>
+        <option value="2">Within 2 km</option>
+        <option value="5" selected>Within 5 km</option>
+        <option value="10">Within 10 km</option>
+        <option value="0">Any distance</option>
+      </select>
+      <p class="near-msg" id="nearMsg">Type your address to see the closest pool tables, sorted by distance.</p>
+    </form>
+    <div id="map"></div>
+  </section>
+
+  <div class="controls">
+    <div class="bar">
+      <label class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="q" type="search" placeholder="Search a venue, suburb or street…" aria-label="Search venues">
+      </label>
+      <select id="region" aria-label="Filter by area">
+        <option value="">All of Melbourne</option>
+      </select>
+    </div>
+    <div class="chips" role="group" aria-label="Filters">
+      <button class="chip" data-f="pub" aria-pressed="false"><span class="dot" style="background:var(--ball-red)"></span>Pubs</button>
+      <button class="chip" data-f="bar" aria-pressed="false"><span class="dot" style="background:var(--cue-blue)"></span>Bars</button>
+      <button class="chip" data-f="hall" aria-pressed="false"><span class="dot" style="background:#111;border:1px solid #888"></span>Pool halls</button>
+      <button class="chip" data-f="free" aria-pressed="false">Free pool</button>
+      <button class="chip" data-f="comp" aria-pressed="false">Pool comps</button>
+    </div>
+  </div>
+
+  <div class="count" id="count"></div>
+  <div id="results"></div>
+
+  <footer>
+    <div class="legend">
+      <span><span class="ball pub"></span> Pub</span>
+      <span><span class="ball bar"></span> Bar</span>
+      <span><span class="ball hall"></span> Pool hall</span>
+      <span><span class="t check">Check first</span> older info — call ahead</span>
+    </div>
+    <p><strong>Rack 'em responsibly.</strong> Pool tables come and go, comp nights move and prices change, so check with the venue before you head out. Map pins are approximate; tap “Map ↗” for exact directions. Address search by OpenStreetMap Nominatim; your address is only sent to look up its location and isn't stored. Venue details compiled November 2026 from Time Out, Broadsheet, Concrete Playground, Urban List, Dan Murphy's Dans Daily, City of Melbourne What's On and venue listings.</p>
+  </footer>
+</div>
+
+<script>
+const VENUES = [
+  // ---- CBD ----
+  {n:"Dom's Social Club", a:"1/301 Swanston St", s:"Melbourne", r:"CBD", t:"bar",
+   d:"Three-level pizzeria, bar and rooftop up a narrow staircase. The pool table is in the level-two bar.", free:true, tags:["Free pool","Rooftop","Pizza"]},
+  {n:"Hickens Hotel", a:"127 Russell St", s:"Melbourne", r:"CBD", t:"pub",
+   d:"Four-level corner pub after a $12 million revamp, with pool tables, a rooftop bar, karaoke rooms and big screens for the sport.", tags:["Rooftop","Sport on screens"]},
+  {n:"Turf Sports Bar", a:"131 Queen St", s:"Melbourne", r:"CBD", t:"pub",
+   d:"Classic city sports pub with a dedicated pool area plus stacks of screens. The pool area can be booked for functions.", tags:["Sport on screens","Bookable area"]},
+  {n:"Pulo Pool Parlour", a:"Basement, 546 Collins St", s:"Melbourne", r:"CBD", t:"hall",
+   d:"Basement pool parlour and bar with billiard tables, chesterfield couches and darts. Open from 2pm daily.", tags:["Darts","Late"]},
+  {n:"Ballers Clubhouse", a:"2 Coverlid Pl", s:"Melbourne", r:"CBD", t:"bar",
+   d:"Huge games venue with interactive projection pool tables, 360 ping pong, digital darts and a ball pit.", tags:["Games bar","Groups"]},
+  {n:"iCue Lounge", a:"QV, Swanston St", s:"Melbourne", r:"CBD", t:"hall",
+   d:"Casual city pool hall for beginners and pros alike, with drinks and regular friendly tournaments.", comp:true, tags:["Tournaments"]},
+
+  // ---- Inner North ----
+  {n:"Goldy's Tavern", a:"66 Gold St", s:"Collingwood", r:"Inner North", t:"pub",
+   d:"150-year-old backstreet local. Free pool until 6pm, plus a Wednesday comp ($10 entry, winner takes all).", free:true, comp:true, tags:["Free till 6pm","Wed comp"]},
+  {n:"Paradise Alley", a:"25 Easey St", s:"Collingwood", r:"Inner North", t:"bar",
+   d:"Warehouse bar with a separate pool room: a red table ringed by booths you can book. Thursday night pool comp ($10).", comp:true, tags:["Thu comp","Laneway garden"]},
+  {n:"The Fox Hotel", a:"351 Wellington St", s:"Collingwood", r:"Inner North", t:"pub",
+   d:"Beer-can-lined local with a pool table, a makeshift ping-pong table, pinball and a rooftop terrace.", tags:["Rooftop","Ping pong"]},
+  {n:"The Bendigo Hotel", a:"125 Johnston St", s:"Collingwood", r:"Inner North", t:"pub",
+   d:"Saloon-door live music pub with pool tables, arcade games, a bucking bull and a dog-friendly rooftop.", tags:["Live music","Rooftop"]},
+  {n:"Union Club Hotel", a:"164 Gore St", s:"Fitzroy", r:"Inner North", t:"pub",
+   d:"Backstreet Fitzroy stalwart. The pool table is in the red-walled lounge with retro couches and a videogame table.", tags:["Beer garden","Pub food"]},
+  {n:"The Punters Club", a:"376 Brunswick St", s:"Fitzroy", r:"Inner North", t:"pub",
+   d:"The reborn '90s music institution has a dedicated pool room (the Love Shack), darts and a jukebox.", tags:["Live music","Darts"]},
+  {n:"Labour in Vain", a:"197A Brunswick St", s:"Fitzroy", r:"Inner North", t:"pub",
+   d:"No-frills Brunswick St boozer with a pool table and rooftop deck. No kitchen, so order in. Tables are harder to get when a band is on.", tags:["Rooftop","BYO food"]},
+  {n:"Red Triangle Snooker Room", a:"2nd Floor, 110 Argyle St", s:"Fitzroy", r:"Inner North", t:"hall",
+   d:"Old-school upstairs hall (since 1977) with full-size tables and a quiet, serious vibe. Unlicensed, so no alcohol. Cheaper before 6pm on weekdays.", check:true, tags:["Full-size tables","No alcohol"]},
+  {n:"North Fitzroy Arms", a:"296 Rae St", s:"Fitzroy North", r:"Inner North", t:"pub",
+   d:"Revamped 150-year-old footy pub that kept its beloved pool table in the front bar. Reportedly $2 a game.", tags:["Footy pub","$2 a game"]},
+  {n:"Cue Stars Billiards", a:"234 Lygon St", s:"Carlton", r:"Inner North", t:"hall",
+   d:"Laid-back Lygon St pool and snooker hall with cold beers, food and sport on the screens.", tags:["Snooker","Beer"]},
+  {n:"The Brunswick Green", a:"313 Sydney Rd", s:"Brunswick", r:"Inner North", t:"pub",
+   d:"Retro, kitsch Sydney Rd local. The pool table greets you as you walk in, and there's a beer garden out back.", tags:["Beer garden"]},
+  {n:"Amelia Shaw", a:"280 Sydney Rd (upstairs)", s:"Brunswick", r:"Inner North", t:"bar",
+   d:"Cocktail bar above the Retreat Hotel with something different: a round, red pool table.", tags:["Round table!","Cocktails"]},
+  {n:"Hotel Railway", a:"291 Albert St", s:"Brunswick", r:"Inner North", t:"pub",
+   d:"Big, revamped 140-year-old pub with a pool table, a huge beer-garden screen, trivia and weekend DJs.", tags:["Beer garden","Trivia"]},
+  {n:"Sporting Club Hotel", a:"27 Weston St", s:"Brunswick", r:"Inner North", t:"pub",
+   d:"Backstreet Brunswick local, revamped in 2024 by the Marquis of Lorne team. Older reports list a free pool table.", check:true, tags:["Dog friendly"]},
+  {n:"Hotel Lombardo", a:"11–13 Sydney Rd", s:"Coburg", r:"Inner North", t:"pub",
+   d:"Italo-American pub with pizza, Guinness and a pool table under a disco ball.", tags:["Pizza","Disco ball"]},
+
+  // ---- South ----
+  {n:"Leonard's House of Love", a:"3 Wilson St", s:"South Yarra", r:"South & East", t:"bar",
+   d:"'70s log-cabin bar off Chapel St with a pool table out the back, fried chicken and DJs till late on weekends.", tags:["Late","Fried chicken"]},
+  {n:"The Silverlake Social", a:"198 Chapel St", s:"Prahran", r:"South & East", t:"bar",
+   d:"American-style bar with a pool table, Buffalo wings and a deep back bar of hard-to-find US booze.", tags:["Wings","Whiskey"]},
+  {n:"Eddie's Poolroom & Bar", a:"168 Chesterville Rd", s:"Moorabbin", r:"South & East", t:"hall",
+   d:"Pool and snooker bar with regular in-house tournaments, pinball, video games and live music on Fri and Sat.", comp:true, check:true, tags:["Tournaments","Live music"]},
+  {n:"Legend Billiards Club", a:"321 Middleborough Rd", s:"Box Hill", r:"South & East", t:"hall",
+   d:"One of Victoria's bigger billiards clubs, with a dozen American pool tables plus snooker.", check:true, tags:["Lots of tables"]},
+  {n:"Mr Cue", a:"Level 1, 973 Whitehorse Rd", s:"Box Hill", r:"South & East", t:"hall",
+   d:"Upstairs pay-by-the-hour pool hall, usually with K-pop or J-pop on the speakers.", check:true, tags:["Hourly rates"]},
+
+  // ---- West ----
+  {n:"Moon Dog Wild West", a:"54 Hopkins St", s:"Footscray", r:"West", t:"bar",
+   d:"Cowboy-themed brewery bar with several pool tables, and the tables are free on Mondays.", free:true, tags:["Free Mondays","Brewery"]},
+];
+
+// Approximate coordinates (street level) for each venue
+const COORDS = {
+  "Dom's Social Club":[-37.8105,144.9645], "Hickens Hotel":[-37.8137,144.9690], "Turf Sports Bar":[-37.8156,144.9608],
+  "Pulo Pool Parlour":[-37.8178,144.9562], "Ballers Clubhouse":[-37.8116,144.9677], "iCue Lounge":[-37.8106,144.9655],
+  "Goldy's Tavern":[-37.8017,144.9893], "Paradise Alley":[-37.7996,144.9905], "The Fox Hotel":[-37.7945,144.9879],
+  "The Bendigo Hotel":[-37.7985,144.9870], "Union Club Hotel":[-37.8020,144.9820], "The Punters Club":[-37.7959,144.9788],
+  "Labour in Vain":[-37.8020,144.9783], "Red Triangle Snooker Room":[-37.7990,144.9805], "North Fitzroy Arms":[-37.7835,144.9817],
+  "Cue Stars Billiards":[-37.8015,144.9668], "The Brunswick Green":[-37.7700,144.9610], "Amelia Shaw":[-37.7715,144.9605],
+  "Hotel Railway":[-37.7660,144.9555], "Sporting Club Hotel":[-37.7735,144.9625], "Hotel Lombardo":[-37.7555,144.9635],
+  "Leonard's House of Love":[-37.8395,144.9935], "The Silverlake Social":[-37.8510,144.9930], "Eddie's Poolroom & Bar":[-37.9330,145.0505],
+  "Legend Billiards Club":[-37.8180,145.1300], "Mr Cue":[-37.8190,145.1240], "Moon Dog Wild West":[-37.8005,144.8985],
+};
+VENUES.forEach((v,i)=>{ v.id=i; [v.lat,v.lng]=COORDS[v.n]||[null,null]; });
+
+const TYPE_LABEL = {pub:"Pub", bar:"Bar", hall:"Pool hall"};
+const REGION_ORDER = ["CBD","Inner North","South & East","West"];
+const state = {q:"", region:"", types:new Set(), free:false, comp:false, home:null, radius:5};
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const mapsUrl = v => "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(`${v.n}, ${v.a}, ${v.s} VIC`);
+
+function km(a, b){
+  const R=6371, r=Math.PI/180, dLat=(b.lat-a.lat)*r, dLng=(b.lng-a.lng)*r;
+  const x=Math.sin(dLat/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dLng/2)**2;
+  return 2*R*Math.asin(Math.sqrt(x));
+}
+const fmtKm = d => d < 1 ? `${Math.round(d*1000/50)*50} m` : `${d.toFixed(1)} km`;
+
+// Populate region select + stats
+REGION_ORDER.forEach(r => { const o=document.createElement("option"); o.value=r; o.textContent=r; $("#region").appendChild(o); });
+const nFree = VENUES.filter(v=>v.free).length, nComp = VENUES.filter(v=>v.comp).length;
+const nSub = new Set(VENUES.map(v=>v.s)).size;
+$("#stats").innerHTML = `<span class="stat"><b>${VENUES.length}</b> venues</span><span class="stat"><b>${nSub}</b> suburbs</span><span class="stat"><b>${nFree}</b> with free pool</span><span class="stat"><b>${nComp}</b> with comps</span>`;
+
+function matches(v){
+  if (state.region && v.r !== state.region) return false;
+  if (state.types.size && !state.types.has(v.t)) return false;
+  if (state.free && !v.free) return false;
+  if (state.comp && !v.comp) return false;
+  if (state.home && state.radius && v.dist > state.radius) return false;
+  if (state.q){
+    const hay = (v.n+" "+v.a+" "+v.s+" "+v.r+" "+v.d+" "+(v.tags||[]).join(" ")).toLowerCase();
+    return state.q.split(/\s+/).every(w => hay.includes(w));
+  }
+  return true;
+}
+
+function card(v){
+  const tags = [];
+  (v.tags||[]).forEach(t=>{
+    const cls = /free/i.test(t) ? "free" : /comp/i.test(t) ? "comp" : "";
+    tags.push(`<span class="t ${cls}">${esc(t)}</span>`);
+  });
+  if (v.check) tags.push(`<span class="t check">Check first</span>`);
+  const dist = state.home ? `<span class="dist">${fmtKm(v.dist)}</span>` : `<div class="ball ${v.t}" title="${esc(TYPE_LABEL[v.t])}"><i>${v.t==="hall"?"8":v.t==="pub"?"3":"2"}</i></div>`;
+  return `<article class="card">
+    <div class="top">
+      <div><h3 class="name">${esc(v.n)}</h3><div class="suburb">${esc(TYPE_LABEL[v.t])} · ${esc(v.s)}</div></div>
+      ${dist}
+    </div>
+    <p class="note">${esc(v.d)}</p>
+    <div class="tags">${tags.join("")}</div>
+    <div class="foot">
+      <span class="addr">${esc(v.a)}, ${esc(v.s)}</span>
+      <span class="foot-r">${map ? `<button class="showmap" data-id="${v.id}">On map</button>` : ""}<a class="map" href="${mapsUrl(v)}" target="_blank" rel="noopener">Map ↗</a></span>
+    </div>
+  </article>`;
+}
+
+/* ---------- Map ---------- */
+let map = null, markers = {}, homeMarker = null, radiusCircle = null;
+const MELB = [-37.81, 144.99];
+try {
+  if (window.L){
+    map = L.map("map", {scrollWheelZoom:false}).setView(MELB, 12);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+    VENUES.forEach(v=>{
+      if (v.lat == null) return;
+      const icon = L.divIcon({className:"", html:`<div class="pin ${v.t}"></div>`, iconSize:[22,22], iconAnchor:[11,11]});
+      markers[v.id] = L.marker([v.lat, v.lng], {icon, title:v.n}).bindPopup(()=>
+        `<div class="pop"><b>${esc(v.n)}</b><span>${esc(TYPE_LABEL[v.t])} · ${esc(v.a)}, ${esc(v.s)}${state.home?` · ${fmtKm(v.dist)} away`:""}</span><br><a href="${mapsUrl(v)}" target="_blank" rel="noopener">Directions ↗</a></div>`);
+    });
+  }
+} catch(e){ map = null; }
+if (!map) $("#map").innerHTML = `<div class="empty"><b>Map unavailable</b>The map couldn't load. You can still use the list below.</div>`;
+
+function updateMap(list){
+  if (!map) return;
+  const show = new Set(list.map(v=>v.id));
+  Object.entries(markers).forEach(([id,m])=>{
+    if (show.has(+id)) { if (!map.hasLayer(m)) m.addTo(map); }
+    else if (map.hasLayer(m)) map.removeLayer(m);
+  });
+}
+function fitMap(list){
+  if (!map) return;
+  const pts = list.filter(v=>v.lat!=null).map(v=>[v.lat,v.lng]);
+  if (state.home) pts.push([state.home.lat, state.home.lng]);
+  if (radiusCircle) { map.fitBounds(radiusCircle.getBounds(), {padding:[20,20]}); return; }
+  if (pts.length > 1) map.fitBounds(pts, {padding:[30,30], maxZoom:15});
+  else if (pts.length === 1) map.setView(pts[0], 15);
+}
+
+function setHome(lat, lng, label){
+  state.home = {lat, lng};
+  VENUES.forEach(v => v.dist = v.lat==null ? Infinity : km(state.home, v));
+  if (map){
+    if (homeMarker) map.removeLayer(homeMarker);
+    homeMarker = L.marker([lat,lng], {icon:L.divIcon({className:"", html:'<div class="me"></div>', iconSize:[18,18], iconAnchor:[9,9]}), zIndexOffset:1000})
+      .addTo(map).bindPopup(`<div class="pop"><b>You're here</b><span>${esc(label)}</span></div>`);
+  }
+  drawRadius();
+  render(true);
+  const list = VENUES.filter(matches);
+  const nearest = [...VENUES].sort((a,b)=>a.dist-b.dist)[0];
+  msg(list.length
+    ? `Showing ${list.length} spot${list.length>1?"s":""} ${state.radius?`within ${state.radius} km of`:"sorted by distance from"} ${label}. Closest: ${nearest.n} (${fmtKm(nearest.dist)}).`
+    : `Nothing within ${state.radius} km of ${label}. Closest is ${nearest.n}, ${fmtKm(nearest.dist)} away — try a bigger distance.`);
+}
+function drawRadius(){
+  if (!map) return;
+  if (radiusCircle) { map.removeLayer(radiusCircle); radiusCircle = null; }
+  if (state.home && state.radius){
+    radiusCircle = L.circle([state.home.lat, state.home.lng], {radius: state.radius*1000, color:"#f2c230", weight:2, fillColor:"#f2c230", fillOpacity:.08}).addTo(map);
+  }
+}
+function msg(text, err){ const m=$("#nearMsg"); m.textContent=text; m.classList.toggle("err", !!err); }
+
+async function geocode(q){
+  // OpenStreetMap Nominatim, biased to greater Melbourne
+  const url = "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=au"
+    + "&viewbox=144.4,-37.5,145.6,-38.3&q=" + encodeURIComponent(/vic|victoria|melbourne/i.test(q) ? q : q + ", Victoria");
+  const res = await fetch(url, {headers:{"Accept":"application/json"}});
+  if (!res.ok) throw new Error("lookup failed");
+  const data = await res.json();
+  if (!data.length) return null;
+  return {lat:+data[0].lat, lng:+data[0].lon, label:data[0].display_name.split(",").slice(0,3).join(",")};
+}
+
+$("#nearForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const q = $("#addr").value.trim();
+  if (!q) { msg("Type an address or suburb first.", true); return; }
+  msg("Looking up your address…");
+  try {
+    const r = await geocode(q);
+    if (!r) { msg("Couldn't find that address. Try adding the suburb, e.g. “12 Smith St, Fitzroy”.", true); return; }
+    setHome(r.lat, r.lng, r.label);
+  } catch(err){ msg("Address lookup isn't responding right now. Try “Use my location”, or try again in a moment.", true); }
+});
+$("#locate").addEventListener("click", ()=>{
+  if (!navigator.geolocation) { msg("Your browser can't share its location. Type your address instead.", true); return; }
+  msg("Finding you…");
+  navigator.geolocation.getCurrentPosition(
+    p => setHome(p.coords.latitude, p.coords.longitude, "your location"),
+    () => msg("Couldn't get your location (permission denied?). Type your address instead.", true),
+    {enableHighAccuracy:true, timeout:10000}
+  );
+});
+$("#radius").addEventListener("change", e=>{
+  state.radius = +e.target.value;
+  if (state.home){ drawRadius(); render(true); }
+});
+
+/* ---------- List ---------- */
+function render(refit){
+  const list = VENUES.filter(matches);
+  updateMap(list);
+  if (refit) fitMap(list);
+  $("#count").textContent = list.length === VENUES.length
+    ? `Showing all ${list.length} spots`
+    : `${list.length} of ${VENUES.length} spots match`;
+  if (!list.length){
+    $("#results").innerHTML = `<div class="empty"><b>Scratch!</b>Nothing matches. Try a bigger distance or clear a few filters.</div>`;
+    return;
+  }
+  let html = "";
+  if (state.home){
+    const sorted = [...list].sort((a,b)=>a.dist-b.dist);
+    html = `<section><div class="region"><h2>Closest to you</h2><span>${sorted.length} spot${sorted.length>1?"s":""}</span></div><div class="grid">${sorted.map(card).join("")}</div></section>`;
+  } else {
+    REGION_ORDER.forEach(r=>{
+      const group = list.filter(v=>v.r===r).sort((a,b)=>a.s.localeCompare(b.s)||a.n.localeCompare(b.n));
+      if (!group.length) return;
+      html += `<section><div class="region"><h2>${esc(r)}</h2><span>${group.length} spot${group.length>1?"s":""}</span></div><div class="grid">${group.map(card).join("")}</div></section>`;
+    });
+  }
+  $("#results").innerHTML = html;
+}
+
+$("#results").addEventListener("click", e=>{
+  const b = e.target.closest(".showmap"); if (!b || !map) return;
+  const m = markers[b.dataset.id]; if (!m) return;
+  $("#map").scrollIntoView({behavior:"smooth", block:"center"});
+  map.setView(m.getLatLng(), 16); m.openPopup();
+});
+$("#q").addEventListener("input", e => { state.q = e.target.value.trim().toLowerCase(); render(); });
+$("#region").addEventListener("change", e => { state.region = e.target.value; render(true); });
+document.querySelectorAll(".chip").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    const f = btn.dataset.f, on = btn.getAttribute("aria-pressed") !== "true";
+    btn.setAttribute("aria-pressed", on);
+    if (f==="free") state.free = on;
+    else if (f==="comp") state.comp = on;
+    else on ? state.types.add(f) : state.types.delete(f);
+    render();
+  });
+});
+render(true);
+</script>
+</body>
+</html>

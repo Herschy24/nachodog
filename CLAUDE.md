@@ -10,6 +10,7 @@ Static site for a friend group. Hosted on GitHub Pages. No build step — all fi
 - `christmas/index.html` — Christmas page
 - `CommissionersCup/index.html` — Golf tournament page
 - `orchid/index.html` — Orchid Microsystems: 3D 90s office spy-hunt game (Three.js r128 from cdnjs)
+- `poolshark/index.html` — Pool Shark: Melbourne pubs/bars/pool halls with pool tables. Venue list + approx coords in inline `VENUES`/`COORDS`; Leaflet 1.9.4 (cdnjs) + OSM tiles map; "near me" uses Nominatim geocoding or browser geolocation
 - `blog/` — project blog (nacho.dog/blog/): `index.html` lists posts + project cards, posts in `blog/posts/*.html`, shared styles in `blog/blog.css` (exception to the inline-CSS pattern), new posts start from `blog/posts/_template.html`
 - `.github/workflows/fetch-price.yml` — fetches GCQF.AX hourly via yfinance, commits + deploys
 - `.github/workflows/deploy.yml` — deploys to GitHub Pages on push to main
